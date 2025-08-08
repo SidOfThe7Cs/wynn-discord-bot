@@ -32,28 +32,37 @@ public class UpdaterCommands {
             .build();
     private static String latestDownloadUrl = "";
 
-    public static void checkForUpdate(SlashCommandInteractionEvent event){
-        try {
-            String latestRelease = checkForNewRelease();
+    public static void checkForUpdate(SlashCommandInteractionEvent event) {
+        event.deferReply(true).queue(hook -> { // true = ephemeral
+            try {
+                String currentVersion = getCurrentVersion();
+                String latestRelease = checkForNewRelease();
+                String userId = event.getUser().getId();
 
-            String userId = event.getUser().getId();
+                if (latestRelease.equals(currentVersion)){
+                    EmbedBuilder embed = new EmbedBuilder()
+                            .setDescription("you are on latest version: " + currentVersion)
+                            .setColor(Color.GREEN);
+                    hook.editOriginalEmbeds(embed.build()).queue();
+                    return;
+                }
 
-            EmbedBuilder embed = new EmbedBuilder()
-                    .setTitle("")
-                    .setDescription("current version is: " + getCurrentVersion() + " latest is: " + latestRelease)
-                    .setColor(Color.CYAN);
+                EmbedBuilder embed = new EmbedBuilder()
+                        .setDescription("current version is: " + currentVersion +
+                                " latest is: " + latestRelease)
+                        .setColor(Color.CYAN);
 
-            Button primary = Button.primary(userId + ":update.confirm", "update to " + latestRelease);
+                Button primary = Button.primary(userId + ":update.confirm", "update to " + latestRelease);
 
-            event.replyEmbeds(embed.build())
-                    .addComponents(ActionRow.of(
-                            primary
-                    )).setEphemeral(true).queue();
-
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+                hook.editOriginalEmbeds(embed.build())
+                        .setComponents(ActionRow.of(primary))
+                        .queue();
+            } catch (IOException e) {
+                hook.editOriginal("Error checking for updates: " + e.getMessage()).queue();
+            }
+        });
     }
+
 
     public static void update(){
         try {
