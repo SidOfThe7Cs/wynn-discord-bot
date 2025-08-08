@@ -1,0 +1,79 @@
+package sidly.discord_bot.api;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
+
+import java.io.IOException;
+import java.lang.reflect.Type;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+
+public class ApiUtils {
+
+    public static PlayerProfile getPlayerData(String username){
+        try {
+            HttpClient client = HttpClient.newHttpClient();
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("https://api.wynncraft.com/v3/player/" + username + "?fullResult"))
+                    .GET()
+                    .build();
+
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+            // Parse response with Gson
+            Gson gson = new GsonBuilder().create();
+
+            Type type = new TypeToken<PlayerProfile>(){}.getType();
+            PlayerProfile apiData = gson.fromJson(response.body(), type);
+
+            if (apiData == null) {
+                System.err.println("player profile was null");
+                return null;
+            }
+
+            return apiData;
+
+        } catch (IOException e) {
+            System.err.println("IOException");
+            throw new RuntimeException(e);
+        } catch (InterruptedException e) {
+            System.err.println("InterruptedException");
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static GuildInfo getGuildInfo(String prefix){
+        try {
+            HttpClient client = HttpClient.newHttpClient();
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("https://api.wynncraft.com/v3/guild/prefix/"+prefix+"?identifier=username"))
+                    .GET()
+                    .build();
+
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+            // Parse response with Gson
+            Gson gson = new GsonBuilder().create();
+
+            Type type = new TypeToken<GuildInfo>(){}.getType();
+            GuildInfo apiData = gson.fromJson(response.body(), type);
+
+            if (apiData == null) {
+                System.err.println("guild info was null");
+                return null;
+            }
+
+            return apiData;
+
+        } catch (IOException e) {
+            System.err.println("IOException");
+            throw new RuntimeException(e);
+        } catch (InterruptedException e) {
+            System.err.println("InterruptedException");
+            throw new RuntimeException(e);
+        }
+    }
+}
