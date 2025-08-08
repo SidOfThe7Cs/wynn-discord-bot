@@ -1,4 +1,11 @@
 
-owner commands:
-    /shutdown
-    /reloadconfig
+download the latest release: https://github.com/SidOfThe7Cs/wynn-discord-bot/releases/latest
+install java 21+ if needed
+run the .jar file it will create the config file and then close
+go to: https://discord.com/developers/applications
+create a new application and copy the bot token from the Bot section
+open the config file and paste the bot token where it says Token: "paste here"
+copy the id of your owner role and paste into into the config file as well
+go to the intall page on the dev app website and select guild install, add the applications.commands and the bot scopes then save and go to the install link url and add the bot to your server
+double click the jar again and your bot should be online
+relaunch your discord client to update the stores slash commands

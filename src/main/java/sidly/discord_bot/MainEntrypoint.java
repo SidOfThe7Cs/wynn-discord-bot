@@ -37,7 +37,7 @@ public class MainEntrypoint extends ListenerAdapter {
         System.exit(0);
     }
 
-    private static void shutdown(SlashCommandInteractionEvent slashCommandInteractionEvent) {
+    private static void shutdown(SlashCommandInteractionEvent event) {
         shutdown();
     }
 
@@ -84,8 +84,15 @@ public class MainEntrypoint extends ListenerAdapter {
         AllSlashCommands.editconfigoption.setRequiredRole(ConfigManager.get(Config.Settings.OwnerRole));
         AllSlashCommands.editconfigoption.setAction(ConfigCommands::editConfigOption);
 
-        commands.addCommands(AllSlashCommands.showconfigoptions.getBaseCommandData());
-        AllSlashCommands.showconfigoptions.setAction(ConfigCommands::showConfigOptions);
+        commands.addCommands(AllSlashCommands.getconfigoptions.getBaseCommandData());
+        AllSlashCommands.getconfigoptions.setAction(ConfigCommands::showConfigOptions);
+
+        commands.addCommands(AllSlashCommands.checkforupdates.getBaseCommandData());
+        AllSlashCommands.checkforupdates.setRequiredRole(ConfigManager.get(Config.Settings.ChiefRole));
+        AllSlashCommands.checkforupdates.setAction(UpdaterCommands::checkForUpdate);
+
+        commands.addCommands(AllSlashCommands.getbotversion.getBaseCommandData());
+        AllSlashCommands.getbotversion.setAction(UpdaterCommands::getBotVersion);
 
         commands.addCommands(
                 AllSlashCommands.adddemotionexeption.getBaseCommandData()
@@ -133,11 +140,14 @@ public class MainEntrypoint extends ListenerAdapter {
         if (!authorId.equals(event.getUser().getId())) return;
 
         MessageChannel channel = event.getChannel();
+        Message message = event.getMessage();
+        MessageEmbed originalEmbed = message.getEmbeds().isEmpty() ? null : message.getEmbeds().getFirst();
         switch (type)
         {
+            case "update.confirm":
+                UpdaterCommands.update();
+                break;
             case "say.like":
-                Message message = event.getMessage();
-                MessageEmbed originalEmbed = message.getEmbeds().isEmpty() ? null : message.getEmbeds().getFirst();
                 if (originalEmbed != null) {
                     EmbedBuilder updated = new EmbedBuilder(originalEmbed)
                             .setColor(Color.GREEN)
