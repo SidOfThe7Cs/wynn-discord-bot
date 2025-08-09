@@ -3,8 +3,7 @@ package sidly.discord_bot.api;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import sidly.discord_bot.Database;
-
+import sidly.discord_bot.ConfigManager;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.URI;
@@ -30,7 +29,7 @@ public class ApiUtils {
             Type type = new TypeToken<PlayerProfile>(){}.getType();
             PlayerProfile apiData = gson.fromJson(response.body(), type);
             apiData.update();
-            Database.allPlayers.put(apiData.username, apiData);
+            ConfigManager.getDatabaseInstance().allPlayers.put(apiData.username, apiData);
 
             if (apiData == null) {
                 System.err.println("player profile was null");
@@ -64,7 +63,7 @@ public class ApiUtils {
             Type type = new TypeToken<GuildInfo>(){}.getType();
             GuildInfo apiData = gson.fromJson(response.body(), type);
             apiData.update();
-            Database.allGuilds.put(apiData.prefix, apiData);
+            ConfigManager.getDatabaseInstance().allGuilds.put(apiData.prefix, apiData);
 
             return apiData;
 

@@ -17,13 +17,14 @@ import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction;
 import sidly.discord_bot.commands.*;
+import sidly.discord_bot.commands.demotion_promotion.PromotionCommands;
+import sidly.discord_bot.commands.demotion_promotion.RequirementType;
 
 import java.awt.*;
 import java.util.Arrays;
 import java.util.EnumSet;
 
-import static net.dv8tion.jda.api.interactions.commands.OptionType.INTEGER;
-import static net.dv8tion.jda.api.interactions.commands.OptionType.STRING;
+import static net.dv8tion.jda.api.interactions.commands.OptionType.*;
 
 public class MainEntrypoint extends ListenerAdapter {
 
@@ -48,7 +49,7 @@ public class MainEntrypoint extends ListenerAdapter {
         Runtime.getRuntime().addShutdownHook(new Thread(MainEntrypoint::shutdown));
 
         ConfigManager.load();
-        String token = ConfigManager.get(Config.Settings.Token);
+        String token = ConfigManager.getSetting(Config.Settings.Token);
         if (token == null || token.isEmpty()){
             System.err.println("please assign your bot token in the config file");
             shutdown();
@@ -62,13 +63,13 @@ public class MainEntrypoint extends ListenerAdapter {
         CommandListUpdateAction commands = jda.updateCommands();
 
         commands.addCommands(AllSlashCommands.shutdown.getBaseCommandData());
-        AllSlashCommands.shutdown.setRequiredRole(ConfigManager.get(Config.Settings.OwnerRole));
+        AllSlashCommands.shutdown.setRequiredRole(ConfigManager.getSetting(Config.Settings.OwnerRole));
         AllSlashCommands.shutdown.setAction(MainEntrypoint::shutdown);
 
 
         commands.addCommands(AllSlashCommands.reloadconfig.getBaseCommandData());
-        AllSlashCommands.reloadconfig.setRequiredRole(ConfigManager.get(Config.Settings.OwnerRole));
-        AllSlashCommands.reloadconfig.setAction(ConfigManager::load);
+        AllSlashCommands.reloadconfig.setRequiredRole(ConfigManager.getSetting(Config.Settings.OwnerRole));
+        AllSlashCommands.reloadconfig.setAction(ConfigManager::reloadConfig);
 
         commands.addCommands(AllSlashCommands.editconfigoption.getBaseCommandData()
                 .addOptions(
@@ -81,14 +82,14 @@ public class MainEntrypoint extends ListenerAdapter {
                         new OptionData(OptionType.STRING, "new_value", "The new value for the setting", true)
                 )
         );
-        AllSlashCommands.editconfigoption.setRequiredRole(ConfigManager.get(Config.Settings.ChiefRole));
+        AllSlashCommands.editconfigoption.setRequiredRole(ConfigManager.getSetting(Config.Settings.ChiefRole));
         AllSlashCommands.editconfigoption.setAction(ConfigCommands::editConfigOption);
 
         commands.addCommands(AllSlashCommands.getconfigoptions.getBaseCommandData());
         AllSlashCommands.getconfigoptions.setAction(ConfigCommands::showConfigOptions);
 
         commands.addCommands(AllSlashCommands.checkforupdates.getBaseCommandData());
-        AllSlashCommands.checkforupdates.setRequiredRole(ConfigManager.get(Config.Settings.ChiefRole));
+        AllSlashCommands.checkforupdates.setRequiredRole(ConfigManager.getSetting(Config.Settings.ChiefRole));
         AllSlashCommands.checkforupdates.setAction(UpdaterCommands::checkForUpdate);
 
         commands.addCommands(AllSlashCommands.getbotversion.getBaseCommandData());
@@ -121,6 +122,37 @@ public class MainEntrypoint extends ListenerAdapter {
         commands.addCommands(AllSlashCommands.checkforinactivity.getBaseCommandData());
 
         commands.addCommands(AllSlashCommands.checkforpromotions.getBaseCommandData());
+
+
+
+        commands.addCommands(AllSlashCommands.addPromotionRequirement.getBaseCommandData()
+                .addOptions(
+                        new OptionData(OptionType.STRING, "rank", "what rank to add the requirement too", true)
+                                .addChoices(
+                                        Arrays.stream(Utils.RankList.values())
+                                                .map(e -> new Command.Choice(e.name(), e.name()))
+                                                .toArray(Command.Choice[]::new)
+                                ),
+                        new OptionData(OptionType.STRING, "requirement", "the type of requirement to add", true)
+                                .addChoices(
+                                        Arrays.stream(RequirementType.values())
+                                                .map(e -> new Command.Choice(e.name(), e.name()))
+                                                .toArray(Command.Choice[]::new)
+                                )
+                )
+                .addOption(INTEGER, "value", "the value for the requirement 0 is false 1 is true", true)
+                .addOption(BOOLEAN, "required", "is this requirement always required", true));
+        AllSlashCommands.addPromotionRequirement.setRequiredRole(ConfigManager.getSetting(Config.Settings.ChiefRole));
+        AllSlashCommands.addPromotionRequirement.setAction(PromotionCommands::addRequirement);
+
+        commands.addCommands(AllSlashCommands.getPromotionRequirements.getBaseCommandData());
+
+        commands.addCommands(AllSlashCommands.checkPromotionProgress.getBaseCommandData());
+
+        commands.addCommands(AllSlashCommands.setPromotionOptionalRequirement.getBaseCommandData());
+
+        commands.addCommands(AllSlashCommands.removePromotionRequirement.getBaseCommandData());
+
 
         // Send the new set of commands to discord, this will override any existing global commands with the new set provided here
         commands.queue();

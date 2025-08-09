@@ -2,8 +2,6 @@ package sidly.discord_bot.commands;
 
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
-import net.dv8tion.jda.api.interactions.components.ActionRow;
-import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import sidly.discord_bot.Config;
 import sidly.discord_bot.ConfigManager;
 
@@ -21,14 +19,14 @@ public class ConfigCommands {
             return;
         }
 
-        ConfigManager.getInstance().settings.put(option, newValue);
+        ConfigManager.getConfigInstance().settings.put(option, newValue);
 
         event.reply(event.getUser().getName() + " has changed the " + setting + " to " + newValue).setEphemeral(false).queue();
     }
 
 
     public static void showConfigOptions(SlashCommandInteractionEvent event){
-        String result = ConfigManager.getInstance().settings.entrySet().stream()
+        String result = ConfigManager.getConfigInstance().settings.entrySet().stream()
                 .filter(entry -> entry.getKey() != Config.Settings.Token)
                 .map(entry -> entry.getKey() + " : " + entry.getValue())
                 .collect(Collectors.joining(System.lineSeparator()));

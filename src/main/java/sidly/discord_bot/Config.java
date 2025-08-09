@@ -26,6 +26,8 @@ public class Config {
         CaptainRole,
         RecruiterRole,
         RecruitRole,
-        VerifiedRole
+        VerifiedRole,
+
+
     }
 }

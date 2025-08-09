@@ -14,55 +14,83 @@ import java.util.Map;
 public class ConfigManager {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final File CONFIG_FILE = new File("config.json");
+    private static final File DATABASE_FILE = new File("database.json");
 
-    private static Config config = new Config(); // default config
+    private static Config config = new Config();
+    private static Database dataBase = new Database();
 
-    public static String get(Config.Settings opt) {
+    public static String getSetting(Config.Settings opt) {
         return config.settings.get(opt);
     }
 
-    public static Config getInstance(){
+    public static Config getConfigInstance(){
         return config;
     }
 
+    public static Database getDatabaseInstance(){
+        return dataBase;
+    }
+
     public static void save() {
-        try (FileWriter writer = new FileWriter(CONFIG_FILE)) {
-            GSON.toJson(config, writer);
-            System.out.println("Config saved successfully.");
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.err.println("Failed to save config.");
-        }
+        save(config, CONFIG_FILE);
+        save(dataBase, DATABASE_FILE);
     }
 
     public static void load() {
-        if (!CONFIG_FILE.exists()) {
-            System.out.println("Config file not found. Creating default.");
-            save(); // Save default
-            return;
-        }
+        config = load(config, CONFIG_FILE, new Config());
+        dataBase = load(dataBase, DATABASE_FILE, new Database());
+    }
 
-        try (FileReader reader = new FileReader(CONFIG_FILE)) {
-            Config loaded = GSON.fromJson(reader, Config.class);
-            if (loaded == null) {
-                System.err.println("Config failed to load, using default.");
-                return;
-            }
-
-            // Merge missing fields
-            mergeMissingDefaults(loaded, new Config());
-            config = loaded;
-            System.out.println("Config loaded successfully.");
-            save();
+    private static <T> void save(T object, File file) {
+        try (FileWriter writer = new FileWriter(file)) {
+            GSON.toJson(object, writer);
+            System.out.println("Saved successfully to " + file.getName());
         } catch (IOException e) {
             e.printStackTrace();
-            System.err.println("Failed to load config.");
+            System.err.println("Failed to save to " + file.getName());
         }
     }
 
-    @SuppressWarnings("unchecked") // horrid idea lmao
-    private static void mergeMissingDefaults(Config target, Config defaults) {
-        for (Field field : Config.class.getDeclaredFields()) {
+    public static <T> T load(T currentInstance, File file, T defaults) {
+
+        if (!file.exists()) {
+            System.out.println(file.getName() + " not found. Creating default.");
+            save(defaults, file);
+            return defaults;
+        }
+
+        try (FileReader reader = new FileReader(file)) {
+            @SuppressWarnings("unchecked")
+            Class<T> clazz = (Class<T>) currentInstance.getClass();
+
+            T loaded = GSON.fromJson(reader, clazz);
+            if (loaded == null) {
+                System.err.println("Failed to load " + file.getName() + ", using default.");
+                return currentInstance;
+            }
+
+            // Merge missing defaults
+            mergeMissingDefaults(loaded, defaults);
+            save(loaded, file); // keep file up to date
+            return loaded;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.err.println("Failed to load " + file.getName());
+        }
+        return currentInstance;
+    }
+
+
+    @SuppressWarnings("unchecked")
+    public static <T> void mergeMissingDefaultsUNUSED(T target, T defaults) {
+        if (target == null || defaults == null) {
+            throw new IllegalArgumentException("Target and defaults must not be null");
+        }
+
+        Class<?> clazz = target.getClass();
+
+        for (Field field : clazz.getDeclaredFields()) {
             field.setAccessible(true);
             try {
                 Object targetValue = field.get(target);
@@ -92,7 +120,31 @@ public class ConfigManager {
         }
     }
 
-    public static void load(SlashCommandInteractionEvent slashCommandInteractionEvent) {
-        load();
+    public static <T> void mergeMissingDefaults(T target, T defaults) {
+        if (target == null || defaults == null) return;
+
+        Class<?> clazz = target.getClass();
+        while (clazz != null) { // Go up inheritance chain
+            for (Field field : clazz.getDeclaredFields()) {
+                field.setAccessible(true);
+                try {
+                    Object currentValue = field.get(target);
+                    Object defaultValue = field.get(defaults);
+
+                    if (currentValue == null) {
+                        field.set(target, defaultValue);
+                    }
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                }
+            }
+            clazz = clazz.getSuperclass();
+        }
+    }
+
+
+    public static void reloadConfig(SlashCommandInteractionEvent event) {
+        config = load(config, CONFIG_FILE, new Config());
+        event.reply("reloaded").setEphemeral(true).queue();
     }
 }

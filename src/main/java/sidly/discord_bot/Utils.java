@@ -19,12 +19,12 @@ public class Utils {
 
     public static boolean hasAtLeastRank(Member user, String roleId) {
         List<String> rankOrder = List.of(
-                ConfigManager.get(Config.Settings.RecruitRole),     // lowest
-                ConfigManager.get(Config.Settings.RecruiterRole),
-                ConfigManager.get(Config.Settings.CaptainRole),
-                ConfigManager.get(Config.Settings.StrategistRole),
-                ConfigManager.get(Config.Settings.ChiefRole),
-                ConfigManager.get(Config.Settings.OwnerRole)        // highest
+                ConfigManager.getSetting(Config.Settings.RecruitRole),     // lowest
+                ConfigManager.getSetting(Config.Settings.RecruiterRole),
+                ConfigManager.getSetting(Config.Settings.CaptainRole),
+                ConfigManager.getSetting(Config.Settings.StrategistRole),
+                ConfigManager.getSetting(Config.Settings.ChiefRole),
+                ConfigManager.getSetting(Config.Settings.OwnerRole)        // highest
         );
 
         if (user == null || roleId == null || roleId.isEmpty()) return false;
@@ -40,5 +40,14 @@ public class Utils {
             }
         }
         return false;
+    }
+
+    public enum RankList{
+        Owner,
+        Chief,
+        Strategist,
+        Captain,
+        Recruiter,
+        Recruit
     }
 }
