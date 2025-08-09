@@ -16,6 +16,7 @@ public enum AllSlashCommands {
     getconfigoptions("shows config options"),
     checkforupdates("check if the bot has any updates"),
     getbotversion("gets the current bot version"),
+    leaderboardguildxp("lists guild members and there contributed xp"),
     adddemotionexeption("adds a player to be excluded from demotion checks, default length is forever"),
     addinactivityexeption("adds a custom inactivity threshold for a player, default length is forever"),
     addpromotionexeption("adds a player top be excluded from promotion checks, default length is forever"),
@@ -54,7 +55,7 @@ public enum AllSlashCommands {
     public void run(SlashCommandInteractionEvent event){
         if (requiredRole.isEmpty()) {
             action.accept(event);
-        }else if (Utils.hasRole(event.getMember(), requiredRole)) {
+        }else if (Utils.hasAtLeastRank(event.getMember(), requiredRole)) {
             action.accept(event);
         } else event.reply("❌ You don't have permission to use this command.").setEphemeral(true).queue();
     }

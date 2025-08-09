@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Map;
 
 public class GuildInfo {
+    public long lastUpdated;
+
     public String uuid;
     public String name;
     public String prefix;
@@ -18,29 +20,29 @@ public class GuildInfo {
     public Map<String, SeasonRank> seasonRanks;
 
     public static class Members {
-        private int total;
-        private Map<String, MemberInfo> owner;
-        private Map<String, MemberInfo> chief;
-        private Map<String, MemberInfo> strategist;
-        private Map<String, MemberInfo> captain;
-        private Map<String, MemberInfo> recruiter;
-        private Map<String, MemberInfo> recruit;
+        public int total;
+        public Map<String, MemberInfo> owner;
+        public Map<String, MemberInfo> chief;
+        public Map<String, MemberInfo> strategist;
+        public Map<String, MemberInfo> captain;
+        public Map<String, MemberInfo> recruiter;
+        public Map<String, MemberInfo> recruit;
     }
 
     public static class MemberInfo {
-        private String nameOrUuid;
-        private boolean online;
-        private String server; // nullable
-        private long contributed;
-        private int contributionRank;
-        private String joined;
+        public String username;
+        public boolean online;
+        public String server; // nullable
+        public long contributed;
+        public int contributionRank;
+        public String joined;
     }
 
     public static class Banner {
-        private String base;
-        private int tier;
-        private String structure;
-        private List<Layer> layers;
+        public String base;
+        public int tier;
+        public String structure;
+        public List<Layer> layers;
 
         public static class Layer {
             private String colour;
@@ -49,7 +51,11 @@ public class GuildInfo {
     }
 
     public static class SeasonRank {
-        private int rating;
-        private int finalTerritories;
+        public int rating;
+        public int finalTerritories;
+    }
+
+    public void update(){
+        lastUpdated = System.currentTimeMillis();
     }
 }

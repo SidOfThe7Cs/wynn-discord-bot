@@ -18,7 +18,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.concurrent.TimeUnit;
@@ -49,7 +48,7 @@ public class UpdaterCommands {
 
                 EmbedBuilder embed = new EmbedBuilder()
                         .setDescription("current version is: " + currentVersion +
-                                " latest is: " + latestRelease)
+                                " latest is: " + latestRelease + "\n" + "when clicking the update button it will say interaction failed but should work you can check using /getbotversion please dont click it again")
                         .setColor(Color.CYAN);
 
                 Button primary = Button.primary(userId + ":update.confirm", "update to " + latestRelease);

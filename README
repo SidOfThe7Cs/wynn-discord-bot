@@ -1,6 +1,6 @@
 
 download the latest release: https://github.com/SidOfThe7Cs/wynn-discord-bot/releases/latest
-install java 21+ if needed
+install java 21+ if needed: https://adoptium.net/temurin/releases
 run the .jar file it will create the config file and then close
 go to: https://discord.com/developers/applications
 create a new application and copy the bot token from the Bot section

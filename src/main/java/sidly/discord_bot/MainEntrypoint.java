@@ -81,7 +81,7 @@ public class MainEntrypoint extends ListenerAdapter {
                         new OptionData(OptionType.STRING, "new_value", "The new value for the setting", true)
                 )
         );
-        AllSlashCommands.editconfigoption.setRequiredRole(ConfigManager.get(Config.Settings.OwnerRole));
+        AllSlashCommands.editconfigoption.setRequiredRole(ConfigManager.get(Config.Settings.ChiefRole));
         AllSlashCommands.editconfigoption.setAction(ConfigCommands::editConfigOption);
 
         commands.addCommands(AllSlashCommands.getconfigoptions.getBaseCommandData());
@@ -93,6 +93,10 @@ public class MainEntrypoint extends ListenerAdapter {
 
         commands.addCommands(AllSlashCommands.getbotversion.getBaseCommandData());
         AllSlashCommands.getbotversion.setAction(UpdaterCommands::getBotVersion);
+
+        commands.addCommands(AllSlashCommands.leaderboardguildxp.getBaseCommandData()
+                .addOption(STRING, "guild_prefix", "e", true));
+        AllSlashCommands.leaderboardguildxp.setAction(GuildCommands::showGuildXpLeaderboard);
 
         commands.addCommands(
                 AllSlashCommands.adddemotionexeption.getBaseCommandData()

@@ -10,12 +10,10 @@ import java.util.Optional;
 public class TestEntrypoint {
 
     public static void main(String[] args) throws IOException {
-        //GuildInfo testApiResponce = ApiUtils.getGuildInfo("HOC");
+        GuildInfo testApiResponce = ApiUtils.getGuildInfo("HOC");
 
-        //Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        //System.out.println(gson.toJson(testApiResponce));
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        System.out.println(gson.toJson(testApiResponce));
 
-        //Optional<UpdaterCommands.LatestRelease> latestRelease = UpdaterCommands.checkForNewRelease();
-        //System.out.println(latestRelease);
     }
 }
