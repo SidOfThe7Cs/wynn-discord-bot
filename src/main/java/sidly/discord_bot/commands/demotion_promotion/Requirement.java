@@ -27,4 +27,8 @@ public class Requirement {
                 ", required=" + required +
                 '}';
     }
+
+    public RequirementType getType() {
+        return this.type;
+    }
 }

@@ -23,11 +23,11 @@ public enum AllSlashCommands {
     checkfordemotions("check your guild members to see who should be a lower rank"),
     checkforinactivity("check your guild members to see who should be a lower rank"),
     checkforpromotions("check your guild members to see who should be a lower rank"),
-    addPromotionRequirement("add a requiment to be promoted to a rank"),
-    getPromotionRequirements("just view em"),
-    checkPromotionProgress("view what a member needs to do to be promoted"),
-    setPromotionOptionalRequirement("set the required number of optional requirements that need to be met"),
-    removePromotionRequirement("remove a requirement from the promotion check");
+    addpromotionrequirement("add a requiment to be promoted to a rank"),
+    getpromotionrequirements("just view em"),
+    checkpromotionprogress("view what a member needs to do to be promoted"),
+    setpromotionoptionalrequirement("set the required number of optional requirements that need to be met"),
+    removepromotionrequirement("remove a requirement from the promotion check");
 
 
     private final String description;

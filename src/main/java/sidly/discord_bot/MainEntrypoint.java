@@ -125,8 +125,7 @@ public class MainEntrypoint extends ListenerAdapter {
 
 
 
-        commands.addCommands(AllSlashCommands.addPromotionRequirement.getBaseCommandData()
-                .addOptions(
+        commands.addCommands(AllSlashCommands.addpromotionrequirement.getBaseCommandData().addOptions(
                         new OptionData(OptionType.STRING, "rank", "what rank to add the requirement too", true)
                                 .addChoices(
                                         Arrays.stream(Utils.RankList.values())
@@ -142,16 +141,43 @@ public class MainEntrypoint extends ListenerAdapter {
                 )
                 .addOption(INTEGER, "value", "the value for the requirement 0 is false 1 is true", true)
                 .addOption(BOOLEAN, "required", "is this requirement always required", true));
-        AllSlashCommands.addPromotionRequirement.setRequiredRole(ConfigManager.getSetting(Config.Settings.ChiefRole));
-        AllSlashCommands.addPromotionRequirement.setAction(PromotionCommands::addRequirement);
+        AllSlashCommands.addpromotionrequirement.setRequiredRole(ConfigManager.getSetting(Config.Settings.ChiefRole));
+        AllSlashCommands.addpromotionrequirement.setAction(PromotionCommands::addRequirement);
 
-        commands.addCommands(AllSlashCommands.getPromotionRequirements.getBaseCommandData());
+        commands.addCommands(AllSlashCommands.getpromotionrequirements.getBaseCommandData());
+        AllSlashCommands.getpromotionrequirements.setAction(PromotionCommands::getRequirements);
 
-        commands.addCommands(AllSlashCommands.checkPromotionProgress.getBaseCommandData());
+        commands.addCommands(AllSlashCommands.checkpromotionprogress.getBaseCommandData());
 
-        commands.addCommands(AllSlashCommands.setPromotionOptionalRequirement.getBaseCommandData());
+        commands.addCommands(AllSlashCommands.setpromotionoptionalrequirement.getBaseCommandData().addOptions(
+                new OptionData(OptionType.STRING, "rank", "what rank to set for", true)
+                        .addChoices(
+                                Arrays.stream(Utils.RankList.values())
+                                        .map(e -> new Command.Choice(e.name(), e.name()))
+                                        .toArray(Command.Choice[]::new)
+                        ),
+                new OptionData(INTEGER, "value", "the number of required optional requirements", true)
+        ));
+        AllSlashCommands.setpromotionoptionalrequirement.setRequiredRole(ConfigManager.getSetting(Config.Settings.ChiefRole));
+        AllSlashCommands.setpromotionoptionalrequirement.setAction(PromotionCommands::setPromotionOptionalRequirement);
 
-        commands.addCommands(AllSlashCommands.removePromotionRequirement.getBaseCommandData());
+        commands.addCommands(AllSlashCommands.removepromotionrequirement.getBaseCommandData().addOptions(
+                        new OptionData(OptionType.STRING, "rank", "what rank to remove the requirement from", true)
+                                .addChoices(
+                                        Arrays.stream(Utils.RankList.values())
+                                                .map(e -> new Command.Choice(e.name(), e.name()))
+                                                .toArray(Command.Choice[]::new)
+                                ),
+                        new OptionData(OptionType.STRING, "requirement", "the type of requirement to add", true)
+                                .addChoices(
+                                        Arrays.stream(RequirementType.values())
+                                                .map(e -> new Command.Choice(e.name(), e.name()))
+                                                .toArray(Command.Choice[]::new)
+                                )
+                )
+        );
+        AllSlashCommands.removepromotionrequirement.setRequiredRole(ConfigManager.getSetting(Config.Settings.ChiefRole));
+        AllSlashCommands.removepromotionrequirement.setAction(PromotionCommands::removeRequirement);
 
 
         // Send the new set of commands to discord, this will override any existing global commands with the new set provided here
@@ -183,49 +209,7 @@ public class MainEntrypoint extends ListenerAdapter {
             case "update.confirm":
                 UpdaterCommands.update();
                 break;
-            case "say.like":
-                if (originalEmbed != null) {
-                    EmbedBuilder updated = new EmbedBuilder(originalEmbed)
-                            .setColor(Color.GREEN)
-                            .setDescription("✅ You clicked: " + event.getComponentId());
-
-                    event.editMessageEmbeds(updated.build()).queue();
-                }
-                break;
-            case "say.shrug":
-                event.reply("shruggggged").setEphemeral(true).queue();
-                break;
-            case "say.dislike":
-                event.reply("You disliked this message. 👎").setEphemeral(true).queue();
-                break;
-            default:
-                event.reply("Unknown button clicked!").setEphemeral(true).queue();
         }
     }
 
-    public static void say(SlashCommandInteractionEvent event) {
-        String userId = event.getUser().getId();
-        String content = "test \n";
-        String pref = event.getOption("guild_prefix").getAsString();
-        content += pref;
-
-        EmbedBuilder embed = new EmbedBuilder()
-                .setTitle(":red_circle: buttons?")
-                .setDescription(content)
-                .setColor(Color.CYAN)
-                .setFooter("Requested by " + event.getUser().getName(), event.getUser().getEffectiveAvatarUrl())
-                .setTimestamp(java.time.Instant.now());
-
-        Button primary = Button.primary(userId + ":say.like", "👍 Like");
-        Button secondary = Button.secondary(userId + ":say.shrug", "shrug");
-        Button danger = Button.danger(userId + ":say.dislike", "👎 Dislike");
-
-        event.replyEmbeds(embed.build())
-                .addComponents(ActionRow.of(
-                        primary,
-                        secondary,
-                        danger
-                ))
-                .queue();
-    }
 }
