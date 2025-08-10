@@ -1,8 +1,8 @@
 package sidly.discord_bot;
 
-import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
+import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
@@ -12,15 +12,12 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.Command;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
-import net.dv8tion.jda.api.interactions.components.ActionRow;
-import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction;
 import sidly.discord_bot.commands.*;
 import sidly.discord_bot.commands.demotion_promotion.PromotionCommands;
 import sidly.discord_bot.commands.demotion_promotion.RequirementType;
 
-import java.awt.*;
 import java.util.Arrays;
 import java.util.EnumSet;
 
@@ -63,12 +60,10 @@ public class MainEntrypoint extends ListenerAdapter {
         CommandListUpdateAction commands = jda.updateCommands();
 
         commands.addCommands(AllSlashCommands.shutdown.getBaseCommandData());
-        AllSlashCommands.shutdown.setRequiredRole(ConfigManager.getSetting(Config.Settings.OwnerRole));
         AllSlashCommands.shutdown.setAction(MainEntrypoint::shutdown);
 
 
         commands.addCommands(AllSlashCommands.reloadconfig.getBaseCommandData());
-        AllSlashCommands.reloadconfig.setRequiredRole(ConfigManager.getSetting(Config.Settings.OwnerRole));
         AllSlashCommands.reloadconfig.setAction(ConfigManager::reloadConfig);
 
         commands.addCommands(AllSlashCommands.editconfigoption.getBaseCommandData()
@@ -82,14 +77,12 @@ public class MainEntrypoint extends ListenerAdapter {
                         new OptionData(OptionType.STRING, "new_value", "The new value for the setting", true)
                 )
         );
-        AllSlashCommands.editconfigoption.setRequiredRole(ConfigManager.getSetting(Config.Settings.ChiefRole));
         AllSlashCommands.editconfigoption.setAction(ConfigCommands::editConfigOption);
 
         commands.addCommands(AllSlashCommands.getconfigoptions.getBaseCommandData());
         AllSlashCommands.getconfigoptions.setAction(ConfigCommands::showConfigOptions);
 
         commands.addCommands(AllSlashCommands.checkforupdates.getBaseCommandData());
-        AllSlashCommands.checkforupdates.setRequiredRole(ConfigManager.getSetting(Config.Settings.ChiefRole));
         AllSlashCommands.checkforupdates.setAction(UpdaterCommands::checkForUpdate);
 
         commands.addCommands(AllSlashCommands.getbotversion.getBaseCommandData());
@@ -98,6 +91,43 @@ public class MainEntrypoint extends ListenerAdapter {
         commands.addCommands(AllSlashCommands.leaderboardguildxp.getBaseCommandData()
                 .addOption(STRING, "guild_prefix", "e", true));
         AllSlashCommands.leaderboardguildxp.setAction(GuildCommands::showGuildXpLeaderboard);
+
+        commands.addCommands(AllSlashCommands.online.getBaseCommandData()
+                .addOption(STRING, "guild_prefix", "e", true));
+        AllSlashCommands.online.setAction(GuildCommands::showOnlineMembers);
+
+        commands.addCommands(AllSlashCommands.verify.getBaseCommandData()
+                .addOption(STRING, "username", "e", true));
+        AllSlashCommands.verify.setAction(VerificationCommands::verify);
+
+        commands.addCommands(AllSlashCommands.listcommands.getBaseCommandData());
+        AllSlashCommands.listcommands.setAction(HelpCommands::listCommands);
+
+        commands.addCommands(AllSlashCommands.setrolerequirement.getBaseCommandData().addOptions(
+                new OptionData(OptionType.STRING, "command", "what command to add the requirement too", true)
+                        .addChoices(
+                                Arrays.stream(AllSlashCommands.values())
+                                        .map(e -> new Command.Choice(e.name(), e.name()))
+                                        .toArray(Command.Choice[]::new)
+                        ),
+                new OptionData(OptionType.STRING, "required_role", "the required role", true)
+                        .addChoices(
+                                Arrays.stream(Config.Settings.values())
+                                        .map(e -> new Command.Choice(e.name(), e.name()))
+                                        .toArray(Command.Choice[]::new)
+                        )
+        ));
+        AllSlashCommands.setrolerequirement.setAction(RoleRequirementCommands::setRoleRequirement);
+
+        commands.addCommands(AllSlashCommands.removerolerequirement.getBaseCommandData().addOptions(
+                new OptionData(OptionType.STRING, "command", "what command to remove the requirement from", true)
+                        .addChoices(
+                                Arrays.stream(AllSlashCommands.values())
+                                        .map(e -> new Command.Choice(e.name(), e.name()))
+                                        .toArray(Command.Choice[]::new)
+                        )
+        ));
+        AllSlashCommands.removerolerequirement.setAction(RoleRequirementCommands::removeRoleRequirement);
 
         commands.addCommands(
                 AllSlashCommands.adddemotionexeption.getBaseCommandData()
@@ -141,13 +171,14 @@ public class MainEntrypoint extends ListenerAdapter {
                 )
                 .addOption(INTEGER, "value", "the value for the requirement 0 is false 1 is true", true)
                 .addOption(BOOLEAN, "required", "is this requirement always required", true));
-        AllSlashCommands.addpromotionrequirement.setRequiredRole(ConfigManager.getSetting(Config.Settings.ChiefRole));
         AllSlashCommands.addpromotionrequirement.setAction(PromotionCommands::addRequirement);
 
         commands.addCommands(AllSlashCommands.getpromotionrequirements.getBaseCommandData());
         AllSlashCommands.getpromotionrequirements.setAction(PromotionCommands::getRequirements);
 
-        commands.addCommands(AllSlashCommands.checkpromotionprogress.getBaseCommandData());
+        commands.addCommands(AllSlashCommands.checkpromotionprogress.getBaseCommandData()
+                .addOption(STRING, "username", "e", true));
+        AllSlashCommands.checkpromotionprogress.setAction(PromotionCommands::checkPromotionProgress);
 
         commands.addCommands(AllSlashCommands.setpromotionoptionalrequirement.getBaseCommandData().addOptions(
                 new OptionData(OptionType.STRING, "rank", "what rank to set for", true)
@@ -158,7 +189,6 @@ public class MainEntrypoint extends ListenerAdapter {
                         ),
                 new OptionData(INTEGER, "value", "the number of required optional requirements", true)
         ));
-        AllSlashCommands.setpromotionoptionalrequirement.setRequiredRole(ConfigManager.getSetting(Config.Settings.ChiefRole));
         AllSlashCommands.setpromotionoptionalrequirement.setAction(PromotionCommands::setPromotionOptionalRequirement);
 
         commands.addCommands(AllSlashCommands.removepromotionrequirement.getBaseCommandData().addOptions(
@@ -176,7 +206,6 @@ public class MainEntrypoint extends ListenerAdapter {
                                 )
                 )
         );
-        AllSlashCommands.removepromotionrequirement.setRequiredRole(ConfigManager.getSetting(Config.Settings.ChiefRole));
         AllSlashCommands.removepromotionrequirement.setAction(PromotionCommands::removeRequirement);
 
 
@@ -195,6 +224,50 @@ public class MainEntrypoint extends ListenerAdapter {
 
     @Override
     public void onButtonInteraction(ButtonInteractionEvent event) {
+        String fullId = event.getComponentId();
+
+        if (fullId.startsWith("verify_confirm_") || fullId.startsWith("verify_deny_")) {
+            // Remove prefix
+            String payload = fullId.substring(fullId.indexOf('_', 7) + 1);
+            // Explanation: indexOf('_', 7) finds the underscore after "verify_" prefix,
+            // then +1 to skip it and get the payload after that.
+
+            // Payload format: "userId|username"
+            String[] parts = payload.split("\\|", 2);
+            if (parts.length < 2) {
+                event.reply("Invalid button data").setEphemeral(true).queue();
+                return;
+            }
+            String userId = parts[0];
+            String username = parts[1];
+
+            event.getGuild().retrieveMemberById(userId).queue(
+                    member -> {
+                        if (member == null) {
+                            event.reply("User not found." + userId + username).setEphemeral(true).queue();
+                            return;
+                        }
+
+                        if (fullId.startsWith("verify_confirm_")) {
+                            event.reply("Verification approved!").setEphemeral(true).queue();
+                            VerificationCommands.completeVerification(member, username, event.getGuild());
+                        } else {
+                            member.getUser().openPrivateChannel().queue(pc ->
+                                    pc.sendMessage("Your verification request was denied.").queue()
+                            );
+                            event.reply("Verification denied.").setEphemeral(true).queue();
+                        }
+                    },
+                    failure -> {
+                        // member not found or error
+                        event.reply("User not found: " + userId + " " + username).setEphemeral(true).queue();
+                    }
+            );
+            return;
+        }
+
+
+
         String[] id = event.getComponentId().split(":"); // this is the custom id we specified in our button
         String authorId = id[0];
         String type = id[1];

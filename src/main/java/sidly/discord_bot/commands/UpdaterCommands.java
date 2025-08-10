@@ -32,7 +32,7 @@ public class UpdaterCommands {
     private static String latestDownloadUrl = "";
 
     public static void checkForUpdate(SlashCommandInteractionEvent event) {
-        event.deferReply(true).queue(hook -> { // true = ephemeral
+        event.deferReply(true).queue(hook -> {
             try {
                 String currentVersion = getCurrentVersion();
                 String latestRelease = checkForNewRelease();

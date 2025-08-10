@@ -10,6 +10,8 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class GuildCommands {
 
@@ -36,7 +38,6 @@ public class GuildCommands {
         // Sort by contributionRank ascending
         allMembers.sort(Comparator.comparingInt(a -> a.contributionRank));
 
-        // Build a leaderboard string (limit length if needed)
         StringBuilder leaderboard = new StringBuilder();
         for (GuildInfo.MemberInfo member : allMembers) {
             leaderboard
@@ -62,4 +63,40 @@ public class GuildCommands {
         event.replyEmbeds(embed.build()).queue();
     }
 
+    public static void showOnlineMembers(SlashCommandInteractionEvent event) {
+        GuildInfo guild = ApiUtils.getGuildInfo(event.getOption("guild_prefix").getAsString().toUpperCase());
+        GuildInfo.Members members = guild.members;
+
+        if (members == null) {
+            event.reply("Could not find guild members.").setEphemeral(true).queue();
+            return;
+        }
+
+        EmbedBuilder embed = new EmbedBuilder()
+                .setTitle("Online Guild Members")
+                .setColor(Color.CYAN)
+                .setFooter("Last updated")
+                .setTimestamp(Instant.ofEpochMilli(guild.lastUpdated));
+
+
+
+        embed.addField("Owner", membersList(members.owner), false);
+        embed.addField("Chief", membersList(members.chief), false);
+        embed.addField("Strategist", membersList(members.strategist), false);
+        embed.addField("Captain", membersList(members.captain), false);
+        embed.addField("Recruiter", membersList(members.recruiter), false);
+        embed.addField("Recruit", membersList(members.recruit), false);
+
+        event.replyEmbeds(embed.build()).queue();
+    }
+
+    // Helper function to build a string of online members for a rank
+    static String membersList(Map<String, GuildInfo.MemberInfo> map) {
+        if (map == null || map.isEmpty()) return "_None_";
+        return map.values().stream()
+                .filter(member -> member.online)
+                .map(member -> member.username)
+                .sorted()
+                .collect(Collectors.joining("\n"));
+    }
 }

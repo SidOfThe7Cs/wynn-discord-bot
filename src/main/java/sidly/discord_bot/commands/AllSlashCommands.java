@@ -5,6 +5,8 @@ import net.dv8tion.jda.api.interactions.IntegrationType;
 import net.dv8tion.jda.api.interactions.InteractionContextType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
+import sidly.discord_bot.Config;
+import sidly.discord_bot.ConfigManager;
 import sidly.discord_bot.Utils;
 
 import java.util.function.Consumer;
@@ -17,6 +19,11 @@ public enum AllSlashCommands {
     checkforupdates("check if the bot has any updates"),
     getbotversion("gets the current bot version"),
     leaderboardguildxp("lists guild members and there contributed xp"),
+    online("list online guild members"),
+    verify("verify your minecraft account"),
+    listcommands("list all bot commands"),
+    setrolerequirement("add a role requirement to run a command"),
+    removerolerequirement("remove a role requirement to run a command"),
     adddemotionexeption("adds a player to be excluded from demotion checks, default length is forever"),
     addinactivityexeption("adds a custom inactivity threshold for a player, default length is forever"),
     addpromotionexeption("adds a player top be excluded from promotion checks, default length is forever"),
@@ -29,10 +36,12 @@ public enum AllSlashCommands {
     setpromotionoptionalrequirement("set the required number of optional requirements that need to be met"),
     removepromotionrequirement("remove a requirement from the promotion check");
 
+    public Consumer<SlashCommandInteractionEvent> getAction() {
+        return action;
+    }
 
     private final String description;
     private Consumer<SlashCommandInteractionEvent> action = null;
-    private String requiredRole = "";
 
     AllSlashCommands(String description) {
         this.description = description;
@@ -46,10 +55,6 @@ public enum AllSlashCommands {
         this.action = action;
     }
 
-    public void setRequiredRole(String id){
-        this.requiredRole = id;
-    }
-
     public SlashCommandData getBaseCommandData(){
         SlashCommandData data = Commands.slash(this.name(), this.getDescription())
                 .setContexts(InteractionContextType.GUILD)
@@ -57,11 +62,25 @@ public enum AllSlashCommands {
         return data;
     }
 
-    public void run(SlashCommandInteractionEvent event){
-        if (requiredRole.isEmpty()) {
+    public void run(SlashCommandInteractionEvent event) {
+        Config.Settings requiredRole = getRequiredRole();
+        if (requiredRole == null) {
             action.accept(event);
-        }else if (Utils.hasAtLeastRank(event.getMember(), requiredRole)) {
+        } else if (Utils.hasRole(event.getMember(), ConfigManager.getSetting(requiredRole))) {
             action.accept(event);
+        } else if (requiredRole == Config.Settings.RecruitRole ||
+                requiredRole == Config.Settings.RecruiterRole ||
+                requiredRole == Config.Settings.CaptainRole ||
+                requiredRole == Config.Settings.StrategistRole ||
+                requiredRole == Config.Settings.ChiefRole) {
+            if (Utils.hasAtLeastRank(event.getMember(), ConfigManager.getSetting(requiredRole))) {
+                action.accept(event);
+            }
         } else event.reply("❌ You don't have permission to use this command.").setEphemeral(true).queue();
+
+    }
+
+    public Config.Settings getRequiredRole() {
+         return ConfigManager.getConfigInstance().roleRequirements.get(this);
     }
 }

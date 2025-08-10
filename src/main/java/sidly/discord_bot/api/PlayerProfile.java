@@ -1,5 +1,7 @@
 package sidly.discord_bot.api;
 
+import sidly.discord_bot.Utils;
+
 import java.util.List;
 import java.util.Map;
 
@@ -73,6 +75,7 @@ public class PlayerProfile {
         public int xp;
         public int xpPercent;
         public int totalLevel;
+        public int contentCompletion;
         public int wars;
         public double playtime;
         public int mobsKilled;
@@ -106,5 +109,33 @@ public class PlayerProfile {
 
     public void update(){
         lastUpdated = System.currentTimeMillis();
+    }
+
+    public int getHighestLevel(){
+        int highestLevel = 0;
+        for (Map.Entry<String, CharacterData> entry : characters.entrySet()){
+            int level = entry.getValue().level;
+            if (level > highestLevel) highestLevel = level;
+        }
+        return highestLevel;
+    }
+    public int getHighestContentCompletion(){
+        int highestContentCompletion = 0;
+        for (Map.Entry<String, CharacterData> entry : characters.entrySet()){
+            int comp = entry.getValue().contentCompletion;
+            if (comp > highestContentCompletion) highestContentCompletion = comp;
+        }
+        return highestContentCompletion;
+    }
+    public Utils.RankList getRank(){
+        return switch (this.guild.rank) {
+            case "OWNER" -> Utils.RankList.Owner;
+            case "CHIEF" -> Utils.RankList.Chief;
+            case "STRATEGIST" -> Utils.RankList.Strategist;
+            case "CAPTAIN" -> Utils.RankList.Captain;
+            case "RECRUITER" -> Utils.RankList.Recruiter;
+            case "RECRUIT" -> Utils.RankList.Recruit;
+            default -> throw new IllegalStateException("Unexpected value: " + this.guild.rank);
+        };
     }
 }

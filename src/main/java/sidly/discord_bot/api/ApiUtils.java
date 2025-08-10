@@ -29,7 +29,6 @@ public class ApiUtils {
             Type type = new TypeToken<PlayerProfile>(){}.getType();
             PlayerProfile apiData = gson.fromJson(response.body(), type);
             apiData.update();
-            ConfigManager.getDatabaseInstance().allPlayers.put(apiData.username, apiData);
 
             if (apiData == null) {
                 System.err.println("player profile was null");
@@ -63,7 +62,6 @@ public class ApiUtils {
             Type type = new TypeToken<GuildInfo>(){}.getType();
             GuildInfo apiData = gson.fromJson(response.body(), type);
             apiData.update();
-            ConfigManager.getDatabaseInstance().allGuilds.put(apiData.prefix, apiData);
 
             return apiData;
 

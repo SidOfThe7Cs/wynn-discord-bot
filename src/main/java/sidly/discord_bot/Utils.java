@@ -3,6 +3,8 @@ package sidly.discord_bot;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 public class Utils {
@@ -13,8 +15,8 @@ public class Utils {
         return "<t:" + epoch + ":" + type + ">";
     }
 
-    public static boolean hasRole(Member user, String userId){
-        return user != null && user.getRoles().stream().anyMatch(role -> role.getId().equals(userId));
+    public static boolean hasRole(Member user, String roleId){
+        return user != null && user.getRoles().stream().anyMatch(role -> role.getId().equals(roleId));
     }
 
     public static boolean hasAtLeastRank(Member user, String roleId) {
@@ -49,5 +51,19 @@ public class Utils {
         Captain,
         Recruiter,
         Recruit
+    }
+
+    public static long daysSinceIso(String isoTimestamp) {
+        try {
+            // Parse the ISO-8601 timestamp string into an Instant
+            Instant past = Instant.parse(isoTimestamp);
+            Instant now = Instant.ofEpochMilli(System.currentTimeMillis());
+
+            // Calculate days between past and now
+            return ChronoUnit.DAYS.between(past, now);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return -1; // Return -1 if parsing failed
+        }
     }
 }

@@ -11,7 +11,7 @@ public class Requirement {
         this.required = required;
     }
 
-    public Object getValue() {
+    public Integer getValue() {
         return value;
     }
 

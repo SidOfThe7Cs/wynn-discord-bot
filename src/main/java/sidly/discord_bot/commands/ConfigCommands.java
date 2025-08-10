@@ -20,6 +20,7 @@ public class ConfigCommands {
         }
 
         ConfigManager.getConfigInstance().settings.put(option, newValue);
+        ConfigManager.save();
 
         event.reply(event.getUser().getName() + " has changed the " + setting + " to " + newValue).setEphemeral(false).queue();
     }

@@ -2,13 +2,15 @@ package sidly.discord_bot.commands.demotion_promotion;
 
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import sidly.discord_bot.Config;
 import sidly.discord_bot.ConfigManager;
 import sidly.discord_bot.Utils;
+import sidly.discord_bot.api.ApiUtils;
+import sidly.discord_bot.api.GuildInfo;
+import sidly.discord_bot.api.PlayerProfile;
 
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 
 public class PromotionCommands {
@@ -23,6 +25,7 @@ public class PromotionCommands {
 
         RequirementList reqList = ConfigManager.getDatabaseInstance().promotionRequirements.computeIfAbsent(rank, k -> new RequirementList());
         reqList.addRequirement(requirement);
+        ConfigManager.save();
 
 
         event.reply("added " + requirement + " to " + rank.name()).setEphemeral(true).queue();
@@ -84,6 +87,7 @@ public class PromotionCommands {
             }
             reply = removedAny ? "Removed all matching requirements." : "Requirement not found";
         }
+        ConfigManager.save();
 
         event.reply(reply).setEphemeral(true).queue();
     }
@@ -92,7 +96,123 @@ public class PromotionCommands {
         Utils.RankList rank = Utils.RankList.valueOf(event.getOption("rank").getAsString());
         int value = event.getOption("value").getAsInt();
         ConfigManager.getDatabaseInstance().promotionRequirements.get(rank).setOptionalQuantityRequired(value);
+        ConfigManager.save();
 
         event.reply("set " + rank + " to " + value).setEphemeral(true).queue();
+    }
+
+    public static void checkPromotionProgress(SlashCommandInteractionEvent event) {
+        String username = event.getOption("username").getAsString();
+
+        PlayerProfile playerData = ApiUtils.getPlayerData(username);
+        GuildInfo guildInfo = ApiUtils.getGuildInfo(ConfigManager.getSetting(Config.Settings.YourGuildPrefix));
+        if (playerData == null) return;
+
+        EmbedBuilder embed = new EmbedBuilder()
+                .setTitle("Promotion Progress for " + username)
+                .setColor(Color.CYAN);
+
+
+        String uuid = playerData.uuid;
+        Utils.RankList playerRank = guildInfo.members.getRankOfMember(uuid);
+        if (playerRank == Utils.RankList.Owner || playerRank == Utils.RankList.Chief) {
+            event.reply(username + " cant be promoted").setEphemeral(true).queue();
+            return;
+        }
+
+        GuildInfo.MemberInfo guildMemberInfo = guildInfo.members.getMemberInfo(uuid);
+
+        // And get promotion requirements map
+        Map<Utils.RankList, RequirementList> promotionRequirements = ConfigManager.getDatabaseInstance().promotionRequirements;
+        RequirementList requirementList = null;
+        int currentIndex = playerRank.ordinal();
+        if (currentIndex > 0) { // Make sure there is a rank above
+            Utils.RankList rankAbove = Utils.RankList.values()[currentIndex - 1];
+            requirementList = promotionRequirements.get(rankAbove);
+        }
+
+
+        // Loop through all RequirementTypes to check progress:
+
+        StringBuilder sb = new StringBuilder();
+        int requiredOptionalRequirements = requirementList.getOptionalQuantityRequired();
+        int optionalCounter = 0;
+        for (Requirement req : requirementList.getRequirements()) {
+            Integer value = req.getValue();
+            switch (req.getType()) {
+                case XPContributed:
+                    long playerXPContribution = guildMemberInfo.contributed;
+                    if (playerXPContribution >= value) {
+                        sb.append("✅ ");
+                        if (!req.isRequired()){
+                            optionalCounter++;
+                        }
+                    } else sb.append("❌");
+                    sb.append(" XPContributed: " + playerXPContribution + " / " + value + '\n');
+                    break;
+                case TopXpContributor:
+                    int playerXPContributionRank = guildMemberInfo.contributionRank;
+                    if (playerXPContributionRank <= value) {
+                        sb.append("✅ ");
+                        if (!req.isRequired()){
+                            optionalCounter++;
+                        }
+                    } else sb.append("❌");
+                    sb.append(" TopXpContributor: " + playerXPContributionRank + " / " + value + '\n');
+                    break;
+                case Level:
+                    int playerLevel = playerData.getHighestLevel();
+                    if (playerLevel >= value) {
+                        sb.append("✅ ");
+                        if (!req.isRequired()){
+                            optionalCounter++;
+                        }
+                    } else sb.append("❌");
+                    sb.append(" Level: " + playerLevel + " / " + value + '\n');
+                    break;
+                case DaysInGuild:
+                    long daysInGuild = Utils.daysSinceIso(guildMemberInfo.joined);
+                    if (daysInGuild >= value) {
+                        sb.append("✅ ");
+                        if (!req.isRequired()){
+                            optionalCounter++;
+                        }
+                    } else sb.append("❌");
+                    sb.append(" DaysInGuild: " + daysInGuild + " / " + value + '\n');
+                    break;
+                case GuildWars:
+                    int guildWars = playerData.globalData.wars;
+                    if (guildWars >= value) {
+                        sb.append("✅ ");
+                        if (!req.isRequired()){
+                            optionalCounter++;
+                        }
+                    } else sb.append("❌");
+                    sb.append(" GuildWars: " + guildWars + " / " + value + '\n');
+                    break;
+                case WarBuild:
+                    sb.append(" WarBuild: " + "not implemented yet" + " / " + value + '\n');
+                    break;
+                case WeeklyPlaytime:
+                    sb.append(" WeeklyPlaytime: " + "not implemented yet" + " / " + value + '\n');
+                    break;
+                case Eco:
+                    sb.append(" Eco: " + "not implemented yet" + " / " + value + '\n');
+                    break;
+                case Verified:
+                    sb.append(" Verified: " + "not implemented yet" + " / " + value + '\n');
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        if (optionalCounter >= requiredOptionalRequirements){
+            sb.append("✅ ");
+        }else sb.append("❌");
+        sb.append(optionalCounter + " of " + requiredOptionalRequirements + " optional requirements are met" + '\n');
+
+        embed.setDescription(sb.toString());
+        event.replyEmbeds(embed.build()).queue();
     }
 }

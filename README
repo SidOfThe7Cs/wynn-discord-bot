@@ -9,3 +9,11 @@ copy the id of your owner role and paste into into the config file as well
 go to the intall page on the dev app website and select guild install, add the applications.commands and the bot scopes then save and go to the install link url and add the bot to your server
 double click the jar again and your bot should be online
 relaunch your discord client to update the stores slash commands
+assign all roles with /editconfigoption and copy the role id for the new_value (might need developer mode enabled idr)
+run /listcommands and change any role reqs you want to with /setrolerequirement
+
+required permissions:
+MESSAGE_EMBED_LINKS
+manage nicknames
+send messages
+MANAGE_ROLES
