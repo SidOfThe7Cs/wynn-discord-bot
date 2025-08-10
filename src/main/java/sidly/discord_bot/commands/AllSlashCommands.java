@@ -15,6 +15,7 @@ public enum AllSlashCommands {
     shutdown("shuts down the bot"),
     reloadconfig("reloads the bots config from the file"),
     editconfigoption("edit a config option"),
+    editconfiglvlroleoption("set the roles for lvls"),
     getconfigoptions("shows config options"),
     checkforupdates("check if the bot has any updates"),
     getbotversion("gets the current bot version"),
@@ -24,6 +25,8 @@ public enum AllSlashCommands {
     listcommands("list all bot commands"),
     setrolerequirement("add a role requirement to run a command"),
     removerolerequirement("remove a role requirement to run a command"),
+    removeverification("remove a verification from a user"),
+    updateplayerroles("update the roles of a player"),
     adddemotionexeption("adds a player to be excluded from demotion checks, default length is forever"),
     addinactivityexeption("adds a custom inactivity threshold for a player, default length is forever"),
     addpromotionexeption("adds a player top be excluded from promotion checks, default length is forever"),
@@ -75,9 +78,8 @@ public enum AllSlashCommands {
                 requiredRole == Config.Settings.ChiefRole) {
             if (Utils.hasAtLeastRank(event.getMember(), ConfigManager.getSetting(requiredRole))) {
                 action.accept(event);
-            }
+            } else event.reply("❌ You don't have permission to use this command.").setEphemeral(true).queue();
         } else event.reply("❌ You don't have permission to use this command.").setEphemeral(true).queue();
-
     }
 
     public Config.Settings getRequiredRole() {

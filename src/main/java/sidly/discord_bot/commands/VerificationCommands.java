@@ -7,7 +7,6 @@ import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.UserSnowflake;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
-import net.dv8tion.jda.api.interactions.InteractionHook;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import sidly.discord_bot.Config;
 import sidly.discord_bot.ConfigManager;
@@ -17,29 +16,35 @@ import sidly.discord_bot.api.GuildInfo;
 import sidly.discord_bot.api.PlayerProfile;
 
 import java.awt.Color;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class VerificationCommands {
+    public final static int MAX_CONTENT_COMPLETION = 1128;
+
     public static void verify(SlashCommandInteractionEvent event) {
         String username = event.getOption("username").getAsString();
 
-        // only allow one discord account per mc account
-        if (ConfigManager.getDatabaseInstance().verifiedMembers.containsKey(username)) {
-            event.reply("someone is already verified as that user").setEphemeral(true).queue();
-            return;
-        }
-
-        PlayerProfile playerData = ApiUtils.getPlayerData(username);
-        if (playerData == null){
-            event.reply("playerData was null").setEphemeral(true).queue();
-            return;
-        }
-        GuildInfo guildInfo = ApiUtils.getGuildInfo(playerData.guild.prefix);
         Member member = event.getMember();
         if (member == null){
             event.reply("member was null").setEphemeral(true).queue();
             return;
         }
+        // only allow one verification per discord account
+        if (ConfigManager.getDatabaseInstance().verifiedMembersByDiscordId.containsKey(member.getId())) {
+            event.reply("you are already verified please ask a moderator to remove it if you need to change it").setEphemeral(true).queue();
+            return;
+        }
+        // only allow one discord account per mc account
+        if (ConfigManager.getDatabaseInstance().verifiedMembersByIgn.containsKey(username)) {
+            event.reply("someone is already verified as that user").setEphemeral(true).queue();
+            return;
+        }
+        PlayerProfile playerData = ApiUtils.getPlayerData(username);
+        if (playerData == null){
+            event.reply("playerData was null").setEphemeral(true).queue();
+            return;
+        }
+
+
         Utils.RankList rankOfMember = playerData.getRank();
         boolean requireConfirmation = switch (rankOfMember) {
             case Utils.RankList.Owner -> true;
@@ -49,14 +54,12 @@ public class VerificationCommands {
             default -> false;
         };
 
-        StringBuilder sb = new StringBuilder();
         EmbedBuilder embed = new EmbedBuilder();
         embed.setColor(Color.BLUE);
-        embed.setTitle("verification");
+        embed.setTitle("Verification");
 
         if (requireConfirmation) {
-            embed.setDescription("waiting for a human to confirm you are who you say you are");
-            event.replyEmbeds(embed.build()).setEphemeral(true).queue();
+            embed.setDescription("Waiting for a moderator to confirm your verification request.");
 
             // Send to mod channel
             TextChannel modChannel = event.getGuild().getTextChannelById(
@@ -79,118 +82,219 @@ public class VerificationCommands {
                         .queue();
             }
         } else {
-            embed.setDescription("done");
-            event.replyEmbeds(embed.build()).setEphemeral(true).queue();
+            embed.setDescription("Verification Complete");
             completeVerification(member, username, member.getGuild());
         }
+
+        if (event.getGuild().getOwnerIdLong() == member.getIdLong()){
+            embed.addField("","You are the server owner so I cant change your nickname please make sure it matches your ign",false);
+        }
+        event.replyEmbeds(embed.build()).setEphemeral(true).queue();
     }
 
     public static void completeVerification(Member member, String username, Guild guild) {
         Role verifiedRole = guild.getRoleById(ConfigManager.getSetting(Config.Settings.VerifiedRole));
         String prefix = ConfigManager.getSetting(Config.Settings.YourGuildPrefix);
 
-        // add the verified role
         if (verifiedRole != null) {
-            ConfigManager.getDatabaseInstance().verifiedMembers.put(username, member);
-            guild.addRoleToMember(member, verifiedRole).queue();
+            // Put in the maps first
+            ConfigManager.getDatabaseInstance().verifiedMembersByIgn.put(username, member.getId());
+            ConfigManager.getDatabaseInstance().verifiedMembersByDiscordId.put(member.getId(), username);
+            ConfigManager.save();
+
+            guild.addRoleToMember(member, verifiedRole).queue(success -> {
+
+                // Don't change nickname if they are owner
+                if (guild.getOwnerIdLong() == member.getIdLong()) {
+                    guild.retrieveMember(UserSnowflake.fromId(member.getId())).queue(VerificationCommands::updatePlayer);
+                    return;
+                }
+
+                // if they are in your guild set there nickname
+                if (prefix.equals(ConfigManager.getSetting(Config.Settings.YourGuildPrefix))) {
+                    guild.modifyNickname(member, username).queue(
+                            nickSuccess -> guild.retrieveMember(UserSnowflake.fromId(member.getId())).queue(VerificationCommands::updatePlayer)
+                    );
+                } else { // if not set nickname to name + prefix
+                    guild.modifyNickname(member, username + "[" + prefix + "]").queue(
+                            nickSuccess -> guild.retrieveMember(UserSnowflake.fromId(member.getId())).queue(VerificationCommands::updatePlayer)
+                    );
+                }
+            });
         }
-
-        if (prefix.equals(ConfigManager.getSetting(Config.Settings.YourGuildPrefix))) {
-
-            // set there nick to their ign
-            guild.modifyNickname(member, username).queue(
-                    success -> {
-                        guild.retrieveMember(UserSnowflake.fromId(member.getId())).queue(VerificationCommands::updatePlayer);
-                    });
-
-        } else {
-            // there a member of a different guild
-
-            // set there nick to their ign + guild prefix
-            guild.modifyNickname(member, username + "[" + prefix + "]").queue(
-                    success -> {
-                        guild.retrieveMember(UserSnowflake.fromId(member.getId())).queue(VerificationCommands::updatePlayer);
-                    });
-        }
-
     }
+
 
     public static void updatePlayer(Member member){
-        String nickname = member.getNickname();
-        if (nickname == null || nickname.endsWith("]") || !Utils.hasRole(member, ConfigManager.getSetting(Config.Settings.VerifiedRole))){
-            // not in guild
-            return; // return without ever making an api request
+        //check if there verified
+        String verifiedRoleId = ConfigManager.getSetting(Config.Settings.VerifiedRole);
+        if (!Utils.hasRole(member, verifiedRoleId)){
+            System.out.println("user is not verified");
+            return;
         }
+
+        String nickname = member.getEffectiveName().split("\\[")[0];
         PlayerProfile playerData = ApiUtils.getPlayerData(nickname);
         if (playerData == null) return;
-        GuildInfo guildInfo = ApiUtils.getGuildInfo(playerData.guild.prefix);
-        updatePlayer(member, playerData, guildInfo);
-    }
-    public static void updatePlayer(Member member, PlayerProfile playerData, GuildInfo guildInfo){
-        StringBuilder sb = new StringBuilder();
 
-        // add there in game guild rank
+        StringBuilder sb = new StringBuilder();
+        sb.append("**").append(member.getAsMention()).append("**\n");
+        int changedCounter = 0;
+
+        // add their in-game guild rank
         Utils.RankList rankOfMember = playerData.getRank();
-        Role rankRole = switch (rankOfMember) {
-            case Utils.RankList.Owner -> member.getGuild().getRoleById(ConfigManager.getSetting(Config.Settings.OwnerRole));
-            case Utils.RankList.Chief -> member.getGuild().getRoleById(ConfigManager.getSetting(Config.Settings.ChiefRole));
-            case Utils.RankList.Strategist -> member.getGuild().getRoleById(ConfigManager.getSetting(Config.Settings.StrategistRole));
-            case Utils.RankList.Captain -> member.getGuild().getRoleById(ConfigManager.getSetting(Config.Settings.CaptainRole));
-            case Utils.RankList.Recruiter -> member.getGuild().getRoleById(ConfigManager.getSetting(Config.Settings.RecruiterRole));
-            case Utils.RankList.Recruit -> member.getGuild().getRoleById(ConfigManager.getSetting(Config.Settings.RecruitRole));
-        };
-        if (rankRole != null) {
-            if (!Utils.hasRole(member, rankRole.getId())) {
-                member.getGuild().addRoleToMember(member, rankRole).queue();
-                sb.append("added the rank role ").append(rankRole.getAsMention()).append('\n');
+        String rankRoleId = null;
+        switch (rankOfMember) {
+            case Owner -> rankRoleId = ConfigManager.getSetting(Config.Settings.OwnerRole);
+            case Chief -> rankRoleId = ConfigManager.getSetting(Config.Settings.ChiefRole);
+            case Strategist -> rankRoleId = ConfigManager.getSetting(Config.Settings.StrategistRole);
+            case Captain -> rankRoleId = ConfigManager.getSetting(Config.Settings.CaptainRole);
+            case Recruiter -> rankRoleId = ConfigManager.getSetting(Config.Settings.RecruiterRole);
+            case Recruit -> rankRoleId = ConfigManager.getSetting(Config.Settings.RecruitRole);
+        }
+        if (rankRoleId == null || rankRoleId.isEmpty()) {
+            sb.append("Failed to get role ID for rank ").append(rankOfMember).append("\n");
+        } else {
+            Role rankRole = member.getGuild().getRoleById(rankRoleId);
+            if (rankRole != null) {
+                if (!Utils.hasRole(member, rankRole.getId())) {
+                    member.getGuild().addRoleToMember(member, rankRole).queue();
+                    changedCounter++;
+                    sb.append("Added the rank role ").append(rankRole.getAsMention()).append('\n');
+                }
+            } else {
+                sb.append("Role not found in guild for ID: ").append(rankRoleId).append('\n');
             }
         }
+
 
         // add their support rank
-        Role supportRank = switch (playerData.supportRank) {
-            case "vip" -> member.getGuild().getRoleById(ConfigManager.getSetting(Config.Settings.VipRole));
-            case "vipplus" -> member.getGuild().getRoleById(ConfigManager.getSetting(Config.Settings.VipPlusRole));
-            case "hero" -> member.getGuild().getRoleById(ConfigManager.getSetting(Config.Settings.HeroRole));
-            case "heroplus" -> member.getGuild().getRoleById(ConfigManager.getSetting(Config.Settings.HeroPlusRole));
-            case "champion" -> member.getGuild().getRoleById(ConfigManager.getSetting(Config.Settings.ChampionRole));
+        String supportRoleId = switch (playerData.supportRank.toLowerCase()) {
+            case "vip" -> ConfigManager.getSetting(Config.Settings.VipRole);
+            case "vipplus" -> ConfigManager.getSetting(Config.Settings.VipPlusRole);
+            case "hero" -> ConfigManager.getSetting(Config.Settings.HeroRole);
+            case "heroplus" -> ConfigManager.getSetting(Config.Settings.HeroPlusRole);
+            case "champion" -> ConfigManager.getSetting(Config.Settings.ChampionRole);
             default -> null;
         };
-        if (supportRank != null) {
-            if (!Utils.hasRole(member, supportRank.getId())) {
-                member.getGuild().addRoleToMember(member, supportRank).queue();
-                sb.append("added the support rank role ").append(supportRank.getAsMention()).append('\n');
+        if (supportRoleId == null || supportRoleId.isEmpty()) {
+            sb.append("No support rank role found for support rank '").append(playerData.supportRank).append("'.\n");
+        } else {
+            Role supportRank = member.getGuild().getRoleById(supportRoleId);
+            if (supportRank != null) {
+                if (!Utils.hasRole(member, supportRank.getId())) {
+                    member.getGuild().addRoleToMember(member, supportRank).queue();
+                    changedCounter++;
+                    sb.append("Added the support rank role ").append(supportRank.getAsMention()).append('\n');
+                }
+            } else {
+                sb.append("Support rank role not found in guild for ID: ").append(supportRoleId).append('\n');
             }
         }
+
 
         // add the member role
-        Role memberRole = member.getGuild().getRoleById(ConfigManager.getSetting(Config.Settings.MemberRole));
-        if (memberRole != null) {
-            if (!Utils.hasRole(member, memberRole.getId())) {
-                member.getGuild().addRoleToMember(member, memberRole).queue();
-                sb.append("added the member role ").append(memberRole.getAsMention()).append('\n');
+        String memberRoleId = ConfigManager.getSetting(Config.Settings.MemberRole);
+        if (memberRoleId == null || memberRoleId.isEmpty()) {
+            sb.append("No member role ID configured.\n");
+        } else {
+            Role memberRole = member.getGuild().getRoleById(memberRoleId);
+            if (memberRole != null) {
+                if (!Utils.hasRole(member, memberRole.getId())) {
+                    member.getGuild().addRoleToMember(member, memberRole).queue();
+                    changedCounter++;
+                    sb.append("Added the member role ").append(memberRole.getAsMention()).append('\n');
+                }
+            } else {
+                sb.append("Member role not found in guild for ID: ").append(memberRoleId).append('\n');
             }
         }
 
+
         // check for 100% content comp
-        Role OneHundredPercentContentCompletionRole = member.getGuild().getRoleById(ConfigManager.getSetting(Config.Settings.OneHundredPercentContentCompletionRole));
-        if (playerData.getHighestContentCompletion() >= 1128 && OneHundredPercentContentCompletionRole != null) {
-            if (!Utils.hasRole(member, OneHundredPercentContentCompletionRole.getId())) {
-                member.getGuild().addRoleToMember(member, OneHundredPercentContentCompletionRole).queue();
-                sb.append("added the 100% completion role ").append(OneHundredPercentContentCompletionRole.getAsMention()).append('\n');
+        String contentCompletionRoleId = ConfigManager.getSetting(Config.Settings.OneHundredPercentContentCompletionRole);
+        if (contentCompletionRoleId == null || contentCompletionRoleId.isEmpty()) {
+            sb.append("No 100% completion role ID configured.\n");
+        } else {
+            Role OneHundredPercentContentCompletionRole = member.getGuild().getRoleById(contentCompletionRoleId);
+            if (OneHundredPercentContentCompletionRole != null) {
+                if (playerData.getHighestContentCompletion() >= MAX_CONTENT_COMPLETION) {
+                    if (!Utils.hasRole(member, OneHundredPercentContentCompletionRole.getId())) {
+                        member.getGuild().addRoleToMember(member, OneHundredPercentContentCompletionRole).queue();
+                        changedCounter++;
+                        sb.append("Added the 100% completion role ").append(OneHundredPercentContentCompletionRole.getAsMention()).append('\n');
+                    }
+                }
+            } else {
+                sb.append("100% completion role not found in guild for ID: ").append(contentCompletionRoleId).append('\n');
             }
         }
+
+
+        // add there highest lvl role
+        int highestLvl = playerData.getHighestLevel();
+        Config.LvlRoles matchedRole = Config.LvlRoles.Lvl1Role; // default
+        if (highestLvl >= 106) {
+            matchedRole = Config.LvlRoles.Lvl106Role;
+        } else {
+            // Round UP to nearest multiple of 5 (minimum 1)
+            int roundedLvl = (highestLvl <= 1) ? 1 : ((highestLvl + 4) / 5) * 5;
+            // Build enum name dynamically, e.g., "Lvl95Role"
+            String enumName = "Lvl" + roundedLvl + "Role";
+            matchedRole = Config.LvlRoles.valueOf(enumName);
+        }
+        String lvlRoleId = ConfigManager.getConfigInstance().lvlRoles.get(matchedRole);
+        if (lvlRoleId == null || lvlRoleId.isEmpty()) {
+            sb.append("Failed to get role ID for ").append(matchedRole).append("\n");
+        } else {
+            Role lvlRole = member.getGuild().getRoleById(lvlRoleId);
+            if (lvlRole != null) {
+                if (!Utils.hasRole(member, lvlRole.getId())) {
+                    member.getGuild().addRoleToMember(member, lvlRole).queue();
+                    changedCounter++;
+                    sb.append("Added the lvlRole role ").append(lvlRole.getAsMention()).append('\n');
+                }
+            } else {
+                sb.append("Role not found in guild for ID: ").append(lvlRoleId).append('\n');
+            }
+        }
+
+
 
         // Send to mod channel
         TextChannel modChannel = member.getGuild().getTextChannelById(
                 ConfigManager.getSetting(Config.Settings.ModerationChannel)
         );
-        if (modChannel != null) {
+        if (modChannel != null && changedCounter > 0) {
             EmbedBuilder modEmbed = new EmbedBuilder()
                     .setColor(Color.ORANGE)
-                    .setTitle("Updates Roles For " + member.getUser().getAsMention())
+                    .setTitle("Updates Roles For")
                     .setDescription(sb.toString());
 
             modChannel.sendMessageEmbeds(modEmbed.build()).queue();
         }
     }
+
+    public static void removeVerification(SlashCommandInteractionEvent event) {
+        String userId = event.getOption("user_id").getAsString();
+        ConfigManager.getDatabaseInstance().removeVerification(userId);
+
+        // remove verified role
+        Role verifiedRole = event.getGuild().getRoleById(ConfigManager.getSetting(Config.Settings.VerifiedRole));
+        event.getGuild().removeRoleFromMember(UserSnowflake.fromId(userId), verifiedRole).queue();
+        ConfigManager.save();
+
+        event.reply("removed verification for " + userId).setEphemeral(true).queue();
+    }
+
+    public static void updateRoles(SlashCommandInteractionEvent event) {
+        String id = event.getOption("user_id").getAsString();
+        event.getGuild().retrieveMemberById(id).queue(member -> {
+            updatePlayer(member);
+            event.reply("updated " + member.getAsMention()).setEphemeral(true).queue();
+        }, failure -> {
+            event.reply("User not found in this guild!").setEphemeral(true).queue();
+        });
+    }
+
 }

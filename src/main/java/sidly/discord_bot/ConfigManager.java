@@ -44,10 +44,8 @@ public class ConfigManager {
     private static <T> void save(T object, File file) {
         try (FileWriter writer = new FileWriter(file)) {
             GSON.toJson(object, writer);
-            System.out.println("Saved successfully to " + file.getName());
         } catch (IOException e) {
             e.printStackTrace();
-            System.err.println("Failed to save to " + file.getName());
         }
     }
 
@@ -120,6 +118,7 @@ public class ConfigManager {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public static <T> void mergeMissingDefaults(T target, T defaults) {
         if (target == null || defaults == null) return;
 
@@ -128,12 +127,23 @@ public class ConfigManager {
             for (Field field : clazz.getDeclaredFields()) {
                 field.setAccessible(true);
                 try {
-                    Object currentValue = field.get(target);
+                    Object targetValue = field.get(target);
                     Object defaultValue = field.get(defaults);
 
-                    if (currentValue == null) {
+                    if (targetValue == null) {
+                        // If target is null, set it to default value
                         field.set(target, defaultValue);
+                    } else if (targetValue instanceof Map && defaultValue instanceof Map) {
+                        Map<Object, Object> targetMap = (Map<Object, Object>) targetValue;
+                        Map<Object, Object> defaultMap = (Map<Object, Object>) defaultValue;
+
+                        // Add any missing entries from defaults into target map
+                        for (Map.Entry<Object, Object> entry : defaultMap.entrySet()) {
+                            targetMap.putIfAbsent(entry.getKey(), entry.getValue());
+                        }
                     }
+                    // You can add similar logic for Collections if needed
+
                 } catch (IllegalAccessException e) {
                     e.printStackTrace();
                 }
@@ -141,6 +151,7 @@ public class ConfigManager {
             clazz = clazz.getSuperclass();
         }
     }
+
 
 
     public static void reloadConfig(SlashCommandInteractionEvent event) {

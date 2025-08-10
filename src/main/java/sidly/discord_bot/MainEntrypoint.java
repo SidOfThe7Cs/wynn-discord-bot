@@ -2,10 +2,10 @@ package sidly.discord_bot;
 
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
-import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
+import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
@@ -20,6 +20,8 @@ import sidly.discord_bot.commands.demotion_promotion.RequirementType;
 
 import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static net.dv8tion.jda.api.interactions.commands.OptionType.*;
 
@@ -56,6 +58,9 @@ public class MainEntrypoint extends ListenerAdapter {
                 .addEventListeners(new MainEntrypoint())
                 .build();
 
+        System.setErr(new ConsoleInterceptor(System.err, jda));
+
+
         // You might need to reload your Discord client if you don't see the commands
         CommandListUpdateAction commands = jda.updateCommands();
 
@@ -78,6 +83,19 @@ public class MainEntrypoint extends ListenerAdapter {
                 )
         );
         AllSlashCommands.editconfigoption.setAction(ConfigCommands::editConfigOption);
+
+        commands.addCommands(AllSlashCommands.editconfiglvlroleoption.getBaseCommandData()
+                .addOptions(
+                        new OptionData(OptionType.STRING, "role", "Choose a role", true)
+                                .addChoices(
+                                        Arrays.stream(Config.LvlRoles.values())
+                                                .map(e -> new Command.Choice(e.name(), e.name()))
+                                                .toArray(Command.Choice[]::new)
+                                ),
+                        new OptionData(OptionType.STRING, "role_id", "The id for the role", true)
+                )
+        );
+        AllSlashCommands.editconfiglvlroleoption.setAction(ConfigCommands::editConfigLvlRoleOption);
 
         commands.addCommands(AllSlashCommands.getconfigoptions.getBaseCommandData());
         AllSlashCommands.getconfigoptions.setAction(ConfigCommands::showConfigOptions);
@@ -104,12 +122,7 @@ public class MainEntrypoint extends ListenerAdapter {
         AllSlashCommands.listcommands.setAction(HelpCommands::listCommands);
 
         commands.addCommands(AllSlashCommands.setrolerequirement.getBaseCommandData().addOptions(
-                new OptionData(OptionType.STRING, "command", "what command to add the requirement too", true)
-                        .addChoices(
-                                Arrays.stream(AllSlashCommands.values())
-                                        .map(e -> new Command.Choice(e.name(), e.name()))
-                                        .toArray(Command.Choice[]::new)
-                        ),
+                new OptionData(OptionType.STRING, "command", "Command to add requirement to", true).setAutoComplete(true),
                 new OptionData(OptionType.STRING, "required_role", "the required role", true)
                         .addChoices(
                                 Arrays.stream(Config.Settings.values())
@@ -120,14 +133,17 @@ public class MainEntrypoint extends ListenerAdapter {
         AllSlashCommands.setrolerequirement.setAction(RoleRequirementCommands::setRoleRequirement);
 
         commands.addCommands(AllSlashCommands.removerolerequirement.getBaseCommandData().addOptions(
-                new OptionData(OptionType.STRING, "command", "what command to remove the requirement from", true)
-                        .addChoices(
-                                Arrays.stream(AllSlashCommands.values())
-                                        .map(e -> new Command.Choice(e.name(), e.name()))
-                                        .toArray(Command.Choice[]::new)
-                        )
+                new OptionData(OptionType.STRING, "command", "what command to remove the requirement from", true).setAutoComplete(true)
         ));
         AllSlashCommands.removerolerequirement.setAction(RoleRequirementCommands::removeRoleRequirement);
+
+        commands.addCommands(AllSlashCommands.removeverification.getBaseCommandData()
+                .addOption(STRING, "user_id", "discord id of user to unverify", true));
+        AllSlashCommands.removeverification.setAction(VerificationCommands::removeVerification);
+
+        commands.addCommands(AllSlashCommands.updateplayerroles.getBaseCommandData()
+                .addOption(STRING, "user_id", "discord id of the member to update", true));
+        AllSlashCommands.updateplayerroles.setAction(VerificationCommands::updateRoles);
 
         commands.addCommands(
                 AllSlashCommands.adddemotionexeption.getBaseCommandData()
@@ -251,11 +267,17 @@ public class MainEntrypoint extends ListenerAdapter {
                         if (fullId.startsWith("verify_confirm_")) {
                             event.reply("Verification approved!").setEphemeral(true).queue();
                             VerificationCommands.completeVerification(member, username, event.getGuild());
+
+                            event.deferEdit().queue();
+                            event.getMessage().delete().queue();
                         } else {
                             member.getUser().openPrivateChannel().queue(pc ->
                                     pc.sendMessage("Your verification request was denied.").queue()
                             );
                             event.reply("Verification denied.").setEphemeral(true).queue();
+
+                            event.deferEdit().queue();
+                            event.getMessage().delete().queue();
                         }
                     },
                     failure -> {
@@ -282,6 +304,22 @@ public class MainEntrypoint extends ListenerAdapter {
             case "update.confirm":
                 UpdaterCommands.update();
                 break;
+        }
+    }
+
+    @Override
+    public void onCommandAutoCompleteInteraction(CommandAutoCompleteInteractionEvent event) {
+        if (event.getFocusedOption().getName().equals("command")) {
+            String userInput = event.getFocusedOption().getValue();
+
+            List<Command.Choice> choices = Arrays.stream(AllSlashCommands.values())
+                    .map(Enum::name)
+                    .filter(name -> name.toLowerCase().startsWith(userInput.toLowerCase()))
+                    .limit(25)
+                    .map(name -> new Command.Choice(name, name))
+                    .collect(Collectors.toList());
+
+            event.replyChoices(choices).queue();
         }
     }
 
