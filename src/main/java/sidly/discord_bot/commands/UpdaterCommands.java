@@ -11,6 +11,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import sidly.discord_bot.Config;
+import sidly.discord_bot.ConfigManager;
 import sidly.discord_bot.MainEntrypoint;
 
 import java.awt.*;
@@ -46,15 +47,20 @@ public class UpdaterCommands {
                     return;
                 }
 
+                boolean downGrade = currentVersion != null && compareVersions(currentVersion, latestRelease) > 0;
+
                 EmbedBuilder embed = new EmbedBuilder()
                         .setDescription("current version is: " + currentVersion +
                                 " latest is: " + latestRelease + "\n" + "when clicking the update button it will say interaction failed but should work you can check using /getbotversion please dont click it again")
                         .setColor(Color.CYAN);
 
-                Button primary = Button.primary(userId + ":update.confirm", "update to " + latestRelease);
+                Button button;
+                if (downGrade){
+                    button = Button.danger(userId + ":update.confirm",  "downgrade to " + latestRelease);
+                }else button = Button.primary(userId + ":update.confirm",  "upgrade to " + latestRelease);
 
                 hook.editOriginalEmbeds(embed.build())
-                        .setComponents(ActionRow.of(primary))
+                        .setComponents(ActionRow.of(button))
                         .queue();
             } catch (IOException e) {
                 hook.editOriginal("Error checking for updates: " + e.getMessage()).queue();
@@ -135,14 +141,12 @@ public class UpdaterCommands {
     }
 
     public static String getCurrentVersion() {
-        File dir = new File(".");
-        File[] files = dir.listFiles();
+        File[] files = ConfigManager.JAR_DIR.listFiles();
         if (files == null) return null;
 
         Pattern pattern = Pattern.compile("wynn-discord-bot-(\\d+\\.\\d+\\.\\d+)-withDependencies\\.jar");
 
         String latestVersion = null;
-
         for (File file : files) {
             Matcher matcher = pattern.matcher(file.getName());
             if (matcher.matches()) {

@@ -15,7 +15,7 @@ import java.util.Map;
 public class ConfigManager {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
-    private static final File JAR_DIR;
+    public static final File JAR_DIR;
 
     static {
         try {
