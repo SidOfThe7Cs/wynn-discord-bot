@@ -60,7 +60,7 @@ public class GuildCommands {
                 .setFooter("Last updated")
                 .setTimestamp(Instant.ofEpochMilli(guild.lastUpdated));
 
-        event.replyEmbeds(embed.build()).queue();
+        event.replyEmbeds(embed.build()).setEphemeral(true).queue();
     }
 
     public static void showOnlineMembers(SlashCommandInteractionEvent event) {

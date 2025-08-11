@@ -39,7 +39,7 @@ public class ConsoleInterceptor extends PrintStream {
         if (logChannel != null) {
             // Discord has message length limits, so truncate if too long
             String toSend = msg.length() > 1900 ? msg.substring(0, 1900) + "..." : msg;
-            logChannel.sendMessage("```ansi\n" + toSend + "```").queue();
+            logChannel.sendMessage("```Ansi\n" + toSend + "```").queue();
         }
     }
 }

@@ -59,6 +59,7 @@ public class MainEntrypoint extends ListenerAdapter {
                 .build();
 
         System.setErr(new ConsoleInterceptor(System.err, jda));
+        System.setOut(new ConsoleInterceptor(System.out, jda));
 
 
         // You might need to reload your Discord client if you don't see the commands
@@ -144,6 +145,21 @@ public class MainEntrypoint extends ListenerAdapter {
         commands.addCommands(AllSlashCommands.updateplayerroles.getBaseCommandData()
                 .addOption(STRING, "user_id", "discord id of the member to update", true));
         AllSlashCommands.updateplayerroles.setAction(VerificationCommands::updateRoles);
+
+        commands.addCommands(AllSlashCommands.getratelimitinfo.getBaseCommandData());
+        AllSlashCommands.getratelimitinfo.setAction(RateLimitCommands::getRateLimitInfo);
+
+        commands.addCommands(AllSlashCommands.addchannelrestriction.getBaseCommandData()
+                .addOption(STRING, "channel_id", "channel id", true)
+                .addOptions(
+                new OptionData(OptionType.STRING, "allowed", "whitelisted / blacklisted / default", true)
+                        .addChoices(
+                                new Command.Choice("whitelisted", "true"),
+                                new Command.Choice("blacklisted", "false"),
+                                new Command.Choice("default", "null")
+                        )
+        ));
+        AllSlashCommands.addchannelrestriction.setAction(ChannelRestrinctionCommands::addRestriction);
 
         commands.addCommands(
                 AllSlashCommands.adddemotionexeption.getBaseCommandData()
@@ -268,7 +284,6 @@ public class MainEntrypoint extends ListenerAdapter {
                             event.reply("Verification approved!").setEphemeral(true).queue();
                             VerificationCommands.completeVerification(member, username, event.getGuild());
 
-                            event.deferEdit().queue();
                             event.getMessage().delete().queue();
                         } else {
                             member.getUser().openPrivateChannel().queue(pc ->
@@ -276,7 +291,6 @@ public class MainEntrypoint extends ListenerAdapter {
                             );
                             event.reply("Verification denied.").setEphemeral(true).queue();
 
-                            event.deferEdit().queue();
                             event.getMessage().delete().queue();
                         }
                     },

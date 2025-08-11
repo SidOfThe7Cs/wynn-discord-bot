@@ -9,6 +9,7 @@ import sidly.discord_bot.Config;
 import sidly.discord_bot.ConfigManager;
 import sidly.discord_bot.Utils;
 
+import java.util.Map;
 import java.util.function.Consumer;
 
 public enum AllSlashCommands {
@@ -27,6 +28,8 @@ public enum AllSlashCommands {
     removerolerequirement("remove a role requirement to run a command"),
     removeverification("remove a verification from a user"),
     updateplayerroles("update the roles of a player"),
+    getratelimitinfo("get the rate limit info"),
+    addchannelrestriction("if any channels are whitelisted only whitelisted channels will allow commands"),
     adddemotionexeption("adds a player to be excluded from demotion checks, default length is forever"),
     addinactivityexeption("adds a custom inactivity threshold for a player, default length is forever"),
     addpromotionexeption("adds a player top be excluded from promotion checks, default length is forever"),
@@ -66,6 +69,31 @@ public enum AllSlashCommands {
     }
 
     public void run(SlashCommandInteractionEvent event) {
+        
+        Map<String, Boolean> allowedChannels = ConfigManager.getConfigInstance().allowedChannels;
+        boolean hasTrue = false;
+        for (Boolean value : allowedChannels.values()) {
+            if (Boolean.TRUE.equals(value)) {
+                hasTrue = true;
+                break;
+            }
+        }
+        if (!allowedChannels.isEmpty()){
+            String id = event.getChannel().getId();
+            Boolean b = allowedChannels.get(id);
+            if (hasTrue){ // you need to be in a whitelisted channel to run command
+                if (!allowedChannels.containsKey(id) || !allowedChannels.get(id).equals(true)){
+                    event.reply("❌ you may not run commands here").setEphemeral(true).queue();
+                    return;
+                }
+            }else { // you can run commands in any not blacklisted channel
+                if (allowedChannels.containsKey(id) && allowedChannels.get(id).equals(false)){
+                    event.reply("❌ you may not run commands here").setEphemeral(true).queue();
+                    return;
+                }
+            }
+        }
+        
         Config.Settings requiredRole = getRequiredRole();
         if (requiredRole == null) {
             action.accept(event);

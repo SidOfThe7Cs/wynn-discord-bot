@@ -40,9 +40,16 @@ public class ConfigCommands {
                 .filter(entry -> entry.getKey() != Config.Settings.Token)
                 .map(entry -> entry.getKey() + " : " + entry.getValue())
                 .collect(Collectors.joining(System.lineSeparator()));
-
         result += "\n";
+
         result += ConfigManager.getConfigInstance().lvlRoles.entrySet().stream()
+                .map(entry -> entry.getKey() + " : " + entry.getValue())
+                .collect(Collectors.joining(System.lineSeparator()));
+        result += "\n";
+
+        result += "Allowed Channels:\n";
+        result += ConfigManager.getConfigInstance().allowedChannels.entrySet().stream()
+                .filter(entry -> entry.getValue() != null)
                 .map(entry -> entry.getKey() + " : " + entry.getValue())
                 .collect(Collectors.joining(System.lineSeparator()));
 

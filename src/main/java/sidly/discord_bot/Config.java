@@ -9,6 +9,7 @@ public class Config {
     public Map<Settings, String> settings = new HashMap<>();
     public Map<LvlRoles, String> lvlRoles = new HashMap<>();
     public Map<AllSlashCommands, Settings> roleRequirements = new HashMap<>();
+    public Map<String, Boolean> allowedChannels = new HashMap<>();
 
     public Config() {
         // default values

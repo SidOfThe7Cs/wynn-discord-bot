@@ -17,12 +17,15 @@ public class TestEntrypoint {
 }
 /*
 TODO
-update all players in your guild peryodically
+
+update all players in your server a couple every 65 seconds
+once all have been updated refresh list from discord (not cache) and repeat
+
+tracked guilds playtime as well as own
 Log there playtime that week
+allow playtime command to specify interval and max
+
 restart command
 Get current memory usage
-
-update player should remove roles too
-limit commands to channel
 
  */

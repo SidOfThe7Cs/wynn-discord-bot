@@ -11,15 +11,18 @@ public class HelpCommands {
         EmbedBuilder embed = new EmbedBuilder();
         embed.setTitle("List of All Bot Commands");
         embed.setColor(Color.CYAN);
-        for (AllSlashCommands command : AllSlashCommands.values()){
-            String info = command.getDescription() + '\n';
-            if (command.getRequiredRole() != null) {
-                info += "requires " + "<@&" + ConfigManager.getSetting(command.getRequiredRole()) + ">\n";
-            }
-            if (command.getAction() == null) info += "this command currently does nothing";
 
-            embed.addField(command.name(), info, false);
+        StringBuilder sb = new StringBuilder();
+
+        for (AllSlashCommands command : AllSlashCommands.values()){
+            sb.append("**").append(command.name()).append("**").append("\n");
+            sb.append(command.getDescription()).append("\n");
+            if (command.getRequiredRole() != null) {
+                sb.append("requires <@&").append(ConfigManager.getSetting(command.getRequiredRole())).append(">\n");
+            }
+            if (command.getAction() == null) sb.append("this command currently does nothing\n");
         }
+        embed.setDescription(sb.toString());
 
         event.replyEmbeds(embed.build()).setEphemeral(true).queue();
     }

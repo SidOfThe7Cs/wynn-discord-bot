@@ -12,7 +12,7 @@ public class Utils {
     public static String getDiscordTimestamp(long epoch, boolean relative){
         String type = "t";
         if (relative) type = "R";
-        return "<t:" + epoch + ":" + type + ">";
+        return "<t:" + epoch/1000 + ":" + type + ">";
     }
 
     public static boolean hasRole(Member user, String roleId){

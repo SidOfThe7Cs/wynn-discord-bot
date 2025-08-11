@@ -10,8 +10,32 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.List;
+import java.util.Map;
 
 public class ApiUtils {
+
+    public static int getRateLimitRemaining() {
+        return rateLimitRemaining;
+    }
+
+    public static int getRateLimitSecondsTillReset() {
+        return rateLimitSecondsTillReset;
+    }
+
+    public static int getRateLimitMax() {
+        return rateLimitMax;
+    }
+
+    private static int rateLimitRemaining = -1;
+    private static int rateLimitSecondsTillReset = -1;
+    private static int rateLimitMax = -1;
+
+    public static long getLastRateLimitUpdate() {
+        return lastRateLimitUpdate;
+    }
+
+    private static long lastRateLimitUpdate = 0;
 
     public static PlayerProfile getPlayerData(String username){
         try {
@@ -22,6 +46,7 @@ public class ApiUtils {
                     .build();
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            parseRateLimit(response);
 
             // Parse response with Gson
             Gson gson = new GsonBuilder().create();
@@ -55,6 +80,7 @@ public class ApiUtils {
                     .build();
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            parseRateLimit(response);
 
             // Parse response with Gson
             Gson gson = new GsonBuilder().create();
@@ -72,5 +98,18 @@ public class ApiUtils {
             System.err.println("InterruptedException");
             throw new RuntimeException(e);
         }
+    }
+
+    private static void parseRateLimit(HttpResponse<String> response){
+        Map<String, List<String>> headers = response.headers().map();
+
+        String remaining = headers.getOrDefault("ratelimit-remaining", List.of("unknown")).getFirst();
+        String reset     = headers.getOrDefault("ratelimit-reset", List.of("unknown")).getFirst();
+        String limit     = headers.getOrDefault("ratelimit-limit", List.of("unknown")).getFirst();
+
+        rateLimitRemaining = Integer.parseInt(remaining);
+        rateLimitSecondsTillReset = Integer.parseInt(reset);
+        rateLimitMax = Integer.parseInt(limit);
+        lastRateLimitUpdate = System.currentTimeMillis();
     }
 }
