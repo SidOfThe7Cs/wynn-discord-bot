@@ -8,13 +8,25 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.Map;
 
 public class ConfigManager {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final File CONFIG_FILE = new File("config.json");
-    private static final File DATABASE_FILE = new File("database.json");
+
+    private static final File JAR_DIR;
+
+    static {
+        try {
+            JAR_DIR = new File(MainEntrypoint.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getParentFile();
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static final File CONFIG_FILE = new File(JAR_DIR, "config.json");
+    private static final File DATABASE_FILE = new File(JAR_DIR,"database.json");
 
     private static Config config = new Config();
     private static Database dataBase = new Database();

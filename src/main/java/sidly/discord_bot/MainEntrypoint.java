@@ -50,7 +50,7 @@ public class MainEntrypoint extends ListenerAdapter {
         ConfigManager.load();
         String token = ConfigManager.getSetting(Config.Settings.Token);
         if (token == null || token.isEmpty()){
-            System.err.println("please assign your bot token in the config file");
+            System.err.println("please assign your bot token in the config file located at " + ConfigManager.CONFIG_FILE.getAbsolutePath());
             shutdown();
         }
 

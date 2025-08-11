@@ -28,4 +28,6 @@ allow playtime command to specify interval and max
 restart command
 Get current memory usage
 
+unverified role on join
+
  */
