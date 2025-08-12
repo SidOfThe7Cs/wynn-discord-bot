@@ -7,9 +7,9 @@ import sidly.discord_bot.ConfigManager;
 public class RoleRequirementCommands {
     public static void setRoleRequirement(SlashCommandInteractionEvent event) {
         AllSlashCommands command = AllSlashCommands.valueOf(event.getOption("command").getAsString());
-        Config.Settings role = Config.Settings.valueOf(event.getOption("required_role").getAsString());
+        String role = event.getOption("role").getAsString();
 
-        ConfigManager.getConfigInstance().roleRequirements.put(command, role);
+        ConfigManager.getConfigInstance().roleRequirements.put(command, Config.Roles.valueOf(role));
 
         event.reply("success").setEphemeral(true).queue();
     }

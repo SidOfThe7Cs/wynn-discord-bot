@@ -31,10 +31,6 @@ public class ConfigManager {
     private static Config config = new Config();
     private static Database dataBase = new Database();
 
-    public static String getSetting(Config.Settings opt) {
-        return config.settings.get(opt);
-    }
-
     public static Config getConfigInstance(){
         return config;
     }

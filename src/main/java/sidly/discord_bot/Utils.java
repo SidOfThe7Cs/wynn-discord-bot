@@ -21,17 +21,25 @@ public class Utils {
 
     public static boolean hasAtLeastRank(Member user, String roleId) {
         List<String> rankOrder = List.of(
-                ConfigManager.getSetting(Config.Settings.RecruitRole),     // lowest
-                ConfigManager.getSetting(Config.Settings.RecruiterRole),
-                ConfigManager.getSetting(Config.Settings.CaptainRole),
-                ConfigManager.getSetting(Config.Settings.StrategistRole),
-                ConfigManager.getSetting(Config.Settings.ChiefRole),
-                ConfigManager.getSetting(Config.Settings.OwnerRole)        // highest
-        );
+                ConfigManager.getConfigInstance().roles.get(Config.Roles.RecruitRole),
+                ConfigManager.getConfigInstance().roles.get(Config.Roles.RecruiterRole),
+                ConfigManager.getConfigInstance().roles.get(Config.Roles.CaptainRole),
+                ConfigManager.getConfigInstance().roles.get(Config.Roles.StrategistRole),
+                ConfigManager.getConfigInstance().roles.get(Config.Roles.ChiefRole),
+                ConfigManager.getConfigInstance().roles.get(Config.Roles.OwnerRole)
+                );
+
+
+        System.out.println("Rank order: " + rankOrder);
 
         if (user == null || roleId == null || roleId.isEmpty()) return false;
-
         int targetIndex = rankOrder.indexOf(roleId);
+
+        System.out.println("Target role ID: " + roleId + " -> index: " + targetIndex);
+        for (Role role : user.getRoles()) {
+            System.out.println("User role: " + role.getName() + " (" + role.getId() + ") index: " + rankOrder.indexOf(role.getId()));
+        }
+
         if (targetIndex == -1) return false; // roleId not found in rankOrder
 
         // Check if user has any role with rank >= targetIndex

@@ -3,7 +3,6 @@ package sidly.discord_bot;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.*;
-import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
@@ -51,7 +50,7 @@ public class MainEntrypoint extends ListenerAdapter {
         Runtime.getRuntime().addShutdownHook(new Thread(MainEntrypoint::shutdown));
 
         ConfigManager.load();
-        String token = ConfigManager.getSetting(Config.Settings.Token);
+        String token = ConfigManager.getConfigInstance().other.get(Config.Settings.Token);
         if (token == null || token.isEmpty()){
             System.err.println("please assign your bot token in the config file located at " + ConfigManager.CONFIG_FILE.getAbsolutePath());
             shutdown();
@@ -75,20 +74,46 @@ public class MainEntrypoint extends ListenerAdapter {
         commands.addCommands(AllSlashCommands.reloadconfig.getBaseCommandData());
         AllSlashCommands.reloadconfig.setAction(ConfigManager::reloadConfig);
 
-        commands.addCommands(AllSlashCommands.editconfigoption.getBaseCommandData()
+        commands.addCommands(AllSlashCommands.editconfigother.getBaseCommandData()
                 .addOptions(
-                        new OptionData(OptionType.STRING, "setting", "Choose a setting", true)
+                        new OptionData(OptionType.STRING, "setting_name", "Choose a setting", true)
                                 .addChoices(
                                         Arrays.stream(Config.Settings.values())
                                                 .map(e -> new Command.Choice(e.name(), e.name()))
                                                 .toArray(Command.Choice[]::new)
                                 ),
-                        new OptionData(OptionType.STRING, "role_or_channel", "The new value for the setting", true).setAutoComplete(true)
+                        new OptionData(OptionType.STRING, "setting_other", "The new value for the setting", true).setAutoComplete(true)
                 )
         );
-        AllSlashCommands.editconfigoption.setAction(ConfigCommands::editConfigOption);
+        AllSlashCommands.editconfigother.setAction(ConfigCommands::editConfigSettingOther);
 
-        commands.addCommands(AllSlashCommands.editconfiglvlroleoption.getBaseCommandData()
+        commands.addCommands(AllSlashCommands.editconfigrole.getBaseCommandData()
+                .addOptions(
+                        new OptionData(OptionType.STRING, "role_name", "Choose a setting", true)
+                                .addChoices(
+                                        Arrays.stream(Config.Roles.values())
+                                                .map(e -> new Command.Choice(e.name(), e.name()))
+                                                .toArray(Command.Choice[]::new)
+                                ),
+                        new OptionData(OptionType.STRING, "role", "The new value for the setting", true).setAutoComplete(true)
+                )
+        );
+        AllSlashCommands.editconfigrole.setAction(ConfigCommands::editConfigRole);
+
+        commands.addCommands(AllSlashCommands.editconfigchannel.getBaseCommandData()
+                .addOptions(
+                        new OptionData(OptionType.STRING, "channel_name", "Choose a setting", true)
+                                .addChoices(
+                                        Arrays.stream(Config.Channels.values())
+                                                .map(e -> new Command.Choice(e.name(), e.name()))
+                                                .toArray(Command.Choice[]::new)
+                                ),
+                        new OptionData(OptionType.STRING, "channel", "The new value for the setting", true).setAutoComplete(true)
+                )
+        );
+        AllSlashCommands.editconfigchannel.setAction(ConfigCommands::editConfigChannel);
+
+        commands.addCommands(AllSlashCommands.editconfiglvlrole.getBaseCommandData()
                 .addOptions(
                         new OptionData(OptionType.STRING, "role_name", "Choose a role", true)
                                 .addChoices(
@@ -99,7 +124,7 @@ public class MainEntrypoint extends ListenerAdapter {
                         new OptionData(OptionType.STRING, "role", "The id for the role", true).setAutoComplete(true)
                 )
         );
-        AllSlashCommands.editconfiglvlroleoption.setAction(ConfigCommands::editConfigLvlRoleOption);
+        AllSlashCommands.editconfiglvlrole.setAction(ConfigCommands::editConfigLvlRoleOption);
 
         commands.addCommands(AllSlashCommands.getconfigoptions.getBaseCommandData());
         AllSlashCommands.getconfigoptions.setAction(ConfigCommands::showConfigOptions);
@@ -127,7 +152,7 @@ public class MainEntrypoint extends ListenerAdapter {
 
         commands.addCommands(AllSlashCommands.setrolerequirement.getBaseCommandData().addOptions(
                 new OptionData(OptionType.STRING, "command", "Command to add requirement to", true).setAutoComplete(true),
-                new OptionData(OptionType.STRING, "required_role", "the required role", true)
+                new OptionData(OptionType.STRING, "role_", "the required role", true)
                         .addChoices(
                                 Arrays.stream(Config.Settings.values())
                                         .map(e -> new Command.Choice(e.name(), e.name()))
@@ -339,16 +364,9 @@ public class MainEntrypoint extends ListenerAdapter {
             event.replyChoices(choices).queue();
         }
 
-        if (event.getFocusedOption().getName().equals("role_or_channel")) {
+        if (event.getFocusedOption().getName().equals("channel")) {
             String userInput = event.getFocusedOption().getValue().toLowerCase();
             List<Command.Choice> choices = new ArrayList<>();
-
-            // Roles
-            for (Role role : event.getGuild().getRoles()) {
-                if (role.getName().toLowerCase().startsWith(userInput)) {
-                    choices.add(new Command.Choice("@" + role.getName(), role.getId()));
-                }
-            }
 
             // Channels (text/voice only)
             for (GuildChannel channel : event.getGuild().getChannels()) {
@@ -379,13 +397,25 @@ public class MainEntrypoint extends ListenerAdapter {
             ).queue();
         }
 
+        if (event.getFocusedOption().getName().equals("setting_other")) {
+            List<Command.Choice> choices = new ArrayList<>();
+
+            for (Config.Settings setting : Config.Settings.values()) {
+                    choices.add(new Command.Choice(setting.name(), setting.name()));
+            }
+
+            event.replyChoices(
+                    choices.stream().limit(25).toList()
+            ).queue();
+        }
+
     }
 
     @Override
     public void onGuildMemberJoin(GuildMemberJoinEvent event) {
         Member member = event.getMember();
         Guild guild = event.getGuild();
-        String unverifiedRoleId = ConfigManager.getSetting(Config.Settings.UnVerifiedRole);
+        String unverifiedRoleId = ConfigManager.getConfigInstance().roles.get(Config.Roles.UnVerifiedRole);
 
         guild.addRoleToMember(member, guild.getRoleById(unverifiedRoleId));
     }

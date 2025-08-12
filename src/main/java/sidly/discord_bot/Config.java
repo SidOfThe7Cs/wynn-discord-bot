@@ -6,30 +6,37 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Config {
-    public Map<Settings, String> settings = new HashMap<>();
+    public Map<Roles, String> roles = new HashMap<>();
     public Map<LvlRoles, String> lvlRoles = new HashMap<>();
-    public Map<AllSlashCommands, Settings> roleRequirements = new HashMap<>();
+    public Map<AllSlashCommands, Roles> roleRequirements = new HashMap<>();
     public Map<String, Boolean> allowedChannels = new HashMap<>();
+    public Map<Channels, String> channels = new HashMap<>();
+    public Map<Settings, String> other = new HashMap<>();
 
     public Config() {
         // default values
-        settings.put(Settings.Token, "");
-        settings.put(Settings.OwnerRole, "");
-        settings.put(Settings.ChiefRole, "");
-        settings.put(Settings.StrategistRole, "");
-        settings.put(Settings.CaptainRole, "");
-        settings.put(Settings.RecruiterRole, "");
-        settings.put(Settings.RecruitRole, "");
-        settings.put(Settings.VerifiedRole, "");
-        settings.put(Settings.MemberRole, "");
-        settings.put(Settings.ChampionRole, "");
-        settings.put(Settings.HeroPlusRole, "");
-        settings.put(Settings.HeroRole, "");
-        settings.put(Settings.VipPlusRole, "");
-        settings.put(Settings.VipRole, "");
-        settings.put(Settings.OneHundredPercentContentCompletionRole, "");
-        settings.put(Settings.ModerationChannel, "");
-        settings.put(Settings.ConsoleLogChannel, "");
+        other.put(Settings.Token, "");
+        other.put(Settings.YourGuildPrefix, "");
+
+        roles.put(Roles.OwnerRole, "");
+        roles.put(Roles.ChiefRole, "");
+        roles.put(Roles.StrategistRole, "");
+        roles.put(Roles.CaptainRole, "");
+        roles.put(Roles.RecruiterRole, "");
+        roles.put(Roles.RecruitRole, "");
+        roles.put(Roles.VerifiedRole, "");
+        roles.put(Roles.MemberRole, "");
+        roles.put(Roles.ChampionRole, "");
+        roles.put(Roles.HeroPlusRole, "");
+        roles.put(Roles.HeroRole, "");
+        roles.put(Roles.VipPlusRole, "");
+        roles.put(Roles.VipRole, "");
+        roles.put(Roles.OneHundredPercentContentCompletionRole, "");
+        roles.put(Roles.UnVerifiedRole, "");
+
+
+        channels.put(Channels.ModerationChannel, "");
+        channels.put(Channels.ConsoleLogChannel, "");
 
 
         lvlRoles.put(LvlRoles.Lvl1Role, "");
@@ -57,27 +64,28 @@ public class Config {
         lvlRoles.put(LvlRoles.Lvl106Role, "");
 
 
-        roleRequirements.put(AllSlashCommands.shutdown, Settings.OwnerRole);
-        roleRequirements.put(AllSlashCommands.reloadconfig, Settings.OwnerRole);
-        roleRequirements.put(AllSlashCommands.editconfigoption, Settings.ChiefRole);
-        roleRequirements.put(AllSlashCommands.checkforupdates, Settings.ChiefRole);
-        roleRequirements.put(AllSlashCommands.addpromotionrequirement, Settings.ChiefRole);
-        roleRequirements.put(AllSlashCommands.setpromotionoptionalrequirement, Settings.ChiefRole);
-        roleRequirements.put(AllSlashCommands.removepromotionrequirement, Settings.ChiefRole);
-        roleRequirements.put(AllSlashCommands.setrolerequirement, Settings.OwnerRole);
-        roleRequirements.put(AllSlashCommands.removerolerequirement, Settings.OwnerRole);
-        roleRequirements.put(AllSlashCommands.addpromotionexeption, Settings.ChiefRole);
-        roleRequirements.put(AllSlashCommands.adddemotionexeption, Settings.ChiefRole);
-        roleRequirements.put(AllSlashCommands.addinactivityexeption, Settings.ChiefRole);
-        roleRequirements.put(AllSlashCommands.checkfordemotions, Settings.StrategistRole);
-        roleRequirements.put(AllSlashCommands.checkforpromotions, Settings.StrategistRole);
-        roleRequirements.put(AllSlashCommands.checkforinactivity, Settings.StrategistRole);
-        roleRequirements.put(AllSlashCommands.removeverification, Settings.OwnerRole);
-        roleRequirements.put(AllSlashCommands.editconfiglvlroleoption, Settings.ChiefRole);
+        roleRequirements.put(AllSlashCommands.shutdown, Roles.OwnerRole);
+        roleRequirements.put(AllSlashCommands.reloadconfig, Roles.OwnerRole);
+        roleRequirements.put(AllSlashCommands.checkforupdates, Roles.ChiefRole);
+        roleRequirements.put(AllSlashCommands.addpromotionrequirement, Roles.ChiefRole);
+        roleRequirements.put(AllSlashCommands.setpromotionoptionalrequirement, Roles.ChiefRole);
+        roleRequirements.put(AllSlashCommands.removepromotionrequirement, Roles.ChiefRole);
+        roleRequirements.put(AllSlashCommands.setrolerequirement, Roles.OwnerRole);
+        roleRequirements.put(AllSlashCommands.removerolerequirement, Roles.OwnerRole);
+        roleRequirements.put(AllSlashCommands.addpromotionexeption, Roles.ChiefRole);
+        roleRequirements.put(AllSlashCommands.adddemotionexeption, Roles.ChiefRole);
+        roleRequirements.put(AllSlashCommands.addinactivityexeption, Roles.ChiefRole);
+        roleRequirements.put(AllSlashCommands.checkfordemotions, Roles.StrategistRole);
+        roleRequirements.put(AllSlashCommands.checkforpromotions, Roles.StrategistRole);
+        roleRequirements.put(AllSlashCommands.checkforinactivity, Roles.StrategistRole);
+        roleRequirements.put(AllSlashCommands.removeverification, Roles.OwnerRole);
+        roleRequirements.put(AllSlashCommands.editconfiglvlrole, Roles.ChiefRole);
+        roleRequirements.put(AllSlashCommands.editconfigchannel, Roles.ChiefRole);
+        roleRequirements.put(AllSlashCommands.editconfigother, Roles.ChiefRole);
+        roleRequirements.put(AllSlashCommands.editconfigrole, Roles.ChiefRole);
     }
 
-    public enum Settings {
-        Token,
+    public enum Roles {
         OwnerRole,
         ChiefRole,
         StrategistRole,
@@ -85,7 +93,6 @@ public class Config {
         RecruiterRole,
         RecruitRole,
         VerifiedRole,
-        YourGuildPrefix,
         MemberRole,
         ChampionRole,
         HeroPlusRole,
@@ -93,9 +100,17 @@ public class Config {
         VipPlusRole,
         VipRole,
         OneHundredPercentContentCompletionRole,
-        ModerationChannel,
         UnVerifiedRole,
+    }
+
+    public enum Channels {
+        ModerationChannel,
         ConsoleLogChannel
+    }
+
+    public enum Settings {
+        Token,
+        YourGuildPrefix,
     }
 
     public enum LvlRoles {

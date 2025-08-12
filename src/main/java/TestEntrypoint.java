@@ -30,4 +30,6 @@ Get current memory usage
 
 unverified role on join
 
+when there not in a guild it crashes
+
  */

@@ -1,18 +1,110 @@
 package sidly.discord_bot.commands;
 
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Role;
+import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import sidly.discord_bot.Config;
 import sidly.discord_bot.ConfigManager;
 
 import java.awt.*;
-import java.util.stream.Collectors;
 
 public class ConfigCommands {
-    public static void editConfigOption(SlashCommandInteractionEvent event) {
-        String setting = event.getOption("setting").getAsString();
-        String mention  = event.getOption("role_or_channel").getAsString();
+
+    public static void showConfigOptions(SlashCommandInteractionEvent event) {
+        Config config = ConfigManager.getConfigInstance();
+        StringBuilder sb = new StringBuilder();
+
+        // Roles
+        sb.append("**Roles:**\n");
+        config.roles.forEach((key, value) -> {
+            String mention = mentionRole(event.getGuild(), value);
+            sb.append(key).append(" : ").append(mention).append("\n");
+        });
+        sb.append("\n");
+
+        // Level Roles
+        sb.append("**Level Roles:**\n");
+        config.lvlRoles.forEach((key, value) -> {
+            String mention = mentionRole(event.getGuild(), value);
+            sb.append(key).append(" : ").append(mention).append("\n");
+        });
+        sb.append("\n");
+
+        // Role Requirements
+        sb.append("**Role Requirements:**\n");
+        config.roleRequirements.forEach((cmd, role) -> {
+            String roleId = config.roles.get(role);
+            String mention = mentionRole(event.getGuild(), roleId);
+            sb.append(cmd).append(" : ").append(mention).append("\n");
+        });
+        sb.append("\n");
+
+        // Allowed Channels
+        sb.append("**Allowed Channels:**\n");
+        config.allowedChannels.forEach((channelId, allowed) -> {
+            String mention = mentionChannel(event.getGuild(), channelId);
+            sb.append(mention != null ? mention : channelId)
+                    .append(" : ").append(allowed).append("\n");
+        });
+        sb.append("\n");
+
+        // Channels
+        sb.append("**Channels:**\n");
+        config.channels.forEach((key, value) -> {
+            String mention = mentionChannel(event.getGuild(), value);
+            sb.append(key).append(" : ").append(mention).append("\n");
+        });
+        sb.append("\n");
+
+        // Other settings
+        sb.append("**Other Settings:**\n");
+        config.other.forEach((key, value) -> {
+            sb.append(key).append(" : ").append(value).append("\n");
+        });
+
+        // Send embed
+        EmbedBuilder embed = new EmbedBuilder()
+                .setTitle("Current Config:")
+                .setDescription(sb.toString())
+                .setColor(Color.CYAN)
+                .setFooter("Requested by " + event.getUser().getName(), event.getUser().getEffectiveAvatarUrl())
+                .setTimestamp(java.time.Instant.now());
+
+        event.replyEmbeds(embed.build()).setEphemeral(true).queue();
+    }
+
+    // Helper for roles
+    private static String mentionRole(Guild guild, String roleId) {
+        if (roleId == null || roleId.isEmpty()) return "None";
+        Role role = guild.getRoleById(roleId);
+        return role != null ? role.getAsMention() : roleId;
+    }
+
+    // Helper for channels
+    private static String mentionChannel(Guild guild, String channelId) {
+        if (channelId == null || channelId.isEmpty()) return null;
+        GuildChannel channel = guild.getGuildChannelById(channelId);
+        return channel != null ? channel.getAsMention() : channelId;
+    }
+
+
+    public static void editConfigLvlRoleOption(SlashCommandInteractionEvent event) {
+        String setting = event.getOption("role_name").getAsString();
+        String mention = event.getOption("role").getAsString();
         String id = mention.replaceAll("\\D+", "");
+        Config.LvlRoles option = Config.LvlRoles.valueOf(setting);
+
+        ConfigManager.getConfigInstance().lvlRoles.put(option, id);
+        ConfigManager.save();
+
+        event.reply(event.getUser().getName() + " has changed the " + setting + " to " + id).setEphemeral(false).queue();
+    }
+
+    public static void editConfigSettingOther(SlashCommandInteractionEvent event) {
+        String setting = event.getOption("setting_name").getAsString();
+        String value  = event.getOption("setting_other").getAsString();
 
         Config.Settings option;
         try {
@@ -27,48 +119,45 @@ public class ConfigCommands {
             return;
         }
 
-        ConfigManager.getConfigInstance().settings.put(option, id);
+        ConfigManager.getConfigInstance().other.put(option, value);
+        ConfigManager.save();
+
+        event.reply(event.getUser().getName() + " has changed the " + setting + " to " + value).setEphemeral(false).queue();
+    }
+
+    public static void editConfigRole(SlashCommandInteractionEvent event) {
+        String setting = event.getOption("role_name").getAsString();
+        String mention  = event.getOption("role").getAsString();
+        String id = mention.replaceAll("\\D+", "");
+
+        Config.Roles option;
+        try {
+            option = Config.Roles.valueOf(setting);
+        } catch (IllegalArgumentException e) {
+            event.reply("Invalid setting: " + setting).setEphemeral(true).queue();
+            return;
+        }
+
+        ConfigManager.getConfigInstance().roles.put(option, id);
         ConfigManager.save();
 
         event.reply(event.getUser().getName() + " has changed the " + setting + " to " + id).setEphemeral(false).queue();
     }
 
-
-    public static void showConfigOptions(SlashCommandInteractionEvent event){
-        String result = ConfigManager.getConfigInstance().settings.entrySet().stream()
-                .filter(entry -> entry.getKey() != Config.Settings.Token)
-                .map(entry -> entry.getKey() + " : " + entry.getValue())
-                .collect(Collectors.joining(System.lineSeparator()));
-        result += "\n";
-
-        result += ConfigManager.getConfigInstance().lvlRoles.entrySet().stream()
-                .map(entry -> entry.getKey() + " : " + entry.getValue())
-                .collect(Collectors.joining(System.lineSeparator()));
-        result += "\n";
-
-        result += "Allowed Channels:\n";
-        result += ConfigManager.getConfigInstance().allowedChannels.entrySet().stream()
-                .filter(entry -> entry.getValue() != null)
-                .map(entry -> entry.getKey() + " : " + entry.getValue())
-                .collect(Collectors.joining(System.lineSeparator()));
-
-        EmbedBuilder embed = new EmbedBuilder()
-                .setTitle("Current Config:")
-                .setDescription(result)
-                .setColor(Color.CYAN)
-                .setFooter("Requested by " + event.getUser().getName(), event.getUser().getEffectiveAvatarUrl())
-                .setTimestamp(java.time.Instant.now());
-
-        event.replyEmbeds(embed.build()).setEphemeral(true).queue();
-    }
-
-    public static void editConfigLvlRoleOption(SlashCommandInteractionEvent event) {
-        String setting = event.getOption("role_name").getAsString();
-        String mention = event.getOption("role").getAsString();
+    public static void editConfigChannel(SlashCommandInteractionEvent event) {
+        String setting = event.getOption("channel_name").getAsString();
+        String mention  = event.getOption("channel").getAsString();
         String id = mention.replaceAll("\\D+", "");
-        Config.LvlRoles option = Config.LvlRoles.valueOf(setting);
 
-        ConfigManager.getConfigInstance().lvlRoles.put(option, id);
+        Config.Channels option;
+        try {
+            option = Config.Channels.valueOf(setting);
+        } catch (IllegalArgumentException e) {
+            event.reply("Invalid setting: " + setting).setEphemeral(true).queue();
+            return;
+        }
+
+        ConfigManager.getConfigInstance().channels.put(option, id);
         ConfigManager.save();
 
         event.reply(event.getUser().getName() + " has changed the " + setting + " to " + id).setEphemeral(false).queue();

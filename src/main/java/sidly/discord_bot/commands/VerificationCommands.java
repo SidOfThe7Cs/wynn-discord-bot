@@ -68,7 +68,7 @@ public class VerificationCommands {
 
             // Send to mod channel
             TextChannel modChannel = event.getGuild().getTextChannelById(
-                    ConfigManager.getSetting(Config.Settings.ModerationChannel)
+                    ConfigManager.getConfigInstance().channels.get(Config.Channels.ModerationChannel)
             );
 
             if (modChannel != null) {
@@ -98,8 +98,8 @@ public class VerificationCommands {
     }
 
     public static void completeVerification(Member member, String username, Guild guild) {
-        Role verifiedRole = guild.getRoleById(ConfigManager.getSetting(Config.Settings.VerifiedRole));
-        String prefix = ConfigManager.getSetting(Config.Settings.YourGuildPrefix);
+        Role verifiedRole = guild.getRoleById(ConfigManager.getConfigInstance().roles.get(Config.Roles.VerifiedRole));
+        String prefix = ConfigManager.getConfigInstance().other.get(Config.Settings.YourGuildPrefix);
 
         if (verifiedRole != null) {
             // Put in the maps first
@@ -116,7 +116,7 @@ public class VerificationCommands {
                 }
 
                 // if they are in your guild set there nickname
-                if (prefix.equals(ConfigManager.getSetting(Config.Settings.YourGuildPrefix))) {
+                if (prefix.equals(ConfigManager.getConfigInstance().other.get(Config.Settings.YourGuildPrefix))) {
                     guild.modifyNickname(member, username).queue(
                             nickSuccess -> guild.retrieveMember(UserSnowflake.fromId(member.getId())).queue(VerificationCommands::updatePlayer)
                     );
@@ -132,7 +132,7 @@ public class VerificationCommands {
 
     public static void updatePlayer(Member member){
         //check if there verified
-        String verifiedRoleId = ConfigManager.getSetting(Config.Settings.VerifiedRole);
+        String verifiedRoleId = ConfigManager.getConfigInstance().roles.get(Config.Roles.VerifiedRole);
         if (!Utils.hasRole(member, verifiedRoleId)){
             System.out.println("user is not verified");
             return;
@@ -150,12 +150,12 @@ public class VerificationCommands {
         Utils.RankList rankOfMember = playerData.getRank();
         // All rank role IDs from config
         Set<String> allRankRoleIds = Stream.of(
-                        ConfigManager.getSetting(Config.Settings.OwnerRole),
-                        ConfigManager.getSetting(Config.Settings.ChiefRole),
-                        ConfigManager.getSetting(Config.Settings.StrategistRole),
-                        ConfigManager.getSetting(Config.Settings.CaptainRole),
-                        ConfigManager.getSetting(Config.Settings.RecruiterRole),
-                        ConfigManager.getSetting(Config.Settings.RecruitRole)
+                        ConfigManager.getConfigInstance().roles.get(Config.Roles.OwnerRole),
+                        ConfigManager.getConfigInstance().roles.get(Config.Roles.ChiefRole),
+                        ConfigManager.getConfigInstance().roles.get(Config.Roles.StrategistRole),
+                        ConfigManager.getConfigInstance().roles.get(Config.Roles.CaptainRole),
+                        ConfigManager.getConfigInstance().roles.get(Config.Roles.RecruiterRole),
+                        ConfigManager.getConfigInstance().roles.get(Config.Roles.RecruitRole)
                 )
                 .filter(id -> id != null && !id.isEmpty())
                 .collect(Collectors.toSet());
@@ -164,12 +164,12 @@ public class VerificationCommands {
         // Determine the correct rank role ID for the member
         String rankRoleId = null;
         switch (rankOfMember) {
-            case Owner -> rankRoleId = ConfigManager.getSetting(Config.Settings.OwnerRole);
-            case Chief -> rankRoleId = ConfigManager.getSetting(Config.Settings.ChiefRole);
-            case Strategist -> rankRoleId = ConfigManager.getSetting(Config.Settings.StrategistRole);
-            case Captain -> rankRoleId = ConfigManager.getSetting(Config.Settings.CaptainRole);
-            case Recruiter -> rankRoleId = ConfigManager.getSetting(Config.Settings.RecruiterRole);
-            case Recruit -> rankRoleId = ConfigManager.getSetting(Config.Settings.RecruitRole);
+            case Owner -> rankRoleId = ConfigManager.getConfigInstance().roles.get(Config.Roles.OwnerRole);
+            case Chief -> rankRoleId = ConfigManager.getConfigInstance().roles.get(Config.Roles.ChiefRole);
+            case Strategist -> rankRoleId = ConfigManager.getConfigInstance().roles.get(Config.Roles.StrategistRole);
+            case Captain -> rankRoleId = ConfigManager.getConfigInstance().roles.get(Config.Roles.CaptainRole);
+            case Recruiter -> rankRoleId = ConfigManager.getConfigInstance().roles.get(Config.Roles.RecruiterRole);
+            case Recruit -> rankRoleId = ConfigManager.getConfigInstance().roles.get(Config.Roles.RecruitRole);
         }
         if (rankRoleId == null || rankRoleId.isEmpty()) {
             sb.append("Failed to get role ID for rank ").append(rankOfMember).append("\n");
@@ -204,22 +204,22 @@ public class VerificationCommands {
         // add their support rank
         // All support rank role IDs from config
         Set<String> allSupportRoleIds = Stream.of(
-                        ConfigManager.getSetting(Config.Settings.VipRole),
-                        ConfigManager.getSetting(Config.Settings.VipPlusRole),
-                        ConfigManager.getSetting(Config.Settings.HeroRole),
-                        ConfigManager.getSetting(Config.Settings.HeroPlusRole),
-                        ConfigManager.getSetting(Config.Settings.ChampionRole)
+                        ConfigManager.getConfigInstance().roles.get(Config.Roles.VipRole),
+                        ConfigManager.getConfigInstance().roles.get(Config.Roles.VipPlusRole),
+                        ConfigManager.getConfigInstance().roles.get(Config.Roles.HeroRole),
+                        ConfigManager.getConfigInstance().roles.get(Config.Roles.HeroPlusRole),
+                        ConfigManager.getConfigInstance().roles.get(Config.Roles.ChampionRole)
                 )
                 .filter(id -> id != null && !id.isEmpty())
                 .collect(Collectors.toSet());
 
         // Determine the correct support role ID for the member
         String supportRoleId = switch (playerData.supportRank.toLowerCase()) {
-            case "vip" -> ConfigManager.getSetting(Config.Settings.VipRole);
-            case "vipplus" -> ConfigManager.getSetting(Config.Settings.VipPlusRole);
-            case "hero" -> ConfigManager.getSetting(Config.Settings.HeroRole);
-            case "heroplus" -> ConfigManager.getSetting(Config.Settings.HeroPlusRole);
-            case "champion" -> ConfigManager.getSetting(Config.Settings.ChampionRole);
+            case "vip" -> ConfigManager.getConfigInstance().roles.get(Config.Roles.VipRole);
+            case "vipplus" -> ConfigManager.getConfigInstance().roles.get(Config.Roles.VipPlusRole);
+            case "hero" -> ConfigManager.getConfigInstance().roles.get(Config.Roles.HeroRole);
+            case "heroplus" -> ConfigManager.getConfigInstance().roles.get(Config.Roles.HeroPlusRole);
+            case "champion" -> ConfigManager.getConfigInstance().roles.get(Config.Roles.ChampionRole);
             default -> null;
         };
         if (supportRoleId == null || supportRoleId.isEmpty()) {
@@ -253,14 +253,14 @@ public class VerificationCommands {
         boolean isOwner = member.getGuild().getOwnerIdLong() == member.getIdLong();
 
         // add / remove the member role and set nickname
-        String memberRoleId = ConfigManager.getSetting(Config.Settings.MemberRole);
+        String memberRoleId = ConfigManager.getConfigInstance().roles.get(Config.Roles.MemberRole);
         if (memberRoleId == null || memberRoleId.isEmpty()) {
             sb.append("No member role ID configured.\n");
         } else {
             Role memberRole = member.getGuild().getRoleById(memberRoleId);
             if (memberRole != null) {
                 boolean hasMemberRole = Utils.hasRole(member, memberRole.getId());
-                if (playerData.guild.prefix.equals(ConfigManager.getSetting(Config.Settings.YourGuildPrefix))){
+                if (playerData.guild.prefix.equals(ConfigManager.getConfigInstance().other.get(Config.Settings.YourGuildPrefix))){
                     // they are in your guild
                     if (!hasMemberRole){
                         changedCounter++;
@@ -284,7 +284,7 @@ public class VerificationCommands {
 
 
         // check for 100% content comp
-        String contentCompletionRoleId = ConfigManager.getSetting(Config.Settings.OneHundredPercentContentCompletionRole);
+        String contentCompletionRoleId = ConfigManager.getConfigInstance().roles.get(Config.Roles.OneHundredPercentContentCompletionRole);
         if (contentCompletionRoleId == null || contentCompletionRoleId.isEmpty()) {
             sb.append("No 100% completion role ID configured.\n");
         } else {
@@ -351,7 +351,7 @@ public class VerificationCommands {
 
         // Send to mod channel
         TextChannel modChannel = member.getGuild().getTextChannelById(
-                ConfigManager.getSetting(Config.Settings.ModerationChannel)
+                ConfigManager.getConfigInstance().channels.get(Config.Channels.ModerationChannel)
         );
         if (modChannel != null && changedCounter > 0) {
             EmbedBuilder modEmbed = new EmbedBuilder()
@@ -368,7 +368,7 @@ public class VerificationCommands {
         ConfigManager.getDatabaseInstance().removeVerification(userId);
 
         // remove verified role
-        Role verifiedRole = event.getGuild().getRoleById(ConfigManager.getSetting(Config.Settings.VerifiedRole));
+        Role verifiedRole = event.getGuild().getRoleById(ConfigManager.getConfigInstance().roles.get(Config.Roles.VerifiedRole));
         event.getGuild().removeRoleFromMember(UserSnowflake.fromId(userId), verifiedRole).queue();
         ConfigManager.save();
 

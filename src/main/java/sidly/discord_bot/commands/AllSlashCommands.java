@@ -15,8 +15,10 @@ import java.util.function.Consumer;
 public enum AllSlashCommands {
     shutdown("shuts down the bot"),
     reloadconfig("reloads the bots config from the file"),
-    editconfigoption("edit a config option"),
-    editconfiglvlroleoption("set the roles for lvls"),
+    editconfigother("edit a config option"),
+    editconfigchannel("edit channels config"),
+    editconfigrole("edit role config"),
+    editconfiglvlrole("set the roles for lvls"),
     getconfigoptions("shows config options"),
     checkforupdates("check if the bot has any updates"),
     getbotversion("gets the current bot version"),
@@ -94,23 +96,24 @@ public enum AllSlashCommands {
             }
         }
         
-        Config.Settings requiredRole = getRequiredRole();
+        Config.Roles requiredRole = getRequiredRole();
         if (requiredRole == null) {
             action.accept(event);
-        } else if (Utils.hasRole(event.getMember(), ConfigManager.getSetting(requiredRole))) {
+        } else if (Utils.hasRole(event.getMember(), ConfigManager.getConfigInstance().roles.get(requiredRole))) {
             action.accept(event);
-        } else if (requiredRole == Config.Settings.RecruitRole ||
-                requiredRole == Config.Settings.RecruiterRole ||
-                requiredRole == Config.Settings.CaptainRole ||
-                requiredRole == Config.Settings.StrategistRole ||
-                requiredRole == Config.Settings.ChiefRole) {
-            if (Utils.hasAtLeastRank(event.getMember(), ConfigManager.getSetting(requiredRole))) {
+        } else if (requiredRole == Config.Roles.RecruitRole ||
+                requiredRole == Config.Roles.RecruiterRole ||
+                requiredRole == Config.Roles.CaptainRole ||
+                requiredRole == Config.Roles.StrategistRole ||
+                requiredRole == Config.Roles.ChiefRole ||
+                requiredRole == Config.Roles.OwnerRole) {
+            if (Utils.hasAtLeastRank(event.getMember(), ConfigManager.getConfigInstance().roles.get(requiredRole))) {
                 action.accept(event);
-            } else event.reply("❌ You don't have permission to use this command.").setEphemeral(true).queue();
+            } else event.reply("❌ You don't have a high enough to use this command.").setEphemeral(true).queue();
         } else event.reply("❌ You don't have permission to use this command.").setEphemeral(true).queue();
     }
 
-    public Config.Settings getRequiredRole() {
+    public Config.Roles getRequiredRole() {
          return ConfigManager.getConfigInstance().roleRequirements.get(this);
     }
 }

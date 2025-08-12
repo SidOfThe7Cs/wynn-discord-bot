@@ -105,7 +105,7 @@ public class PromotionCommands {
         String username = event.getOption("username").getAsString();
 
         PlayerProfile playerData = ApiUtils.getPlayerData(username);
-        GuildInfo guildInfo = ApiUtils.getGuildInfo(ConfigManager.getSetting(Config.Settings.YourGuildPrefix));
+        GuildInfo guildInfo = ApiUtils.getGuildInfo(ConfigManager.getConfigInstance().other.get(Config.Settings.YourGuildPrefix));
         if (playerData == null) return;
 
         EmbedBuilder embed = new EmbedBuilder()

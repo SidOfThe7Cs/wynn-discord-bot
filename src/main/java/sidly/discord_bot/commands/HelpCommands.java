@@ -18,7 +18,7 @@ public class HelpCommands {
             sb.append("**").append(command.name()).append("**").append("\n");
             sb.append(command.getDescription()).append("\n");
             if (command.getRequiredRole() != null) {
-                sb.append("requires <@&").append(ConfigManager.getSetting(command.getRequiredRole())).append(">\n");
+                sb.append("requires <@&").append(ConfigManager.getConfigInstance().roles.get(command.getRequiredRole())).append(">\n");
             }
             if (command.getAction() == null) sb.append("this command currently does nothing\n");
         }

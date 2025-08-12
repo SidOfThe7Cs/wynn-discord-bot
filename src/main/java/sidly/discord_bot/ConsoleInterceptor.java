@@ -34,7 +34,7 @@ public class ConsoleInterceptor extends PrintStream {
     }
 
     private void sendToDiscord(String msg) {
-        String logChannelId = ConfigManager.getSetting(Config.Settings.ConsoleLogChannel);
+        String logChannelId = ConfigManager.getConfigInstance().channels.get(Config.Channels.ConsoleLogChannel);
         TextChannel logChannel = jda.getTextChannelById(logChannelId);
         if (logChannel != null) {
             // Discord has message length limits, so truncate if too long
