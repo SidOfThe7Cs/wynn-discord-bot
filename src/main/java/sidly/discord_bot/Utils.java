@@ -1,7 +1,10 @@
 package sidly.discord_bot;
 
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
+import net.dv8tion.jda.api.entities.channel.Channel;
+import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -90,6 +93,22 @@ public class Utils {
         } catch (Exception e) {
             e.printStackTrace();
             return -1; // Return -1 if parsing failed
+        }
+    }
+
+    public static Role getRoleIdFromGuild(Guild guild, String id){
+        if (id == null || id.isEmpty()){
+            return null;
+        }else{
+            return guild.getRoleById(id);
+        }
+    }
+
+    public static GuildChannel getChannelIdFromGuild(Guild guild, String id){
+        if (id == null || id.isEmpty()){
+            return null;
+        }else{
+            return guild.getGuildChannelById(id);
         }
     }
 }

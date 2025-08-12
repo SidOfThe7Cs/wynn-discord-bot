@@ -17,52 +17,19 @@ public class Config {
         // default values
         other.put(Settings.Token, "");
         other.put(Settings.YourGuildPrefix, "");
+        other.put(Settings.MaxContentCompletion, "1128");
 
-        roles.put(Roles.OwnerRole, "");
-        roles.put(Roles.ChiefRole, "");
-        roles.put(Roles.StrategistRole, "");
-        roles.put(Roles.CaptainRole, "");
-        roles.put(Roles.RecruiterRole, "");
-        roles.put(Roles.RecruitRole, "");
-        roles.put(Roles.VerifiedRole, "");
-        roles.put(Roles.MemberRole, "");
-        roles.put(Roles.ChampionRole, "");
-        roles.put(Roles.HeroPlusRole, "");
-        roles.put(Roles.HeroRole, "");
-        roles.put(Roles.VipPlusRole, "");
-        roles.put(Roles.VipRole, "");
-        roles.put(Roles.OneHundredPercentContentCompletionRole, "");
-        roles.put(Roles.UnVerifiedRole, "");
+        for (Roles role : Roles.values()) {
+            roles.put(role, "");
+        }
 
+        for (Channels channel : Channels.values()) {
+            channels.put(channel, "");
+        }
 
-        channels.put(Channels.ModerationChannel, "");
-        channels.put(Channels.ConsoleLogChannel, "");
-
-
-        lvlRoles.put(LvlRoles.Lvl1Role, "");
-        lvlRoles.put(LvlRoles.Lvl5Role, "");
-        lvlRoles.put(LvlRoles.Lvl10Role, "");
-        lvlRoles.put(LvlRoles.Lvl15Role, "");
-        lvlRoles.put(LvlRoles.Lvl20Role, "");
-        lvlRoles.put(LvlRoles.Lvl25Role, "");
-        lvlRoles.put(LvlRoles.Lvl30Role, "");
-        lvlRoles.put(LvlRoles.Lvl35Role, "");
-        lvlRoles.put(LvlRoles.Lvl40Role, "");
-        lvlRoles.put(LvlRoles.Lvl45Role, "");
-        lvlRoles.put(LvlRoles.Lvl50Role, "");
-        lvlRoles.put(LvlRoles.Lvl55Role, "");
-        lvlRoles.put(LvlRoles.Lvl60Role, "");
-        lvlRoles.put(LvlRoles.Lvl65Role, "");
-        lvlRoles.put(LvlRoles.Lvl70Role, "");
-        lvlRoles.put(LvlRoles.Lvl75Role, "");
-        lvlRoles.put(LvlRoles.Lvl80Role, "");
-        lvlRoles.put(LvlRoles.Lvl85Role, "");
-        lvlRoles.put(LvlRoles.Lvl90Role, "");
-        lvlRoles.put(LvlRoles.Lvl95Role, "");
-        lvlRoles.put(LvlRoles.Lvl100Role, "");
-        lvlRoles.put(LvlRoles.Lvl105Role, "");
-        lvlRoles.put(LvlRoles.Lvl106Role, "");
-
+        for (LvlRoles lvlRole : LvlRoles.values()) {
+            lvlRoles.put(lvlRole, "");
+        }
 
         roleRequirements.put(AllSlashCommands.shutdown, Roles.OwnerRole);
         roleRequirements.put(AllSlashCommands.reloadconfig, Roles.OwnerRole);
@@ -101,16 +68,25 @@ public class Config {
         VipRole,
         OneHundredPercentContentCompletionRole,
         UnVerifiedRole,
+        GuildRaidsRole,
+        GiveawayRole,
+        TrialEcoRole,
+        TrialTankRole,
+        TrialDpsRole,
+        TrialHealerRole,
+        TrialSoloRole,
     }
 
     public enum Channels {
         ModerationChannel,
-        ConsoleLogChannel
+        ConsoleLogChannel,
+        WelcomeChannel
     }
 
     public enum Settings {
         Token,
         YourGuildPrefix,
+        MaxContentCompletion
     }
 
     public enum LvlRoles {

@@ -64,10 +64,9 @@ public enum AllSlashCommands {
     }
 
     public SlashCommandData getBaseCommandData(){
-        SlashCommandData data = Commands.slash(this.name(), this.getDescription())
+        return Commands.slash(this.name(), this.getDescription())
                 .setContexts(InteractionContextType.GUILD)
                 .setIntegrationTypes(IntegrationType.GUILD_INSTALL);
-        return data;
     }
 
     public void run(SlashCommandInteractionEvent event) {

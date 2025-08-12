@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import static net.dv8tion.jda.api.interactions.commands.OptionType.*;
@@ -306,7 +307,12 @@ public class MainEntrypoint extends ListenerAdapter {
 
                         if (fullId.startsWith("verify_confirm_")) {
                             event.reply("Verification approved!").setEphemeral(true).queue();
-                            VerificationCommands.completeVerification(member, username, event.getGuild());
+
+                            // after the private channel opens run the verificationComplete and then when that completes send the user the results
+                            member.getUser().openPrivateChannel().queue(privateChannel -> {
+                                CompletableFuture<String> verificationFuture = VerificationCommands.completeVerification(member, username, event.getGuild());
+                                verificationFuture.thenAccept(result -> privateChannel.sendMessage(result).queue());
+                            });
 
                             event.getMessage().delete().queue();
                         } else {
@@ -413,7 +419,10 @@ public class MainEntrypoint extends ListenerAdapter {
         Guild guild = event.getGuild();
         String unverifiedRoleId = ConfigManager.getConfigInstance().roles.get(Config.Roles.UnVerifiedRole);
 
-        guild.addRoleToMember(member, guild.getRoleById(unverifiedRoleId));
+        Role role = Utils.getRoleIdFromGuild(guild, unverifiedRoleId);
+        if (role != null) {
+            guild.addRoleToMember(member, role).queue();
+        }
     }
 
 

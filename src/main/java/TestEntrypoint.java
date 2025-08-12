@@ -30,6 +30,7 @@ Get current memory usage
 unverified role on join
 
 remove more roles on update and unverified
+mod admin content team role
 
 inactivity
 
