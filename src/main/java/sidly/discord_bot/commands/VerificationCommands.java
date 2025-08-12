@@ -130,10 +130,10 @@ public class VerificationCommands {
     }
 
 
-    public static void updatePlayer(Member member){
+    public static void updatePlayer(Member member) {
         //check if there verified
         String verifiedRoleId = ConfigManager.getConfigInstance().roles.get(Config.Roles.VerifiedRole);
-        if (!Utils.hasRole(member, verifiedRoleId)){
+        if (!Utils.hasRole(member, verifiedRoleId)) {
             System.out.println("user is not verified");
             return;
         }
@@ -146,8 +146,43 @@ public class VerificationCommands {
         sb.append("**").append(member.getAsMention()).append("**\n");
         int changedCounter = 0;
 
+        boolean isOwner = member.getGuild().getOwnerIdLong() == member.getIdLong();
+        // add / remove the member role and set nickname
+        String memberRoleId = ConfigManager.getConfigInstance().roles.get(Config.Roles.MemberRole);
+        if (memberRoleId == null || memberRoleId.isEmpty()) {
+            sb.append("No member role ID configured.\n");
+        } else {
+            Role memberRole = member.getGuild().getRoleById(memberRoleId);
+            if (memberRole != null) {
+                boolean hasMemberRole = Utils.hasRole(member, memberRole.getId());
+                if (playerData.guild.prefix.equals(ConfigManager.getConfigInstance().other.get(Config.Settings.YourGuildPrefix))) {
+                    // they are in your guild
+                    if (!hasMemberRole) {
+                        changedCounter++;
+                        member.getGuild().addRoleToMember(member, memberRole).queue();
+                        sb.append("Added the member role ").append(memberRole.getAsMention()).append('\n');
+                    }
+                    if (!isOwner)
+                        member.modifyNickname(nickname).queue(); // make sure there nick doesnt have a guild tag after it
+                } else {
+                    // in a different guild
+                    if (hasMemberRole) {
+                        changedCounter++;
+                        member.getGuild().removeRoleFromMember(member, memberRole).queue();
+                        sb.append("removed the member role ").append(memberRole.getAsMention()).append('\n');
+                    }
+                    if (!isOwner)
+                        member.getGuild().modifyNickname(member, nickname + "[" + playerData.guild.prefix + "]").queue(); // make sure there nick has a guild tag after it
+                }
+            } else {
+                sb.append("Member role not found in guild for ID: ").append(memberRoleId).append('\n');
+            }
+        }
         // add their in-game guild rank
         Utils.RankList rankOfMember = playerData.getRank();
+        if (playerData.guild.prefix.equals(ConfigManager.getConfigInstance().other.get(Config.Settings.YourGuildPrefix))) {
+            rankOfMember = null;
+        }
         // All rank role IDs from config
         Set<String> allRankRoleIds = Stream.of(
                         ConfigManager.getConfigInstance().roles.get(Config.Roles.OwnerRole),
@@ -170,10 +205,22 @@ public class VerificationCommands {
             case Captain -> rankRoleId = ConfigManager.getConfigInstance().roles.get(Config.Roles.CaptainRole);
             case Recruiter -> rankRoleId = ConfigManager.getConfigInstance().roles.get(Config.Roles.RecruiterRole);
             case Recruit -> rankRoleId = ConfigManager.getConfigInstance().roles.get(Config.Roles.RecruitRole);
+            case null -> {}
         }
-        if (rankRoleId == null || rankRoleId.isEmpty()) {
+        if (rankRoleId == null) {
+            // not in guild remove all rank roles
+            Guild guild = member.getGuild();
+            for (String roleId : allRankRoleIds) {
+                Role roleToRemove = guild.getRoleById(roleId);
+                if (roleToRemove != null) {
+                    guild.removeRoleFromMember(member, roleToRemove).queue();
+                    changedCounter++;
+                    sb.append("Removed rank role ").append(roleToRemove.getAsMention()).append('\n');
+                }
+            }
+        } else if(rankRoleId.isEmpty()){
             sb.append("Failed to get role ID for rank ").append(rankOfMember).append("\n");
-        } else {
+        }else {
             Guild guild = member.getGuild();
             // Remove all other rank roles from member
             for (String roleId : allRankRoleIds) {
@@ -198,7 +245,6 @@ public class VerificationCommands {
                 }
             }
         }
-
 
 
         // add their support rank
@@ -249,37 +295,6 @@ public class VerificationCommands {
                         sb.append("Support rank role not found in guild for ID: ").append(supportRoleId).append('\n');
                     }
                 }
-            }
-        }
-        boolean isOwner = member.getGuild().getOwnerIdLong() == member.getIdLong();
-
-        // add / remove the member role and set nickname
-        String memberRoleId = ConfigManager.getConfigInstance().roles.get(Config.Roles.MemberRole);
-        if (memberRoleId == null || memberRoleId.isEmpty()) {
-            sb.append("No member role ID configured.\n");
-        } else {
-            Role memberRole = member.getGuild().getRoleById(memberRoleId);
-            if (memberRole != null) {
-                boolean hasMemberRole = Utils.hasRole(member, memberRole.getId());
-                if (playerData.guild.prefix.equals(ConfigManager.getConfigInstance().other.get(Config.Settings.YourGuildPrefix))){
-                    // they are in your guild
-                    if (!hasMemberRole){
-                        changedCounter++;
-                        member.getGuild().addRoleToMember(member, memberRole).queue();
-                        sb.append("Added the member role ").append(memberRole.getAsMention()).append('\n');
-                    }
-                    if(!isOwner) member.modifyNickname(nickname).queue(); // make sure there nick doesnt have a guild tag after it
-                }else {
-                    // in a different guild
-                    if (hasMemberRole){
-                        changedCounter++;
-                        member.getGuild().removeRoleFromMember(member, memberRole).queue();
-                        sb.append("removed the member role ").append(memberRole.getAsMention()).append('\n');
-                    }
-                    if(!isOwner) member.getGuild().modifyNickname(member, nickname + "[" + playerData.guild.prefix + "]").queue(); // make sure there nick has a guild tag after it
-                }
-            } else {
-                sb.append("Member role not found in guild for ID: ").append(memberRoleId).append('\n');
             }
         }
 
@@ -346,8 +361,6 @@ public class VerificationCommands {
                 }
             }
         }
-
-
 
 
         // Send to mod channel

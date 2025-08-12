@@ -22,17 +22,17 @@ update all players in your server a couple every 65 seconds
 once all have been updated refresh list from discord (not cache) and repeat
 
 tracked guilds playtime as well as own
+get guild and online players if there online track playtime
 Log there playtime that week
 allow playtime command to specify interval and max
 
-restart command
 Get current memory usage
 
 unverified role on join
 
-when there not in a guild it crashes
 remove more roles on update and unverified
 
 inactivity
 
+make commands defer there messages and edit them when the actually succeed
  */
