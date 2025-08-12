@@ -1,10 +1,7 @@
 package sidly.discord_bot.commands;
 
 import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.Role;
-import net.dv8tion.jda.api.entities.UserSnowflake;
+import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
@@ -390,8 +387,8 @@ public class VerificationCommands {
     }
 
     public static void updateRoles(SlashCommandInteractionEvent event) {
-        String id = event.getOption("user_id").getAsString();
-        event.getGuild().retrieveMemberById(id).queue(member -> {
+        User user = event.getOption("user").getAsUser();
+        event.getGuild().retrieveMemberById(user.getId()).queue(member -> {
             updatePlayer(member);
             event.reply("updated " + member.getAsMention()).setEphemeral(true).queue();
         }, failure -> {

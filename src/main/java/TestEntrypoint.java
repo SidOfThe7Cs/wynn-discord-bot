@@ -17,7 +17,6 @@ public class TestEntrypoint {
 }
 /*
 TODO
-
 update all players in your server a couple every 65 seconds
 once all have been updated refresh list from discord (not cache) and repeat
 
@@ -35,4 +34,6 @@ remove more roles on update and unverified
 inactivity
 
 make commands defer there messages and edit them when the actually succeed
+
+encode message id into button
  */

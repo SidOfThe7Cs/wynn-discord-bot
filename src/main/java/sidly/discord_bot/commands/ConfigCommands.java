@@ -3,10 +3,12 @@ package sidly.discord_bot.commands;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Role;
+import net.dv8tion.jda.api.entities.channel.Channel;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import sidly.discord_bot.Config;
 import sidly.discord_bot.ConfigManager;
+import sidly.discord_bot.Utils;
 
 import java.awt.*;
 
@@ -95,8 +97,8 @@ public class ConfigCommands {
 
     public static void editConfigLvlRoleOption(SlashCommandInteractionEvent event) {
         String setting = event.getOption("role_name").getAsString();
-        String mention = event.getOption("role").getAsString();
-        String id = mention.replaceAll("\\D+", "");
+        Role mention = event.getOption("role").getAsRole();
+        String id = mention.getId();
         Config.LvlRoles option = Config.LvlRoles.valueOf(setting);
 
         ConfigManager.getConfigInstance().lvlRoles.put(option, id);
@@ -130,8 +132,8 @@ public class ConfigCommands {
 
     public static void editConfigRole(SlashCommandInteractionEvent event) {
         String setting = event.getOption("role_name").getAsString();
-        String mention  = event.getOption("role").getAsString();
-        String id = mention.replaceAll("\\D+", "");
+        Role mention  = event.getOption("role").getAsRole();
+        String id = mention.getId();
 
         Config.Roles option;
         try {
@@ -149,8 +151,8 @@ public class ConfigCommands {
 
     public static void editConfigChannel(SlashCommandInteractionEvent event) {
         String setting = event.getOption("channel_name").getAsString();
-        String mention  = event.getOption("channel").getAsString();
-        String id = mention.replaceAll("\\D+", "");
+        Channel mention  = event.getOption("channel").getAsChannel();
+        String id = mention.getId();
 
         Config.Channels option;
         try {

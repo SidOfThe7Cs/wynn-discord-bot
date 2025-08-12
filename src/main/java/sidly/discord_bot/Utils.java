@@ -6,6 +6,7 @@ import net.dv8tion.jda.api.entities.Role;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
 
 public class Utils {
 
@@ -43,6 +44,30 @@ public class Utils {
             }
         }
         return false;
+    }
+
+    public static Config.Roles getRoleEnumFromId(String roleId) {
+        return ConfigManager.getConfigInstance().roles.entrySet().stream()
+                .filter(entry -> roleId.equals(entry.getValue()))
+                .map(Map.Entry::getKey)
+                .findFirst()
+                .orElse(null); // or throw exception if you want
+    }
+
+    public static Config.LvlRoles getLvlRoleEnumFromId(String roleId) {
+        return ConfigManager.getConfigInstance().lvlRoles.entrySet().stream()
+                .filter(entry -> roleId.equals(entry.getValue()))
+                .map(Map.Entry::getKey)
+                .findFirst()
+                .orElse(null); // or throw exception if you want
+    }
+
+    public static Config.Channels getChannelEnumFromId(String channelId) {
+        return ConfigManager.getConfigInstance().channels.entrySet().stream()
+                .filter(entry -> channelId.equals(entry.getValue()))
+                .map(Map.Entry::getKey)
+                .findFirst()
+                .orElse(null); // or throw exception if you want
     }
 
     public enum RankList{

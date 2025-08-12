@@ -3,6 +3,7 @@ package sidly.discord_bot;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.entities.channel.Channel;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
@@ -95,7 +96,7 @@ public class MainEntrypoint extends ListenerAdapter {
                                                 .map(e -> new Command.Choice(e.name(), e.name()))
                                                 .toArray(Command.Choice[]::new)
                                 ),
-                        new OptionData(OptionType.STRING, "role", "The new value for the setting", true).setAutoComplete(true)
+                        new OptionData(ROLE, "role", "The new value for the setting", true)
                 )
         );
         AllSlashCommands.editconfigrole.setAction(ConfigCommands::editConfigRole);
@@ -108,7 +109,7 @@ public class MainEntrypoint extends ListenerAdapter {
                                                 .map(e -> new Command.Choice(e.name(), e.name()))
                                                 .toArray(Command.Choice[]::new)
                                 ),
-                        new OptionData(OptionType.STRING, "channel", "The new value for the setting", true).setAutoComplete(true)
+                        new OptionData(CHANNEL, "channel", "The new value for the setting", true)
                 )
         );
         AllSlashCommands.editconfigchannel.setAction(ConfigCommands::editConfigChannel);
@@ -121,7 +122,7 @@ public class MainEntrypoint extends ListenerAdapter {
                                                 .map(e -> new Command.Choice(e.name(), e.name()))
                                                 .toArray(Command.Choice[]::new)
                                 ),
-                        new OptionData(OptionType.STRING, "role", "The id for the role", true).setAutoComplete(true)
+                        new OptionData(ROLE, "role", "The id for the role", true)
                 )
         );
         AllSlashCommands.editconfiglvlrole.setAction(ConfigCommands::editConfigLvlRoleOption);
@@ -152,12 +153,12 @@ public class MainEntrypoint extends ListenerAdapter {
 
         commands.addCommands(AllSlashCommands.setrolerequirement.getBaseCommandData().addOptions(
                 new OptionData(OptionType.STRING, "command", "Command to add requirement to", true).setAutoComplete(true),
-                new OptionData(OptionType.STRING, "role", "the required role", true).setAutoComplete(true)
+                new OptionData(ROLE, "role", "the required role", true)
         ));
         AllSlashCommands.setrolerequirement.setAction(RoleRequirementCommands::setRoleRequirement);
 
         commands.addCommands(AllSlashCommands.removerolerequirement.getBaseCommandData().addOptions(
-                new OptionData(OptionType.STRING, "command", "what command to remove the requirement from", true).setAutoComplete(true)
+                new OptionData(STRING, "command", "what command to remove the requirement from", true).setAutoComplete(true)
         ));
         AllSlashCommands.removerolerequirement.setAction(RoleRequirementCommands::removeRoleRequirement);
 
@@ -166,14 +167,14 @@ public class MainEntrypoint extends ListenerAdapter {
         AllSlashCommands.removeverification.setAction(VerificationCommands::removeVerification);
 
         commands.addCommands(AllSlashCommands.updateplayerroles.getBaseCommandData()
-                .addOption(STRING, "user_id", "discord id of the member to update", true));
+                .addOption(USER, "user", "user", true));
         AllSlashCommands.updateplayerroles.setAction(VerificationCommands::updateRoles);
 
         commands.addCommands(AllSlashCommands.getratelimitinfo.getBaseCommandData());
         AllSlashCommands.getratelimitinfo.setAction(RateLimitCommands::getRateLimitInfo);
 
         commands.addCommands(AllSlashCommands.addchannelrestriction.getBaseCommandData()
-                .addOption(STRING, "channel_id", "channel id", true)
+                .addOption(CHANNEL, "channel", "channel", true)
                 .addOptions(
                 new OptionData(OptionType.STRING, "allowed", "whitelisted / blacklisted / default", true)
                         .addChoices(
@@ -186,19 +187,19 @@ public class MainEntrypoint extends ListenerAdapter {
 
         commands.addCommands(
                 AllSlashCommands.adddemotionexeption.getBaseCommandData()
-                        .addOption(STRING, "username", "e", true)
+                        .addOption(USER, "user", "e", true)
                         .addOption(INTEGER, "length", "in days")
         );
 
         commands.addCommands(
                 AllSlashCommands.addinactivityexeption.getBaseCommandData()
-                        .addOption(STRING, "username", "e", true)
+                        .addOption(USER, "user", "e", true)
                         .addOption(INTEGER, "length", "in days")
         );
 
         commands.addCommands(
                 AllSlashCommands.addpromotionexeption.getBaseCommandData()
-                        .addOption(STRING, "username", "e", true)
+                        .addOption(USER, "user", "e", true)
                         .addOption(INTEGER, "length", "in days")
         );
 
