@@ -61,8 +61,11 @@ public class ConfigCommands {
         // Other settings
         sb.append("**Other Settings:**\n");
         config.other.forEach((key, value) -> {
-            sb.append(key).append(" : ").append(value).append("\n");
+            if (!key.equals(Config.Settings.Token)) {
+                sb.append(key).append(" : ").append(value).append("\n");
+            }
         });
+
 
         // Send embed
         EmbedBuilder embed = new EmbedBuilder()
