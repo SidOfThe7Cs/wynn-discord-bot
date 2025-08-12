@@ -2,9 +2,11 @@ package sidly.discord_bot;
 
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
-import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
+import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
@@ -18,6 +20,7 @@ import sidly.discord_bot.commands.*;
 import sidly.discord_bot.commands.demotion_promotion.PromotionCommands;
 import sidly.discord_bot.commands.demotion_promotion.RequirementType;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
@@ -80,20 +83,20 @@ public class MainEntrypoint extends ListenerAdapter {
                                                 .map(e -> new Command.Choice(e.name(), e.name()))
                                                 .toArray(Command.Choice[]::new)
                                 ),
-                        new OptionData(OptionType.STRING, "new_value", "The new value for the setting", true)
+                        new OptionData(OptionType.STRING, "role_or_channel", "The new value for the setting", true).setAutoComplete(true)
                 )
         );
         AllSlashCommands.editconfigoption.setAction(ConfigCommands::editConfigOption);
 
         commands.addCommands(AllSlashCommands.editconfiglvlroleoption.getBaseCommandData()
                 .addOptions(
-                        new OptionData(OptionType.STRING, "role", "Choose a role", true)
+                        new OptionData(OptionType.STRING, "role_name", "Choose a role", true)
                                 .addChoices(
                                         Arrays.stream(Config.LvlRoles.values())
                                                 .map(e -> new Command.Choice(e.name(), e.name()))
                                                 .toArray(Command.Choice[]::new)
                                 ),
-                        new OptionData(OptionType.STRING, "role_id", "The id for the role", true)
+                        new OptionData(OptionType.STRING, "role", "The id for the role", true).setAutoComplete(true)
                 )
         );
         AllSlashCommands.editconfiglvlroleoption.setAction(ConfigCommands::editConfigLvlRoleOption);
@@ -329,12 +332,63 @@ public class MainEntrypoint extends ListenerAdapter {
             List<Command.Choice> choices = Arrays.stream(AllSlashCommands.values())
                     .map(Enum::name)
                     .filter(name -> name.toLowerCase().startsWith(userInput.toLowerCase()))
-                    .limit(25)
+                    .limit(10)
                     .map(name -> new Command.Choice(name, name))
                     .collect(Collectors.toList());
 
             event.replyChoices(choices).queue();
         }
+
+        if (event.getFocusedOption().getName().equals("role_or_channel")) {
+            String userInput = event.getFocusedOption().getValue().toLowerCase();
+            List<Command.Choice> choices = new ArrayList<>();
+
+            // Roles
+            for (Role role : event.getGuild().getRoles()) {
+                if (role.getName().toLowerCase().startsWith(userInput)) {
+                    choices.add(new Command.Choice("@" + role.getName(), role.getId()));
+                }
+            }
+
+            // Channels (text/voice only)
+            for (GuildChannel channel : event.getGuild().getChannels()) {
+                if (channel.getType().isMessage() &&
+                        channel.getName().toLowerCase().startsWith(userInput)) {
+                    choices.add(new Command.Choice("#" + channel.getName(), channel.getId()));
+                }
+            }
+
+            // Limit to 10 choices (or 25 max allowed by Discord)
+            event.replyChoices(
+                    choices.stream().limit(10).toList()
+            ).queue();
+        }
+
+        if (event.getFocusedOption().getName().equals("role")) {
+            String userInput = event.getFocusedOption().getValue().toLowerCase();
+            List<Command.Choice> choices = new ArrayList<>();
+
+            for (Role role : event.getGuild().getRoles()) {
+                if (role.getName().toLowerCase().startsWith(userInput)) {
+                    choices.add(new Command.Choice("@" + role.getName(), role.getId()));
+                }
+            }
+
+            event.replyChoices(
+                    choices.stream().limit(10).toList()
+            ).queue();
+        }
+
     }
+
+    @Override
+    public void onGuildMemberJoin(GuildMemberJoinEvent event) {
+        Member member = event.getMember();
+        Guild guild = event.getGuild();
+        String unverifiedRoleId = ConfigManager.getSetting(Config.Settings.UnVerifiedRole);
+
+        guild.addRoleToMember(member, guild.getRoleById(unverifiedRoleId));
+    }
+
 
 }

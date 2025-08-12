@@ -11,7 +11,8 @@ import java.util.stream.Collectors;
 public class ConfigCommands {
     public static void editConfigOption(SlashCommandInteractionEvent event) {
         String setting = event.getOption("setting").getAsString();
-        String newValue = event.getOption("new_value").getAsString();
+        String mention  = event.getOption("role_or_channel").getAsString();
+        String id = mention.replaceAll("\\D+", "");
 
         Config.Settings option;
         try {
@@ -24,14 +25,12 @@ public class ConfigCommands {
         if (option == Config.Settings.Token) {
             event.reply("If this is working the token is already correct and you don't want to change it").setEphemeral(true).queue();
             return;
-        } else {
-            System.out.println(option);
         }
 
-        ConfigManager.getConfigInstance().settings.put(option, newValue);
+        ConfigManager.getConfigInstance().settings.put(option, id);
         ConfigManager.save();
 
-        event.reply(event.getUser().getName() + " has changed the " + setting + " to " + newValue).setEphemeral(false).queue();
+        event.reply(event.getUser().getName() + " has changed the " + setting + " to " + id).setEphemeral(false).queue();
     }
 
 
@@ -64,13 +63,14 @@ public class ConfigCommands {
     }
 
     public static void editConfigLvlRoleOption(SlashCommandInteractionEvent event) {
-        String setting = event.getOption("role").getAsString();
-        String newValue = event.getOption("role_id").getAsString();
+        String setting = event.getOption("role_name").getAsString();
+        String mention = event.getOption("role").getAsString();
+        String id = mention.replaceAll("\\D+", "");
         Config.LvlRoles option = Config.LvlRoles.valueOf(setting);
 
-        ConfigManager.getConfigInstance().lvlRoles.put(option, newValue);
+        ConfigManager.getConfigInstance().lvlRoles.put(option, id);
         ConfigManager.save();
 
-        event.reply(event.getUser().getName() + " has changed the " + setting + " to " + newValue).setEphemeral(false).queue();
+        event.reply(event.getUser().getName() + " has changed the " + setting + " to " + id).setEphemeral(false).queue();
     }
 }

@@ -94,6 +94,7 @@ public class Config {
         VipRole,
         OneHundredPercentContentCompletionRole,
         ModerationChannel,
+        UnVerifiedRole,
         ConsoleLogChannel
     }
 
