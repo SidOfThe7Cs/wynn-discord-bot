@@ -128,6 +128,7 @@ public class PlayerProfile {
         return highestContentCompletion;
     }
     public Utils.RankList getRank(){
+        if (this.guild == null) return null;
         return switch (this.guild.rank) {
             case "OWNER" -> Utils.RankList.Owner;
             case "CHIEF" -> Utils.RankList.Chief;
@@ -135,7 +136,7 @@ public class PlayerProfile {
             case "CAPTAIN" -> Utils.RankList.Captain;
             case "RECRUITER" -> Utils.RankList.Recruiter;
             case "RECRUIT" -> Utils.RankList.Recruit;
-            default -> throw new IllegalStateException("Unexpected value: " + this.guild.rank);
+            default -> null;
         };
     }
 }

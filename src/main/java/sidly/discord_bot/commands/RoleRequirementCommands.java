@@ -4,12 +4,15 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import sidly.discord_bot.Config;
 import sidly.discord_bot.ConfigManager;
 
+import java.util.Map;
+
 public class RoleRequirementCommands {
     public static void setRoleRequirement(SlashCommandInteractionEvent event) {
         AllSlashCommands command = AllSlashCommands.valueOf(event.getOption("command").getAsString());
-        String role = event.getOption("role").getAsString();
+        String mention  = event.getOption("role").getAsString();
+        String id = mention.replaceAll("\\D+", "");
 
-        ConfigManager.getConfigInstance().roleRequirements.put(command, Config.Roles.valueOf(role));
+        ConfigManager.getConfigInstance().roleRequirements.put(command, getRoleEnumFromId(id));
 
         event.reply("success").setEphemeral(true).queue();
     }
@@ -21,4 +24,13 @@ public class RoleRequirementCommands {
 
         event.reply("success").setEphemeral(true).queue();
     }
+
+    public static Config.Roles getRoleEnumFromId(String roleId) {
+        return ConfigManager.getConfigInstance().roles.entrySet().stream()
+                .filter(entry -> roleId.equals(entry.getValue()))
+                .map(Map.Entry::getKey)
+                .findFirst()
+                .orElse(null); // or throw exception if you want
+    }
+
 }

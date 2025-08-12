@@ -152,12 +152,7 @@ public class MainEntrypoint extends ListenerAdapter {
 
         commands.addCommands(AllSlashCommands.setrolerequirement.getBaseCommandData().addOptions(
                 new OptionData(OptionType.STRING, "command", "Command to add requirement to", true).setAutoComplete(true),
-                new OptionData(OptionType.STRING, "role_", "the required role", true)
-                        .addChoices(
-                                Arrays.stream(Config.Settings.values())
-                                        .map(e -> new Command.Choice(e.name(), e.name()))
-                                        .toArray(Command.Choice[]::new)
-                        )
+                new OptionData(OptionType.STRING, "role", "the required role", true).setAutoComplete(true)
         ));
         AllSlashCommands.setrolerequirement.setAction(RoleRequirementCommands::setRoleRequirement);
 
