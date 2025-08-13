@@ -66,6 +66,7 @@ public class GuildCommands {
     public static void showOnlineMembers(SlashCommandInteractionEvent event) {
         GuildInfo guild = ApiUtils.getGuildInfo(event.getOption("guild_prefix").getAsString().toUpperCase());
         GuildInfo.Members members = guild.members;
+        int count = guild.online;
 
         if (members == null) {
             event.reply("Could not find guild members.").setEphemeral(true).queue();
@@ -73,7 +74,7 @@ public class GuildCommands {
         }
 
         EmbedBuilder embed = new EmbedBuilder()
-                .setTitle("Online Guild Members")
+                .setTitle("Online Guild Members: " + count)
                 .setColor(Color.CYAN)
                 .setFooter("Last updated")
                 .setTimestamp(Instant.ofEpochMilli(guild.lastUpdated));

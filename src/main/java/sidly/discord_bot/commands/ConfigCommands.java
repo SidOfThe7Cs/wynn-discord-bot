@@ -131,7 +131,7 @@ public class ConfigCommands {
     }
 
     public static void editConfigRole(SlashCommandInteractionEvent event) {
-        String setting = event.getOption("role_name").getAsString();
+        String setting = event.getOption("config_role").getAsString();
         Role mention  = event.getOption("role").getAsRole();
         String id = mention.getId();
 
