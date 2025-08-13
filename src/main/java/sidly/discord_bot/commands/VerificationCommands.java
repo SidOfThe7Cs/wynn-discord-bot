@@ -143,6 +143,9 @@ public class VerificationCommands {
 
 
     public static String updatePlayer(Member member) {
+        if (member == null){
+            return "member was null updatePlayer()";
+        }
         // check if there verified
         String verifiedRoleId = ConfigManager.getConfigInstance().roles.get(Config.Roles.VerifiedRole);
         if (!Utils.hasRole(member, verifiedRoleId)) {
@@ -182,13 +185,11 @@ public class VerificationCommands {
                     sb.append(removeRolesIfNotMember(member));
                     // make sure there nick has a guild tag after it
                     if (!isOwner) {
-                        String guildPrefix;
                         if (playerData.guild == null){
-                            guildPrefix = "NONE";
+                            member.getGuild().modifyNickname(member, nickname).queue();
                         } else {
-                            guildPrefix = playerData.guild.prefix;
+                            member.getGuild().modifyNickname(member, nickname + " [" + playerData.guild.prefix + "]").queue();
                         }
-                        member.getGuild().modifyNickname(member, nickname + " [" + guildPrefix + "]").queue();
                     }
                 }
             } else {
@@ -296,14 +297,18 @@ public class VerificationCommands {
         TextChannel modChannel = member.getGuild().getTextChannelById(
                 ConfigManager.getConfigInstance().channels.get(Config.Channels.ModerationChannel)
         );
-        if (modChannel != null && !sb.toString().isEmpty()) {
+
+        String text = sb.toString();
+        long lineBreakCount = text.chars().filter(ch -> ch == '\n').count();
+
+        if (modChannel != null && lineBreakCount > 1) {
             EmbedBuilder modEmbed = new EmbedBuilder()
                     .setColor(Color.ORANGE)
-                    .setDescription(sb.toString());
+                    .setDescription(text);
 
             modChannel.sendMessageEmbeds(modEmbed.build()).queue();
         }
-        return sb.toString();
+        return text;
     }
 
     public static void removeVerification(SlashCommandInteractionEvent event) {

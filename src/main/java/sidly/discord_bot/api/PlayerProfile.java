@@ -6,8 +6,6 @@ import java.util.List;
 import java.util.Map;
 
 public class PlayerProfile {
-    public long lastUpdated;
-
     public String username;
     public boolean online;
     public String server;
@@ -105,10 +103,6 @@ public class PlayerProfile {
     public static class Profession {
         public int level;
         public int xpPercent;
-    }
-
-    public void update(){
-        lastUpdated = System.currentTimeMillis();
     }
 
     public int getHighestLevel(){

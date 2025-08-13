@@ -2,6 +2,7 @@ package sidly.discord_bot;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import sidly.discord_bot.database.Database;
 
 import java.io.File;
 import java.io.FileReader;

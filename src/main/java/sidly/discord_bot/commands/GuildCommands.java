@@ -2,6 +2,7 @@ package sidly.discord_bot.commands;
 
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import sidly.discord_bot.Utils;
 import sidly.discord_bot.api.ApiUtils;
 import sidly.discord_bot.api.GuildInfo;
 
@@ -57,8 +58,7 @@ public class GuildCommands {
                 .setTitle("Guild XP Leaderboard")
                 .setDescription(leaderboard.toString())
                 .setColor(Color.CYAN)
-                .setFooter("Last updated")
-                .setTimestamp(Instant.ofEpochMilli(guild.lastUpdated));
+                .setFooter("Last updated");
 
         event.replyEmbeds(embed.build()).setEphemeral(true).queue();
     }
@@ -76,8 +76,7 @@ public class GuildCommands {
         EmbedBuilder embed = new EmbedBuilder()
                 .setTitle("Online Members in " + guild.name + " [" + guild.prefix + "]" + "\n" + count + "/" + guild.members.total)
                 .setColor(Color.CYAN)
-                .setFooter("Last updated")
-                .setTimestamp(Instant.ofEpochMilli(guild.lastUpdated));
+                .setFooter("Last updated");
 
 
 
@@ -96,7 +95,7 @@ public class GuildCommands {
         if (map == null || map.isEmpty()) return "_None_";
         return map.values().stream()
                 .filter(member -> member.online)
-                .map(member -> member.username)
+                .map(member -> Utils.escapeDiscordMarkdown(member.username))
                 .sorted()
                 .collect(Collectors.joining("\n"));
     }

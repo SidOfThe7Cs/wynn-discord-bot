@@ -6,8 +6,6 @@ import java.util.List;
 import java.util.Map;
 
 public class GuildInfo {
-    public long lastUpdated;
-
     public String uuid;
     public String name;
     public String prefix;
@@ -78,9 +76,5 @@ public class GuildInfo {
     public static class SeasonRank {
         public int rating;
         public int finalTerritories;
-    }
-
-    public void update(){
-        lastUpdated = System.currentTimeMillis();
     }
 }

@@ -146,4 +146,12 @@ public class Utils {
             return guild.getGuildChannelById(id);
         }
     }
+
+    public static String escapeDiscordMarkdown(String input) {
+        if (input == null) return null;
+        // Characters to escape in Discord Markdown
+        String specialChars = "[*_~`>|]";
+        return input.replaceAll("([" + specialChars + "])", "\\\\$1");
+    }
+
 }

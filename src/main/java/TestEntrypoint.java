@@ -17,8 +17,6 @@ public class TestEntrypoint {
 }
 /*
 TODO
-update all players in your server a couple every 65 seconds
-once all have been updated refresh list from discord (not cache) and repeat
 
 tracked guilds playtime as well as own
 get guild and online players if there online track playtime
@@ -30,4 +28,8 @@ Get current memory usage
 mod admin content team role
 
 inactivity
+
+Get the time till rate limit refresh and then get the rate limit remaining and sutract 20 from it then send that many playersaya requests as quickly as possible
+If its been over 7 days log there playtime
+
  */

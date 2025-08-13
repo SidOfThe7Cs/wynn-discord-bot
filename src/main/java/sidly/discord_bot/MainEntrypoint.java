@@ -15,9 +15,12 @@ import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction;
+import net.dv8tion.jda.api.utils.MemberCachePolicy;
+import net.dv8tion.jda.api.utils.cache.CacheFlag;
 import sidly.discord_bot.commands.*;
 import sidly.discord_bot.commands.demotion_promotion.PromotionCommands;
 import sidly.discord_bot.commands.demotion_promotion.RequirementType;
+import sidly.discord_bot.timed_actions.UpdatePlayers;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,6 +39,7 @@ public class MainEntrypoint extends ListenerAdapter {
         shuttingDown = true;
 
         System.out.println("Shutting down");
+        UpdatePlayers.shutdown();
         ConfigManager.save();
         System.exit(0);
     }
@@ -46,7 +50,7 @@ public class MainEntrypoint extends ListenerAdapter {
 
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
 
         Runtime.getRuntime().addShutdownHook(new Thread(MainEntrypoint::shutdown));
 
@@ -59,6 +63,8 @@ public class MainEntrypoint extends ListenerAdapter {
 
         JDA jda = JDABuilder.createLight(token, EnumSet.noneOf(GatewayIntent.class))
                 .addEventListeners(new MainEntrypoint())
+                .enableIntents(GatewayIntent.GUILD_MEMBERS)
+                .setMemberCachePolicy(MemberCachePolicy.ALL)
                 .build();
 
         System.setErr(new ConsoleInterceptor(System.err, jda));
@@ -83,7 +89,7 @@ public class MainEntrypoint extends ListenerAdapter {
                                                 .map(e -> new Command.Choice(e.name(), e.name()))
                                                 .toArray(Command.Choice[]::new)
                                 ),
-                        new OptionData(OptionType.STRING, "setting_other", "The new value for the setting", true).setAutoComplete(true)
+                        new OptionData(OptionType.STRING, "setting_other", "The new value for the setting", true)
                 )
         );
         AllSlashCommands.editconfigother.setAction(ConfigCommands::editConfigSettingOther);
@@ -262,6 +268,10 @@ public class MainEntrypoint extends ListenerAdapter {
 
         // Send the new set of commands to discord, this will override any existing global commands with the new set provided here
         commands.queue();
+
+        jda.awaitReady();
+
+        UpdatePlayers.init(jda);
     }
 
 

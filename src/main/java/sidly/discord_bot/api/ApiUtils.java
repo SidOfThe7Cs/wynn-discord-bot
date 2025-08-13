@@ -4,12 +4,16 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import sidly.discord_bot.ConfigManager;
+import sidly.discord_bot.database.PlayerDataShortened;
+import sidly.discord_bot.database.PlaytimeHistoryList;
+
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -53,12 +57,14 @@ public class ApiUtils {
 
             Type type = new TypeToken<PlayerProfile>(){}.getType();
             PlayerProfile apiData = gson.fromJson(response.body(), type);
-            apiData.update();
 
-            if (apiData == null) {
-                System.err.println("player profile was null");
-                return null;
+            PlayerDataShortened playerDataShort = new PlayerDataShortened(apiData);
+            ConfigManager.getDatabaseInstance().allPlayers.put(apiData.username, playerDataShort);
+            Map<String, PlaytimeHistoryList> playtimeHistoryMap = ConfigManager.getDatabaseInstance().playtimeHistory;
+            if (playtimeHistoryMap.get(apiData.username) == null){
+                playtimeHistoryMap.put(apiData.username, new PlaytimeHistoryList());
             }
+            playtimeHistoryMap.get(apiData.username).addPlaytimeIfNeeded(playerDataShort);
 
             return apiData;
 
@@ -87,7 +93,6 @@ public class ApiUtils {
 
             Type type = new TypeToken<GuildInfo>(){}.getType();
             GuildInfo apiData = gson.fromJson(response.body(), type);
-            apiData.update();
 
             return apiData;
 

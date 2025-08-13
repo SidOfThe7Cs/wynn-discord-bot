@@ -90,7 +90,8 @@ public class Config {
     public enum Settings {
         Token,
         YourGuildPrefix,
-        MaxContentCompletion
+        MaxContentCompletion,
+        YourDiscordServerId
     }
 
     public enum LvlRoles {
