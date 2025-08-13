@@ -158,7 +158,10 @@ public class VerificationCommands {
         int changedCounter = 0;
 
         boolean isOwner = member.getGuild().getOwnerIdLong() == member.getIdLong();
-        boolean isMember = playerData.guild.prefix.equals(ConfigManager.getConfigInstance().other.get(Config.Settings.YourGuildPrefix));
+        boolean isMember;
+        if (playerData.guild == null){
+            isMember = false;
+        } else isMember = playerData.guild.prefix.equals(ConfigManager.getConfigInstance().other.get(Config.Settings.YourGuildPrefix));
         // add / remove the member role and set nickname
         String memberRoleId = ConfigManager.getConfigInstance().roles.get(Config.Roles.MemberRole);
         if (memberRoleId == null || memberRoleId.isEmpty()) {
