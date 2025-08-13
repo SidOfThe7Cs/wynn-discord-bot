@@ -1,5 +1,6 @@
 package sidly.discord_bot.database;
 
+import sidly.discord_bot.ConfigManager;
 import sidly.discord_bot.Utils;
 
 import java.util.ArrayList;
@@ -21,6 +22,7 @@ public class PlaytimeHistoryList {
         } else if (playtimeHistory.getLast().timeLogged + SIX_AND_A_HALF_DAYS_IN_MILLIS <= playerData.lastModified){
             playtimeHistory.add(new PlaytimeHistoryEntry(playerData.latestPlaytime));
         }
+        ConfigManager.save();
     }
 
     public PlaytimeHistoryList() {

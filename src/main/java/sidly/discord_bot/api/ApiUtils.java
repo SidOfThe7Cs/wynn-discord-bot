@@ -92,7 +92,6 @@ public class ApiUtils {
             Gson gson = new GsonBuilder().create();
 
             Type type = new TypeToken<GuildInfo>(){}.getType();
-            System.out.println(response.body());
             GuildInfo apiData = gson.fromJson(response.body(), type);
 
             return apiData;

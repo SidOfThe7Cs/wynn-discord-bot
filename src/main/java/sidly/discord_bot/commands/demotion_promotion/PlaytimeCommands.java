@@ -24,7 +24,7 @@ public class PlaytimeCommands {
             PlaytimeHistoryList playtimeHistoryList = playtimeHistory.get(entry.getValue().username);
             if (playtimeHistoryList != null) {
                 sb.append(entry.getValue().username).append(" ");
-                sb.append(playtimeHistoryList.getPlaytimeHistory());
+                sb.append(playtimeHistoryList.getPlaytimeHistory()).append("\n");
             }
         }
 
