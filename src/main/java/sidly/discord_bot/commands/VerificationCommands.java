@@ -407,9 +407,13 @@ public class VerificationCommands {
         for (String roleId : allIds) {
             if (!roleId.equals(idToKeep) && Utils.hasRole(member, roleId)) {
                 Role roleToRemove = Utils.getRoleFromGuild(guild, roleId);
-                if (roleToRemove != null && Utils.hasRole(member, roleId)) {
-                    guild.removeRoleFromMember(member, roleToRemove).queue();
-                    sb.append("Removed role ").append(roleToRemove.getAsMention()).append('\n');
+                if (roleToRemove != null) {
+                    if (Utils.hasRole(member, roleId)) {
+                        guild.removeRoleFromMember(member, roleToRemove).queue();
+                        sb.append("Removed role ").append(roleToRemove.getAsMention()).append('\n');
+                    }
+                } else {
+                    sb.append("Role not found in guild for ID: ").append(idToKeep).append('\n');
                 }
             }
         }
@@ -417,9 +421,11 @@ public class VerificationCommands {
         if (idToKeep != null) {
             if (!Utils.hasRole(member, idToKeep)) {
                 Role rankRole = Utils.getRoleFromGuild(guild, idToKeep);
-                if (rankRole != null && !Utils.hasRole(member, idToKeep)) {
-                    guild.addRoleToMember(member, rankRole).queue();
-                    sb.append("Added the role ").append(rankRole.getAsMention()).append('\n');
+                if (rankRole != null) {
+                    if (!Utils.hasRole(member, idToKeep)){
+                        guild.addRoleToMember(member, rankRole).queue();
+                        sb.append("Added the role ").append(rankRole.getAsMention()).append('\n');
+                    }
                 } else {
                     sb.append("Role not found in guild for ID: ").append(idToKeep).append('\n');
                 }

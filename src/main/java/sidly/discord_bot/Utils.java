@@ -76,9 +76,11 @@ public class Utils {
         StringBuilder sb = new StringBuilder();
         Guild guild = member.getGuild();
         Role roleToAdd = getRoleFromGuild(guild, roleId);
-        if (roleToAdd != null && !Utils.hasRole(member, roleId)) {
-            guild.addRoleToMember(member, roleToAdd).queue();
-            sb.append("Added role ").append(roleToAdd.getAsMention()).append('\n');
+        if (roleToAdd != null) {
+            if (!Utils.hasRole(member, roleId)) {
+                guild.addRoleToMember(member, roleToAdd).queue();
+                sb.append("Added role ").append(roleToAdd.getAsMention()).append('\n');
+            }
         } else sb.append("failed to get role for ").append(roleId).append('\n');
         return sb.toString();
     }
@@ -92,9 +94,11 @@ public class Utils {
         StringBuilder sb = new StringBuilder();
         Guild guild = member.getGuild();
         Role roleToRemove = getRoleFromGuild(guild, roleId);
-        if (roleToRemove != null && Utils.hasRole(member, roleId)) {
-            guild.removeRoleFromMember(member, roleToRemove).queue();
-            sb.append("Removed role ").append(roleToRemove.getAsMention()).append('\n');
+        if (roleToRemove != null) {
+            if (Utils.hasRole(member, roleId)) {
+                guild.removeRoleFromMember(member, roleToRemove).queue();
+                sb.append("Removed role ").append(roleToRemove.getAsMention()).append('\n');
+            }
         } else sb.append("failed to get role for ").append(roleId).append('\n');
         return sb.toString();
     }
