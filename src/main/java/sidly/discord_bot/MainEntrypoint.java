@@ -18,6 +18,7 @@ import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction;
 import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
 import sidly.discord_bot.commands.*;
+import sidly.discord_bot.commands.demotion_promotion.PlaytimeCommands;
 import sidly.discord_bot.commands.demotion_promotion.PromotionCommands;
 import sidly.discord_bot.commands.demotion_promotion.RequirementType;
 import sidly.discord_bot.timed_actions.UpdatePlayers;
@@ -185,6 +186,10 @@ public class MainEntrypoint extends ListenerAdapter {
                         )
         ));
         AllSlashCommands.addchannelrestriction.setAction(ChannelRestrinctionCommands::addRestriction);
+
+        commands.addCommands(AllSlashCommands.getallplayersaverageplaytime.getBaseCommandData()
+                .addOption(INTEGER, "weeks", "average over the last number of week", true));
+        AllSlashCommands.getallplayersaverageplaytime.setAction(PlaytimeCommands::getAllPlayersPlaytime);
 
         commands.addCommands(
                 AllSlashCommands.adddemotionexeption.getBaseCommandData()

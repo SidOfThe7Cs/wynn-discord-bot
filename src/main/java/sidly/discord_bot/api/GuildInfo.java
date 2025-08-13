@@ -2,8 +2,10 @@ package sidly.discord_bot.api;
 
 import sidly.discord_bot.Utils;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiConsumer;
 
 public class GuildInfo {
     public String uuid;
@@ -50,6 +52,19 @@ public class GuildInfo {
                 case Recruit -> recruit.get(uuid);
             };
         }
+        public Map<String, MemberInfo> getAllMembers() {
+            Map<String, MemberInfo> combined = new HashMap<>();
+
+            combined.putAll(owner);
+            combined.putAll(chief);
+            combined.putAll(strategist);
+            combined.putAll(captain);
+            combined.putAll(recruiter);
+            combined.putAll(recruit);
+
+            return combined;
+        }
+
     }
 
     public static class MemberInfo {

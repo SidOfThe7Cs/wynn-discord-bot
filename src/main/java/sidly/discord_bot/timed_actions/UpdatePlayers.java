@@ -61,7 +61,7 @@ public class UpdatePlayers {
             public void run() {
                 updateNext();
             }
-        },  10 * 1000, 90 * 1000); // 90 seconds
+        },  10 * 1000, 17 * 1000); // 90 seconds
     }
 
     public static void shutdown() {

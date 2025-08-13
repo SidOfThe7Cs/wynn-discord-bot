@@ -1,17 +1,18 @@
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import sidly.discord_bot.api.GuildInfo;
 import sidly.discord_bot.api.ApiUtils;
+import sidly.discord_bot.api.GuildName;
 
 import java.io.IOException;
+import java.util.Map;
 
 public class TestEntrypoint {
 
     public static void main(String[] args) throws IOException {
-        GuildInfo testApiResponce = ApiUtils.getGuildInfo("HOC");
+        Map<String, GuildName> testApiResponce = ApiUtils.getAllGuildsList();
 
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        System.out.println(gson.toJson(testApiResponce));
+        System.out.println("there are a total of: " + testApiResponce.entrySet().size() + " guilds");
 
     }
 }
@@ -19,17 +20,13 @@ public class TestEntrypoint {
 TODO
 
 tracked guilds playtime as well as own
-get guild and online players if there online track playtime
-Log there playtime that week
 allow playtime command to specify interval and max
 
 Get current memory usage
 
-mod admin content team role
-
 inactivity
 
 Get the time till rate limit refresh and then get the rate limit remaining and sutract 20 from it then send that many playersaya requests as quickly as possible
-If its been over 7 days log there playtime
+tracked guild show average players online and avg captains+
 
  */

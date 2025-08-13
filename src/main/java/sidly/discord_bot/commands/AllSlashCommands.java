@@ -31,6 +31,7 @@ public enum AllSlashCommands {
     removeverification("remove a verification from a user"),
     updateplayerroles("update the roles of a player"),
     getratelimitinfo("get the rate limit info"),
+    getallplayersaverageplaytime("e"),
     addchannelrestriction("if any channels are whitelisted only whitelisted channels will allow commands"),
     adddemotionexeption("adds a player to be excluded from demotion checks, default length is forever"),
     addinactivityexeption("adds a custom inactivity threshold for a player, default length is forever"),

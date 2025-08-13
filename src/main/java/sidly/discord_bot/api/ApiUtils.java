@@ -92,7 +92,36 @@ public class ApiUtils {
             Gson gson = new GsonBuilder().create();
 
             Type type = new TypeToken<GuildInfo>(){}.getType();
+            System.out.println(response.body());
             GuildInfo apiData = gson.fromJson(response.body(), type);
+
+            return apiData;
+
+        } catch (IOException e) {
+            System.err.println("IOException");
+            throw new RuntimeException(e);
+        } catch (InterruptedException e) {
+            System.err.println("InterruptedException");
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static Map<String, GuildName> getAllGuildsList() {
+        try {
+            HttpClient client = HttpClient.newHttpClient();
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("https://api.wynncraft.com/v3/guild/list/guild"))
+                    .GET()
+                    .build();
+
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            parseRateLimit(response);
+
+            // Parse response with Gson
+            Gson gson = new GsonBuilder().create();
+
+            Type type = new TypeToken<Map<String, GuildName>>(){}.getType();
+            Map<String, GuildName> apiData = gson.fromJson(response.body(), type);
 
             return apiData;
 
@@ -112,9 +141,15 @@ public class ApiUtils {
         String reset     = headers.getOrDefault("ratelimit-reset", List.of("unknown")).getFirst();
         String limit     = headers.getOrDefault("ratelimit-limit", List.of("unknown")).getFirst();
 
-        rateLimitRemaining = Integer.parseInt(remaining);
-        rateLimitSecondsTillReset = Integer.parseInt(reset);
-        rateLimitMax = Integer.parseInt(limit);
+        if (!remaining.equals("unknown")) {
+            rateLimitRemaining = Integer.parseInt(remaining);
+        }
+        if (!reset.equals("unknown")) {
+            rateLimitSecondsTillReset = Integer.parseInt(reset);
+        }
+        if (!limit.equals("unknown")) {
+            rateLimitMax = Integer.parseInt(limit);
+        }
         lastRateLimitUpdate = System.currentTimeMillis();
     }
 }
