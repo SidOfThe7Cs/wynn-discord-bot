@@ -183,8 +183,15 @@ public class VerificationCommands {
                     // in a different guild
                     sb.append(removeRolesIfNotMember(member));
                     // make sure there nick has a guild tag after it
-                    if (!isOwner)
-                        member.getGuild().modifyNickname(member, nickname + "[" + playerData.guild.prefix + "]").queue();
+                    if (!isOwner) {
+                        String guildPrefix;
+                        if (playerData.guild == null){
+                            guildPrefix = "no guild";
+                        } else {
+                            guildPrefix = playerData.guild.prefix;
+                        }
+                        member.getGuild().modifyNickname(member, nickname + "[" + guildPrefix + "]").queue();
+                    }
                 }
             } else {
                 sb.append("Member role not found in guild for ID: ").append(memberRoleId).append('\n');
