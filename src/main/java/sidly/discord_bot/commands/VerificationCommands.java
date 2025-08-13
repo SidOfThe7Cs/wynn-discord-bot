@@ -132,7 +132,7 @@ public class VerificationCommands {
 
             String newNick = prefix.equals(ConfigManager.getConfigInstance().other.get(Config.Settings.YourGuildPrefix))
                     ? username // if in your guild
-                    : username + "[" + prefix + "]"; // if different guild
+                    : username + " [" + prefix + "]"; // if different guild
             guild.modifyNickname(member, newNick).queue(nickSuccess -> runUpdate.run());
         });
 
@@ -149,13 +149,12 @@ public class VerificationCommands {
             return member.getAsMention() + " is not verified";
         }
 
-        String nickname = member.getEffectiveName().split("\\[")[0];
+        String nickname = member.getEffectiveName().split("\\[")[0].trim();
         PlayerProfile playerData = ApiUtils.getPlayerData(nickname);
         if (playerData == null) return "api failed";
 
         StringBuilder sb = new StringBuilder();
         sb.append("**Updates Roles For** ").append(member.getAsMention()).append("\n");
-        int changedCounter = 0;
 
         boolean isOwner = member.getGuild().getOwnerIdLong() == member.getIdLong();
         boolean isMember;
@@ -173,7 +172,6 @@ public class VerificationCommands {
                 if (isMember) {
                     // they are in your guild
                     if (!hasMemberRole) {
-                        changedCounter++;
                         member.getGuild().addRoleToMember(member, memberRole).queue();
                         sb.append("Added the member role ").append(memberRole.getAsMention()).append('\n');
                     }
@@ -186,11 +184,11 @@ public class VerificationCommands {
                     if (!isOwner) {
                         String guildPrefix;
                         if (playerData.guild == null){
-                            guildPrefix = "no guild";
+                            guildPrefix = "NONE";
                         } else {
                             guildPrefix = playerData.guild.prefix;
                         }
-                        member.getGuild().modifyNickname(member, nickname + "[" + guildPrefix + "]").queue();
+                        member.getGuild().modifyNickname(member, nickname + " [" + guildPrefix + "]").queue();
                     }
                 }
             } else {
@@ -252,7 +250,6 @@ public class VerificationCommands {
                 if (playerData.getHighestContentCompletion() >= MAX_CONTENT_COMPLETION) {
                     if (!Utils.hasRole(member, OneHundredPercentContentCompletionRole.getId())) {
                         member.getGuild().addRoleToMember(member, OneHundredPercentContentCompletionRole).queue();
-                        changedCounter++;
                         sb.append("Added the 100% completion role ").append(OneHundredPercentContentCompletionRole.getAsMention()).append('\n');
                     }
                 }
@@ -299,7 +296,7 @@ public class VerificationCommands {
         TextChannel modChannel = member.getGuild().getTextChannelById(
                 ConfigManager.getConfigInstance().channels.get(Config.Channels.ModerationChannel)
         );
-        if (modChannel != null && changedCounter > 0) {
+        if (modChannel != null && !sb.toString().isEmpty()) {
             EmbedBuilder modEmbed = new EmbedBuilder()
                     .setColor(Color.ORANGE)
                     .setDescription(sb.toString());

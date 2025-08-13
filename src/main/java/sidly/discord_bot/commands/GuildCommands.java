@@ -74,7 +74,7 @@ public class GuildCommands {
         }
 
         EmbedBuilder embed = new EmbedBuilder()
-                .setTitle("Online Guild Members: " + count)
+                .setTitle("Online Members in " + guild.name + " [" + guild.prefix + "]" + "\n" + count + "/" + guild.members.total)
                 .setColor(Color.CYAN)
                 .setFooter("Last updated")
                 .setTimestamp(Instant.ofEpochMilli(guild.lastUpdated));

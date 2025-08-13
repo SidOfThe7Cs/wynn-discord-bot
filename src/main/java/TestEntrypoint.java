@@ -30,6 +30,4 @@ Get current memory usage
 mod admin content team role
 
 inactivity
-
-online count
  */
