@@ -83,14 +83,14 @@ public class ConfigCommands {
     // Helper for roles
     private static String mentionRole(Guild guild, String roleId) {
         if (roleId == null || roleId.isEmpty()) return "None";
-        Role role = Utils.getRoleIdFromGuild(guild, roleId);
+        Role role = Utils.getRoleFromGuild(guild, roleId);
         return role != null ? role.getAsMention() : roleId;
     }
 
     // Helper for channels
     private static String mentionChannel(Guild guild, String channelId) {
         if (channelId == null || channelId.isEmpty()) return null;
-        GuildChannel channel = Utils.getChannelIdFromGuild(guild, channelId);
+        GuildChannel channel = Utils.getChannelFromGuild(guild, channelId);
         return channel != null ? channel.getAsMention() : channelId;
     }
 

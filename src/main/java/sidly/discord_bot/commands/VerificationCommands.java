@@ -4,7 +4,6 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
-import net.dv8tion.jda.api.interactions.InteractionHook;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import sidly.discord_bot.Config;
 import sidly.discord_bot.ConfigManager;
@@ -16,7 +15,6 @@ import java.awt.Color;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -108,7 +106,7 @@ public class VerificationCommands {
 
     public static CompletableFuture<String> completeVerification(Member member, String username, Guild guild) {
         CompletableFuture<String> future = new CompletableFuture<>();
-        Role verifiedRole = Utils.getRoleIdFromGuild(guild, ConfigManager.getConfigInstance().roles.get(Config.Roles.VerifiedRole));
+        Role verifiedRole = Utils.getRoleFromGuild(guild, ConfigManager.getConfigInstance().roles.get(Config.Roles.VerifiedRole));
         String prefix = ConfigManager.getConfigInstance().other.get(Config.Settings.YourGuildPrefix);
 
         if (verifiedRole == null) {
@@ -166,7 +164,7 @@ public class VerificationCommands {
         if (memberRoleId == null || memberRoleId.isEmpty()) {
             sb.append("No member role ID configured.\n");
         } else {
-            Role memberRole = Utils.getRoleIdFromGuild(member.getGuild(), memberRoleId);
+            Role memberRole = Utils.getRoleFromGuild(member.getGuild(), memberRoleId);
             if (memberRole != null) {
                 boolean hasMemberRole = Utils.hasRole(member, memberRole.getId());
                 if (isMember) {
@@ -182,7 +180,8 @@ public class VerificationCommands {
                     // in a different guild
                     sb.append(removeRolesIfNotMember(member));
                     // make sure there nick has a guild tag after it
-                    if (!isOwner) member.getGuild().modifyNickname(member, nickname + "[" + playerData.guild.prefix + "]").queue();
+                    if (!isOwner)
+                        member.getGuild().modifyNickname(member, nickname + "[" + playerData.guild.prefix + "]").queue();
                 }
             } else {
                 sb.append("Member role not found in guild for ID: ").append(memberRoleId).append('\n');
@@ -226,7 +225,7 @@ public class VerificationCommands {
                 default -> null;
             };
         }
-        if(supportRoleId != null && supportRoleId.isEmpty()){
+        if (supportRoleId != null && supportRoleId.isEmpty()) {
             sb.append("Failed to get role ID for support rank ").append(playerData.supportRank).append("\n"); // unset in config
         }
         sb.append(removeSupportRankRolesExcept(member, supportRoleId));
@@ -238,7 +237,7 @@ public class VerificationCommands {
         if (contentCompletionRoleId == null || contentCompletionRoleId.isEmpty()) {
             sb.append("No 100% completion role ID configured.\n");
         } else {
-            Role OneHundredPercentContentCompletionRole = Utils.getRoleIdFromGuild(member.getGuild(), contentCompletionRoleId);
+            Role OneHundredPercentContentCompletionRole = Utils.getRoleFromGuild(member.getGuild(), contentCompletionRoleId);
             if (OneHundredPercentContentCompletionRole != null) {
                 if (playerData.getHighestContentCompletion() >= MAX_CONTENT_COMPLETION) {
                     if (!Utils.hasRole(member, OneHundredPercentContentCompletionRole.getId())) {
@@ -264,11 +263,27 @@ public class VerificationCommands {
             matchedRole = Config.LvlRoles.valueOf(enumName);
         }
         String lvlRoleId = ConfigManager.getConfigInstance().lvlRoles.get(matchedRole);
-        if(lvlRoleId != null && lvlRoleId.isEmpty()){
+        if (lvlRoleId != null && lvlRoleId.isEmpty()) {
             sb.append("Failed to get role ID for lvl role ").append(lvlRoleId).append("\n"); // unset in config
         }
         sb.append(removeLvlRolesExcept(member, lvlRoleId));
 
+
+        // their wynncraft server rank so admin/content team
+        String wynnRankRoleId = switch (playerData.rank) {
+            case "Administrator", "WebDev"-> ConfigManager.getConfigInstance().roles.get(Config.Roles.WynnAdminRole);
+            case "Music", "Hybrid", "Game Master" -> ConfigManager.getConfigInstance().roles.get(Config.Roles.WynnContentTeamRole);
+            case "Moderator" -> ConfigManager.getConfigInstance().roles.get(Config.Roles.WynnModeratorRole);
+            default -> null;
+        };
+        sb.append(removeWynnRankRolesExcept(member, wynnRankRoleId));
+
+        //veteran?
+        if (playerData.veteran) {
+            sb.append(Utils.addRole(member, Config.Roles.WynnVetRole));
+        } else {
+            sb.append(Utils.removeRole(member, Config.Roles.WynnVetRole));
+        }
 
         // Send to mod channel
         TextChannel modChannel = member.getGuild().getTextChannelById(
@@ -304,9 +319,9 @@ public class VerificationCommands {
 
         return removeRankRolesExcept(member, null) +
                 removeWarRolesExcept(member, null) +
-                removeRole(member, Config.Roles.MemberRole) +
-                removeRole(member, Config.Roles.GuildRaidsRole) +
-                removeRole(member, Config.Roles.GiveawayRole);
+                Utils.removeRole(member, Config.Roles.MemberRole) +
+                Utils.removeRole(member, Config.Roles.GuildRaidsRole) +
+                Utils.removeRole(member, Config.Roles.GiveawayRole);
     }
 
     public static String removeWarRolesExcept(Member member, String trialRoleId){
@@ -354,6 +369,19 @@ public class VerificationCommands {
         return removeRolesExcept(member, allSupportRoleIds, supportRankRoleId);
     }
 
+    public static String removeWynnRankRolesExcept(Member member, String wynnRankRoleId){
+        // All support rank role IDs from config
+        Set<String> allWynnRankRoleIds = Stream.of(
+                        ConfigManager.getConfigInstance().roles.get(Config.Roles.WynnModeratorRole),
+                        ConfigManager.getConfigInstance().roles.get(Config.Roles.WynnAdminRole),
+                        ConfigManager.getConfigInstance().roles.get(Config.Roles.WynnContentTeamRole)
+                )
+                .filter(id -> id != null && !id.isEmpty())
+                .collect(Collectors.toSet());
+
+        return removeRolesExcept(member, allWynnRankRoleIds, wynnRankRoleId);
+    }
+
     public static String removeLvlRolesExcept(Member member, String lvlRoleId){
         // All support rank role IDs from config
         Set<String> allLvlRoleIds = Arrays.stream(Config.LvlRoles.values())
@@ -371,7 +399,7 @@ public class VerificationCommands {
         // Remove all other roles from member
         for (String roleId : allIds) {
             if (!roleId.equals(idToKeep) && Utils.hasRole(member, roleId)) {
-                Role roleToRemove = Utils.getRoleIdFromGuild(guild, roleId);
+                Role roleToRemove = Utils.getRoleFromGuild(guild, roleId);
                 if (roleToRemove != null) {
                     guild.removeRoleFromMember(member, roleToRemove).queue();
                     sb.append("Removed role ").append(roleToRemove.getAsMention()).append('\n');
@@ -381,7 +409,7 @@ public class VerificationCommands {
         // Add the correct role if not already present
         if (idToKeep != null) {
             if (!Utils.hasRole(member, idToKeep)) {
-                Role rankRole = Utils.getRoleIdFromGuild(guild, idToKeep);
+                Role rankRole = Utils.getRoleFromGuild(guild, idToKeep);
                 if (rankRole != null) {
                     guild.addRoleToMember(member, rankRole).queue();
                     sb.append("Added the role ").append(rankRole.getAsMention()).append('\n');
@@ -392,22 +420,6 @@ public class VerificationCommands {
         }
 
         return sb.toString();
-    }
-
-    public static String removeRole(Member member, String roleId){
-        StringBuilder sb = new StringBuilder();
-        Guild guild = member.getGuild();
-        Role roleToRemove = Utils.getRoleIdFromGuild(guild, roleId);
-        if (roleToRemove != null) {
-            guild.removeRoleFromMember(member, roleToRemove).queue();
-            sb.append("Removed role ").append(roleToRemove.getAsMention()).append('\n');
-        } else sb.append("failed to get role for ").append(roleId).append('\n');
-        return sb.toString();
-    }
-
-    public static String removeRole(Member member, Config.Roles role){
-        String roleId = ConfigManager.getConfigInstance().roles.get(role);
-        return removeRole(member, roleId);
     }
 
 }

@@ -3,7 +3,6 @@ package sidly.discord_bot;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
-import net.dv8tion.jda.api.entities.channel.Channel;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 
 import java.time.Instant;
@@ -73,6 +72,38 @@ public class Utils {
                 .orElse(null); // or throw exception if you want
     }
 
+    public static String addRole(Member member, String roleId){
+        StringBuilder sb = new StringBuilder();
+        Guild guild = member.getGuild();
+        Role roleToAdd = getRoleFromGuild(guild, roleId);
+        if (roleToAdd != null) {
+            guild.addRoleToMember(member, roleToAdd).queue();
+            sb.append("Added role ").append(roleToAdd.getAsMention()).append('\n');
+        } else sb.append("failed to get role for ").append(roleId).append('\n');
+        return sb.toString();
+    }
+
+    public static String addRole(Member member, Config.Roles role){
+        String roleId = ConfigManager.getConfigInstance().roles.get(role);
+        return addRole(member, roleId);
+    }
+
+    public static String removeRole(Member member, String roleId){
+        StringBuilder sb = new StringBuilder();
+        Guild guild = member.getGuild();
+        Role roleToRemove = getRoleFromGuild(guild, roleId);
+        if (roleToRemove != null) {
+            guild.removeRoleFromMember(member, roleToRemove).queue();
+            sb.append("Removed role ").append(roleToRemove.getAsMention()).append('\n');
+        } else sb.append("failed to get role for ").append(roleId).append('\n');
+        return sb.toString();
+    }
+
+    public static String removeRole(Member member, Config.Roles role){
+        String roleId = ConfigManager.getConfigInstance().roles.get(role);
+        return removeRole(member, roleId);
+    }
+
     public enum RankList{
         Owner,
         Chief,
@@ -96,7 +127,7 @@ public class Utils {
         }
     }
 
-    public static Role getRoleIdFromGuild(Guild guild, String id){
+    public static Role getRoleFromGuild(Guild guild, String id){
         if (id == null || id.isEmpty()){
             return null;
         }else{
@@ -104,7 +135,7 @@ public class Utils {
         }
     }
 
-    public static GuildChannel getChannelIdFromGuild(Guild guild, String id){
+    public static GuildChannel getChannelFromGuild(Guild guild, String id){
         if (id == null || id.isEmpty()){
             return null;
         }else{

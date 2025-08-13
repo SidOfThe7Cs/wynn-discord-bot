@@ -3,7 +3,6 @@ package sidly.discord_bot;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.*;
-import net.dv8tion.jda.api.entities.channel.Channel;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
@@ -91,12 +90,7 @@ public class MainEntrypoint extends ListenerAdapter {
 
         commands.addCommands(AllSlashCommands.editconfigrole.getBaseCommandData()
                 .addOptions(
-                        new OptionData(OptionType.STRING, "role_name", "Choose a setting", true)
-                                .addChoices(
-                                        Arrays.stream(Config.Roles.values())
-                                                .map(e -> new Command.Choice(e.name(), e.name()))
-                                                .toArray(Command.Choice[]::new)
-                                ),
+                        new OptionData(OptionType.STRING, "config_role", "Choose a setting", true).setAutoComplete(true),
                         new OptionData(ROLE, "role", "The new value for the setting", true)
                 )
         );
@@ -366,37 +360,17 @@ public class MainEntrypoint extends ListenerAdapter {
             event.replyChoices(choices).queue();
         }
 
-        if (event.getFocusedOption().getName().equals("channel")) {
-            String userInput = event.getFocusedOption().getValue().toLowerCase();
-            List<Command.Choice> choices = new ArrayList<>();
+        if (event.getFocusedOption().getName().equals("config_role")) {
+            String userInput = event.getFocusedOption().getValue();
 
-            // Channels (text/voice only)
-            for (GuildChannel channel : event.getGuild().getChannels()) {
-                if (channel.getType().isMessage() &&
-                        channel.getName().toLowerCase().startsWith(userInput)) {
-                    choices.add(new Command.Choice("#" + channel.getName(), channel.getId()));
-                }
-            }
+            List<Command.Choice> choices = Arrays.stream(Config.Roles.values())
+                    .map(Enum::name)
+                    .filter(name -> name.toLowerCase().startsWith(userInput.toLowerCase()))
+                    .limit(10)
+                    .map(name -> new Command.Choice(name, name))
+                    .collect(Collectors.toList());
 
-            // Limit to 10 choices (or 25 max allowed by Discord)
-            event.replyChoices(
-                    choices.stream().limit(10).toList()
-            ).queue();
-        }
-
-        if (event.getFocusedOption().getName().equals("role")) {
-            String userInput = event.getFocusedOption().getValue().toLowerCase();
-            List<Command.Choice> choices = new ArrayList<>();
-
-            for (Role role : event.getGuild().getRoles()) {
-                if (role.getName().toLowerCase().startsWith(userInput)) {
-                    choices.add(new Command.Choice("@" + role.getName(), role.getId()));
-                }
-            }
-
-            event.replyChoices(
-                    choices.stream().limit(10).toList()
-            ).queue();
+            event.replyChoices(choices).queue();
         }
 
         if (event.getFocusedOption().getName().equals("setting_other")) {
@@ -419,7 +393,7 @@ public class MainEntrypoint extends ListenerAdapter {
         Guild guild = event.getGuild();
         String unverifiedRoleId = ConfigManager.getConfigInstance().roles.get(Config.Roles.UnVerifiedRole);
 
-        Role role = Utils.getRoleIdFromGuild(guild, unverifiedRoleId);
+        Role role = Utils.getRoleFromGuild(guild, unverifiedRoleId);
         if (role != null) {
             guild.addRoleToMember(member, role).queue();
         }

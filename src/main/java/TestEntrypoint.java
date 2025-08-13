@@ -27,14 +27,7 @@ allow playtime command to specify interval and max
 
 Get current memory usage
 
-unverified role on join
-
-remove more roles on update and unverified
 mod admin content team role
 
 inactivity
-
-make commands defer there messages and edit them when the actually succeed
-
-encode message id into button
  */

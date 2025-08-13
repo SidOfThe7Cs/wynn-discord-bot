@@ -75,6 +75,10 @@ public class Config {
         TrialDpsRole,
         TrialHealerRole,
         TrialSoloRole,
+        WynnAdminRole,
+        WynnContentTeamRole,
+        WynnModeratorRole,
+        WynnVetRole
     }
 
     public enum Channels {
