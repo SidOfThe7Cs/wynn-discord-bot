@@ -31,6 +31,7 @@ public class PageBuilder {
         state.currentPage = page;
 
 
+
         EmbedBuilder embed = state.function.get();
 
         Button leftButton = Button.primary("pagination:" + key + ":left", "◀️");

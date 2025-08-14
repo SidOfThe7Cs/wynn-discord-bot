@@ -186,8 +186,8 @@ public class GuildCommands {
             .map(OptionMapping::getAsInt)
             .orElse(-1);
 
-        Button leftButton = Button.primary("pagination:guilds:left", "◀️");
-        Button rightButton = Button.primary("pagination:guilds:right", "▶️");
+        Button leftButton = Button.primary("pagination:guild:left", "◀️");
+        Button rightButton = Button.primary("pagination:guild:right", "▶️");
 
         ActionRow row = ActionRow.of(leftButton, rightButton);
         EmbedBuilder embed = buildGuildsPage();
