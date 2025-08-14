@@ -140,8 +140,6 @@ public class VerificationCommands {
     }
 
 
-
-
     public static String updatePlayer(Member member) {
         if (member == null){
             return "member was null updatePlayer()";
@@ -154,7 +152,9 @@ public class VerificationCommands {
 
         String nickname = member.getEffectiveName().split("\\[")[0].trim();
         PlayerProfile playerData = ApiUtils.getPlayerData(nickname);
-        if (playerData == null) return "api failed";
+        if (playerData == null) {
+            return removeRolesUnverify(member);
+        }
 
         StringBuilder sb = new StringBuilder();
         sb.append("**Updates Roles For** ").append(member.getAsMention()).append("\n");
@@ -334,6 +334,19 @@ public class VerificationCommands {
                 Utils.removeRole(member, Config.Roles.MemberRole) +
                 Utils.removeRole(member, Config.Roles.GuildRaidsRole) +
                 Utils.removeRole(member, Config.Roles.GiveawayRole);
+    }
+
+    public static String removeRolesUnverify(Member member){
+        return removeRolesIfNotMember(member) +
+                Utils.removeRole(member, Config.Roles.WynnVetRole) +
+                Utils.removeRole(member, Config.Roles.OneHundredPercentContentCompletionRole) +
+                Utils.removeRole(member, Config.Roles.VerifiedRole) +
+                Utils.addRole(member, Config.Roles.UnVerifiedRole) +
+                removeSupportRankRolesExcept(member, null) +
+                removeLvlRolesExcept(member, null) +
+                Utils.removeRole(member, Config.Roles.WynnAdminRole) +
+                Utils.removeRole(member, Config.Roles.WynnModeratorRole) +
+                Utils.removeRole(member, Config.Roles.WynnContentTeamRole);
     }
 
     public static String removeWarRolesExcept(Member member, String trialRoleId){

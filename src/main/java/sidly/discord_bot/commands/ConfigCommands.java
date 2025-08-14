@@ -63,7 +63,7 @@ public class ConfigCommands {
         // Other settings
         sb.append("**Other Settings:**\n");
         config.other.forEach((key, value) -> {
-            if (!key.equals(Config.Settings.Token)) {
+            if (!key.equals(Config.Settings.Token) && !key.equals(Config.Settings.ApiToken)) {
                 sb.append(key).append(" : ").append(value).append("\n");
             }
         });
@@ -111,6 +111,7 @@ public class ConfigCommands {
         String setting = event.getOption("setting_name").getAsString();
         String value  = event.getOption("setting_other").getAsString();
 
+        boolean ephemeral = false;
         Config.Settings option;
         try {
             option = Config.Settings.valueOf(setting);
@@ -124,10 +125,14 @@ public class ConfigCommands {
             return;
         }
 
+        if (option == Config.Settings.ApiToken) {
+            ephemeral = true;
+        }
+
         ConfigManager.getConfigInstance().other.put(option, value);
         ConfigManager.save();
 
-        event.reply(event.getUser().getName() + " has changed the " + setting + " to " + value).setEphemeral(false).queue();
+        event.reply(event.getUser().getName() + " has changed the " + setting + " to " + value).setEphemeral(ephemeral).queue();
     }
 
     public static void editConfigRole(SlashCommandInteractionEvent event) {

@@ -9,14 +9,26 @@ import java.awt.*;
 
 public class RateLimitCommands {
     public static void getRateLimitInfo(SlashCommandInteractionEvent event) {
-        long resetTime = ApiUtils.getLastRateLimitUpdate() + (ApiUtils.getRateLimitSecondsTillReset() * 1000L);
-        // if reset time is in past set remaining to max
-        String remaining = String.valueOf((resetTime <= System.currentTimeMillis()) ? ApiUtils.getRateLimitMax() : ApiUtils.getRateLimitRemaining());
+
         EmbedBuilder embed = new EmbedBuilder();
         embed.setColor(Color.CYAN);
-        embed.setTitle("Rate Limit");
-        embed.setDescription(remaining + " / " + ApiUtils.getRateLimitMax() + " remaining\n" + "resets in " + Utils.getDiscordTimestamp(resetTime, true));
+        embed.setTitle("Rate Limit Info");
+        StringBuilder sb = new StringBuilder();
 
+        for (ApiUtils.RateLimitTypes type : ApiUtils.RateLimitTypes.values()) {
+            ApiUtils.RateLimitInfo rateLimitInfo = ApiUtils.rateLimitInfoMap.get(type);
+            if (rateLimitInfo == null){
+                continue;
+            }
+            sb.append("**").append(type.name()).append("**\n");
+            long resetTime = ApiUtils.getLastRateLimitUpdate() + (rateLimitInfo.rateLimitSecondsTillReset() * 1000L);
+            // if reset time is in past set remaining to max
+            String remaining = String.valueOf((resetTime <= System.currentTimeMillis()) ? rateLimitInfo.rateLimitMax() : rateLimitInfo.rateLimitRemaining());
+            sb.append(remaining).append(" / ").append(rateLimitInfo.rateLimitMax()).append(" remaining\n").append("resets in ").append(Utils.getDiscordTimestamp(resetTime, true));
+            sb.append("\n");
+        }
+
+        embed.setDescription(sb.toString());
         event.replyEmbeds(embed.build()).setEphemeral(true).queue();
     }
 }

@@ -93,7 +93,8 @@ public class Config {
         Token,
         YourGuildPrefix,
         MaxContentCompletion,
-        YourDiscordServerId
+        YourDiscordServerId,
+        ApiToken
     }
 
     public enum LvlRoles {
