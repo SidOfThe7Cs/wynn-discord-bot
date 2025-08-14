@@ -157,13 +157,14 @@ public class GuildCommands {
                 .map(OptionMapping::getAsInt)
                 .orElse(-1);
 
+
+        EmbedBuilder embed = new EmbedBuilder();
+        embed.setColor(Color.CYAN);
+        embed.setTitle("Average activity for tracked guilds");
+        StringBuilder sb = new StringBuilder();
+
         for (String trackedGuild : ConfigManager.getDatabaseInstance().trackedGuilds) {
             GuildDataActivity guildDataActivity = ConfigManager.getDatabaseInstance().trackedGuildActivity.get(trackedGuild);
-
-            EmbedBuilder embed = new EmbedBuilder();
-            embed.setColor(Color.CYAN);
-            embed.setTitle("Average activity for tracked guilds");
-            StringBuilder sb = new StringBuilder();
 
             String averagePlayers = "?";
             String averageCaptains = "?";;
@@ -176,9 +177,9 @@ public class GuildCommands {
             sb.append("[**").append(trackedGuild).append("**] ").append(guildDataActivity.getGuildName()).append("\n");
             sb.append("Avg. Online: ").append(averagePlayers).append("\n");
             sb.append("Avg. Captains+: ").append(averageCaptains).append("\n");
-
-            embed.setDescription(sb.toString());
-            event.replyEmbeds(embed.build()).queue();
         }
+
+        embed.setDescription(sb.toString());
+        event.replyEmbeds(embed.build()).queue();
     }
 }
