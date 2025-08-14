@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import sidly.discord_bot.ConfigManager;
+import sidly.discord_bot.database.GuildDataActivity;
 import sidly.discord_bot.database.PlayerDataShortened;
 import sidly.discord_bot.database.PlaytimeHistoryList;
 
@@ -78,6 +79,7 @@ public class ApiUtils {
     }
 
     public static GuildInfo getGuildInfo(String prefix){
+        prefix = prefix.toUpperCase();
         try {
             HttpClient client = HttpClient.newHttpClient();
             HttpRequest request = HttpRequest.newBuilder()
@@ -93,6 +95,18 @@ public class ApiUtils {
 
             Type type = new TypeToken<GuildInfo>(){}.getType();
             GuildInfo apiData = gson.fromJson(response.body(), type);
+
+            Map<String, GuildDataActivity> trackedGuildActivity = ConfigManager.getDatabaseInstance().trackedGuildActivity;
+            if (trackedGuildActivity.get(prefix) == null) trackedGuildActivity.put(prefix, new GuildDataActivity(apiData.name));
+            int onlinePlayerCount = 0;
+            int onlineCaptainPlusCount = 0;
+            GuildInfo.Members members = apiData.members;
+            if (members != null) {
+                onlinePlayerCount = members.getOnlineMembersCount();
+                onlineCaptainPlusCount = members.getOnlineCaptainsPlusCount();
+            }
+            trackedGuildActivity.get(prefix).add(onlinePlayerCount, false);
+            trackedGuildActivity.get(prefix).add(onlineCaptainPlusCount, true);
 
             return apiData;
 

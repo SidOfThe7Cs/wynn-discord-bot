@@ -2,16 +2,16 @@ package sidly.discord_bot.commands;
 
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.interactions.commands.OptionMapping;
+import sidly.discord_bot.ConfigManager;
 import sidly.discord_bot.Utils;
 import sidly.discord_bot.api.ApiUtils;
 import sidly.discord_bot.api.GuildInfo;
+import sidly.discord_bot.database.GuildDataActivity;
 
 import java.awt.*;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Comparator;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 public class GuildCommands {
@@ -98,5 +98,77 @@ public class GuildCommands {
                 .map(member -> Utils.escapeDiscordMarkdown(member.username))
                 .sorted()
                 .collect(Collectors.joining("\n"));
+    }
+
+    public static void addTrackedGuild(SlashCommandInteractionEvent event) {
+        String guildPrefix = event.getOption("guild_prefix").getAsString().toUpperCase();
+        ConfigManager.getDatabaseInstance().trackedGuilds.add(guildPrefix);
+        event.reply("added " + guildPrefix).setEphemeral(true).queue();
+    }
+
+    public static void removeTrackedGuild(SlashCommandInteractionEvent event) {
+        String guildPrefix = event.getOption("guild_prefix").getAsString().toUpperCase();
+        ConfigManager.getDatabaseInstance().trackedGuilds.remove(guildPrefix);
+        event.reply("added " + guildPrefix).setEphemeral(true).queue();
+    }
+
+    public static void viewActiveHours(SlashCommandInteractionEvent event) {
+        String guildPrefix = event.getOption("guild_prefix").getAsString().toUpperCase();
+        int days = Optional.ofNullable(event.getOption("days"))
+                .map(OptionMapping::getAsInt)
+                .orElse(-1);
+
+        GuildDataActivity guildDataActivity = ConfigManager.getDatabaseInstance().trackedGuildActivity.get(guildPrefix);
+
+        EmbedBuilder embed = new EmbedBuilder();
+        embed.setColor(Color.CYAN);
+        embed.setTitle("[" + guildPrefix + "] " + guildDataActivity.getGuildName() + "Active Hours");
+        StringBuilder sb = new StringBuilder();
+        sb.append(" Hour ┃ Players ┃ Captains\n━━━━━━╋━━━━━━━━━╋━━━━━━━━━\n");
+
+        for (int hour = 0; hour < 24; hour++) {
+            double averagePlayers = guildDataActivity.getAverageOnline(hour, days, false);
+            double averageCaptains = guildDataActivity.getAverageOnline(hour, days, true);
+
+            // If the average is negative (no data), show "--.00"
+            String playersStr = averagePlayers < 0 ? "--.--" : String.format("%02.2f", averagePlayers);
+            String captainsStr = averageCaptains < 0 ? "--.--" : String.format("%02.2f", averageCaptains);
+
+            sb.append(String.format(
+                    "%s ┃ %6s  ┃ %6s%n",
+                    Utils.getTimestampFromInt(hour),
+                    playersStr,
+                    captainsStr
+            ));
+
+        }
+
+        embed.setDescription(sb.toString());
+        event.replyEmbeds(embed.build()).queue();
+    }
+
+    public static void viewTrackedGuilds(SlashCommandInteractionEvent event) {
+        int days = Optional.ofNullable(event.getOption("days"))
+                .map(OptionMapping::getAsInt)
+                .orElse(-1);
+
+        for (String trackedGuild : ConfigManager.getDatabaseInstance().trackedGuilds) {
+            GuildDataActivity guildDataActivity = ConfigManager.getDatabaseInstance().trackedGuildActivity.get(trackedGuild);
+
+            EmbedBuilder embed = new EmbedBuilder();
+            embed.setColor(Color.CYAN);
+            embed.setTitle("Average activity for tracked guilds");
+            StringBuilder sb = new StringBuilder();
+
+            double averagePlayers = guildDataActivity.getAverageOnline(days, false);
+            double averageCaptains = guildDataActivity.getAverageOnline(days, true);
+
+            sb.append("[**").append(trackedGuild).append("**] ").append(guildDataActivity.getGuildName()).append("\n");
+            sb.append("Avg. Online: ").append(averagePlayers).append("\n");
+            sb.append("Avg. Captains+: ").append(averageCaptains).append("\n");
+
+            embed.setDescription(sb.toString());
+            event.replyEmbeds(embed.build()).queue();
+        }
     }
 }

@@ -167,7 +167,7 @@ public class VerificationCommands {
         // add / remove the member role and set nickname
         String memberRoleId = ConfigManager.getConfigInstance().roles.get(Config.Roles.MemberRole);
         if (memberRoleId == null || memberRoleId.isEmpty()) {
-            sb.append("No member role ID configured.\n");
+            sb.append("Failed to get role ID for member role\n");
         } else {
             Role memberRole = Utils.getRoleFromGuild(member.getGuild(), memberRoleId);
             if (memberRole != null) {
@@ -244,7 +244,7 @@ public class VerificationCommands {
         int MAX_CONTENT_COMPLETION = Integer.parseInt(ConfigManager.getConfigInstance().other.get(Config.Settings.MaxContentCompletion));
         String contentCompletionRoleId = ConfigManager.getConfigInstance().roles.get(Config.Roles.OneHundredPercentContentCompletionRole);
         if (contentCompletionRoleId == null || contentCompletionRoleId.isEmpty()) {
-            sb.append("No 100% completion role ID configured.\n");
+            sb.append("Failed to get role ID for 100% content completion role\n");
         } else {
             Role OneHundredPercentContentCompletionRole = Utils.getRoleFromGuild(member.getGuild(), contentCompletionRoleId);
             if (OneHundredPercentContentCompletionRole != null) {
@@ -272,7 +272,7 @@ public class VerificationCommands {
         }
         String lvlRoleId = ConfigManager.getConfigInstance().lvlRoles.get(matchedRole);
         if (lvlRoleId != null && lvlRoleId.isEmpty()) {
-            sb.append("Failed to get role ID for lvl role ").append(lvlRoleId).append("\n"); // unset in config
+            sb.append("Failed to get role ID for lvl role ").append(matchedRole).append("\n"); // unset in config
         }
         sb.append(removeLvlRolesExcept(member, lvlRoleId));
 

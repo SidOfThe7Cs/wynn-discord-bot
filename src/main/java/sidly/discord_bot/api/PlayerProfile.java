@@ -106,6 +106,7 @@ public class PlayerProfile {
     }
 
     public int getHighestLevel(){
+        if (this.characters == null || this.characters.isEmpty()) return 0;
         int highestLevel = 0;
         for (Map.Entry<String, CharacterData> entry : characters.entrySet()){
             int level = entry.getValue().level;

@@ -3,9 +3,7 @@ package sidly.discord_bot.database;
 import sidly.discord_bot.Utils;
 import sidly.discord_bot.commands.demotion_promotion.RequirementList;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Database {
     public Map<Utils.RankList, RequirementList> promotionRequirements;
@@ -13,6 +11,8 @@ public class Database {
     public Map<String, String> verifiedMembersByDiscordId;
     public Map<String, PlayerDataShortened> allPlayers;
     public Map<String, PlaytimeHistoryList> playtimeHistory;
+    public Map<String, GuildDataActivity> trackedGuildActivity;
+    public List<String> trackedGuilds;
 
     public Database() {
         this.promotionRequirements = new HashMap<>();
@@ -20,6 +20,8 @@ public class Database {
         this.verifiedMembersByIgn = new HashMap<>();
         this.allPlayers = new HashMap<>();
         this.playtimeHistory = new HashMap<>();
+        this.trackedGuildActivity = new HashMap<>();
+        this.trackedGuilds = new ArrayList<>();
     }
 
     public void removeVerification(String string) {

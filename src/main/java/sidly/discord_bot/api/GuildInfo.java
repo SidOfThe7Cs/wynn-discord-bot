@@ -2,9 +2,7 @@ package sidly.discord_bot.api;
 
 import sidly.discord_bot.Utils;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.BiConsumer;
 
 public class GuildInfo {
@@ -52,7 +50,7 @@ public class GuildInfo {
                 case Recruit -> recruit.get(uuid);
             };
         }
-        public Map<String, MemberInfo> getAllMembers() {
+        public  Map<String, MemberInfo> getAllMembers() {
             Map<String, MemberInfo> combined = new HashMap<>();
 
             combined.putAll(owner);
@@ -63,6 +61,37 @@ public class GuildInfo {
             combined.putAll(recruit);
 
             return combined;
+        }
+
+        public int getOnlineMembersCount() {
+            Set<String> uniqueOnline = new HashSet<>();
+            addOnlineFromRank(owner, uniqueOnline);
+            addOnlineFromRank(chief, uniqueOnline);
+            addOnlineFromRank(strategist, uniqueOnline);
+            addOnlineFromRank(captain, uniqueOnline);
+            addOnlineFromRank(recruiter, uniqueOnline);
+            addOnlineFromRank(recruit, uniqueOnline);
+            return uniqueOnline.size();
+        }
+
+        public int getOnlineCaptainsPlusCount() {
+            Set<String> uniqueOnline = new HashSet<>();
+            addOnlineFromRank(owner, uniqueOnline);
+            addOnlineFromRank(chief, uniqueOnline);
+            addOnlineFromRank(strategist, uniqueOnline);
+            addOnlineFromRank(captain, uniqueOnline);
+            return uniqueOnline.size();
+        }
+
+        // Overload for adding directly into a Set
+        private void addOnlineFromRank(Map<String, MemberInfo> rank, Set<String> collector) {
+            if (rank != null) {
+                for (Map.Entry<String, MemberInfo> entry : rank.entrySet()) {
+                    if (entry.getValue().online) {
+                        collector.add(entry.getKey());
+                    }
+                }
+            }
         }
 
     }

@@ -3,7 +3,6 @@ package sidly.discord_bot;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.*;
-import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
@@ -16,11 +15,11 @@ import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction;
 import net.dv8tion.jda.api.utils.MemberCachePolicy;
-import net.dv8tion.jda.api.utils.cache.CacheFlag;
 import sidly.discord_bot.commands.*;
 import sidly.discord_bot.commands.demotion_promotion.PlaytimeCommands;
 import sidly.discord_bot.commands.demotion_promotion.PromotionCommands;
 import sidly.discord_bot.commands.demotion_promotion.RequirementType;
+import sidly.discord_bot.timed_actions.TrackedGuilds;
 import sidly.discord_bot.timed_actions.UpdatePlayers;
 
 import java.util.ArrayList;
@@ -191,6 +190,23 @@ public class MainEntrypoint extends ListenerAdapter {
                 .addOption(INTEGER, "weeks", "average over the last number of week", true));
         AllSlashCommands.getallplayersaverageplaytime.setAction(PlaytimeCommands::getAllPlayersPlaytime);
 
+        commands.addCommands(AllSlashCommands.addtrackedguild.getBaseCommandData()
+                .addOption(STRING, "guild_prefix", "e", true));
+        AllSlashCommands.addtrackedguild.setAction(GuildCommands::addTrackedGuild);
+
+        commands.addCommands(AllSlashCommands.removetrackedguild.getBaseCommandData()
+                .addOption(STRING, "guild_prefix", "e", true));
+        AllSlashCommands.removetrackedguild.setAction(GuildCommands::removeTrackedGuild);
+
+        commands.addCommands(AllSlashCommands.activehours.getBaseCommandData()
+                .addOption(STRING, "guild_prefix", "e", true)
+                .addOption(INTEGER, "days", "average over the last number of days", false));
+        AllSlashCommands.activehours.setAction(GuildCommands::viewActiveHours);
+
+        commands.addCommands(AllSlashCommands.trackedguilds.getBaseCommandData()
+                .addOption(INTEGER, "days", "average over the last number of days", false));
+        AllSlashCommands.trackedguilds.setAction(GuildCommands::viewTrackedGuilds);
+
         commands.addCommands(
                 AllSlashCommands.adddemotionexeption.getBaseCommandData()
                         .addOption(USER, "user", "e", true)
@@ -277,6 +293,7 @@ public class MainEntrypoint extends ListenerAdapter {
         jda.awaitReady();
 
         UpdatePlayers.init(jda);
+        TrackedGuilds.init();
     }
 
 

@@ -50,6 +50,8 @@ public class Config {
         roleRequirements.put(AllSlashCommands.editconfigchannel, Roles.ChiefRole);
         roleRequirements.put(AllSlashCommands.editconfigother, Roles.ChiefRole);
         roleRequirements.put(AllSlashCommands.editconfigrole, Roles.ChiefRole);
+        roleRequirements.put(AllSlashCommands.addtrackedguild, Roles.ChiefRole);
+        roleRequirements.put(AllSlashCommands.removetrackedguild, Roles.ChiefRole);
     }
 
     public enum Roles {

@@ -1,19 +1,16 @@
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import sidly.discord_bot.api.ApiUtils;
-import sidly.discord_bot.api.GuildName;
+import sidly.discord_bot.Utils;
 
 import java.io.IOException;
-import java.util.Map;
 
 public class TestEntrypoint {
 
     public static void main(String[] args) throws IOException {
-        Map<String, GuildName> testApiResponce = ApiUtils.getAllGuildsList();
+        //Map<String, GuildName> testApiResponce = ApiUtils.getAllGuildsList();
 
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        System.out.println("there are a total of: " + testApiResponce.entrySet().size() + " guilds");
+        //Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        //System.out.println("there are a total of: " + testApiResponce.entrySet().size() + " guilds");
 
+        System.out.println(Utils.getHoursSinceDayStarted(System.currentTimeMillis()));
     }
 }
 /*
@@ -26,7 +23,11 @@ Get current memory usage
 
 inactivity
 
-Get the time till rate limit refresh and then get the rate limit remaining and sutract 20 from it then send that many playersaya requests as quickly as possible
-tracked guild show average players online and avg captains+
+every 90 seconds update the rank of everyone in your guild
+
+fix formating for activeHours
+add full guild name to tracked guild
+
+format trackedguild to 2 decimals and sort it by activity and add a optional limit to the command
 
  */

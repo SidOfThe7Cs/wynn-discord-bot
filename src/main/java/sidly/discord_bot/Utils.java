@@ -6,6 +6,8 @@ import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
@@ -154,4 +156,16 @@ public class Utils {
         return input.replaceAll("([" + specialChars + "])", "\\\\$1");
     }
 
+    public static int getHoursSinceDayStarted(long millis){
+        long millisInDay = millis % (24 * 60 * 60 * 1000);
+
+        long hours = millisInDay / (60 * 60 * 1000);
+
+        return (int)((hours));
+    }
+
+    public static String getTimestampFromInt(int hour){
+        long epochSeconds = LocalDate.now().atTime(hour, 0).toEpochSecond(ZoneOffset.UTC);
+        return getDiscordTimestamp(epochSeconds * 1000, false);
+    }
 }
