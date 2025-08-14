@@ -51,7 +51,7 @@ public class ApiUtils {
             if (status == 404) {
                 return null;
             }
-            if (status == 300) System.out.println("a multiselector was actually returned and i havent added handling for it");
+            if (status == 300) System.out.println("a multiselector was actually returned and i havent added handling for it " + username);
             parseRateLimit(response);
 
             // Parse response with Gson
@@ -103,7 +103,7 @@ public class ApiUtils {
             if (status == 404) {
                 return null;
             }
-            if (status == 300) System.out.println("a multiselector was actually returned and i havent added handling for it");
+            if (status == 300) System.out.println("a multiselector was actually returned and i havent added handling for it " + prefix);
             parseRateLimit(response);
 
             // Parse response with Gson

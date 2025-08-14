@@ -70,7 +70,7 @@ public class PlayerProfile {
         public String type;
         public String nickname;
         public int level;
-        public int xp;
+        public long xp;
         public int xpPercent;
         public int totalLevel;
         public int contentCompletion;
@@ -78,7 +78,7 @@ public class PlayerProfile {
         public double playtime;
         public int mobsKilled;
         public int chestsFound;
-        public int blocksWalked;
+        public long blocksWalked;
         public int itemsIdentified;
         public int logins;
         public int deaths;
@@ -115,6 +115,7 @@ public class PlayerProfile {
         return highestLevel;
     }
     public int getHighestContentCompletion(){
+        if (this.characters == null || this.characters.isEmpty()) return 0;
         int highestContentCompletion = 0;
         for (Map.Entry<String, CharacterData> entry : characters.entrySet()){
             int comp = entry.getValue().contentCompletion;
