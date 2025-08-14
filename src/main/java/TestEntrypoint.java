@@ -16,7 +16,6 @@ public class TestEntrypoint {
 /*
 TODO
 
-tracked guilds playtime as well as own
 allow playtime command to specify interval and max
 
 Get current memory usage
@@ -26,8 +25,6 @@ inactivity
 every 90 seconds update the rank of everyone in your guild
 
 fix formating for activeHours
-add full guild name to tracked guild
-
-format trackedguild to 2 decimals and sort it by activity and add a optional limit to the command
+format /trackedguilds to 2 decimals and sort it by activity and add a optional limit to the command
 
  */

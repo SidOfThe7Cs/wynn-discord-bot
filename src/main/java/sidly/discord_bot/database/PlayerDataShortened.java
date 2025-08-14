@@ -14,7 +14,7 @@ public class PlayerDataShortened {
         this.username = player.username;
         this.uuid = player.uuid;
         this.level = player.getHighestLevel();
-        this.guildWars = player.globalData.wars;
+        this.guildWars = (player.globalData == null) ? 0 : player.globalData.wars;
         this.latestPlaytime = player.playtime;
         this.lastModified = System.currentTimeMillis();
     }
