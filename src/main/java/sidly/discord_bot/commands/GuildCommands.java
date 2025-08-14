@@ -103,13 +103,13 @@ public class GuildCommands {
     public static void addTrackedGuild(SlashCommandInteractionEvent event) {
         String guildPrefix = event.getOption("guild_prefix").getAsString();
         ConfigManager.getDatabaseInstance().trackedGuilds.add(guildPrefix);
-        event.reply("added " + guildPrefix).setEphemeral(true).queue();
+        event.reply("added " + guildPrefix + " from tracked guilds").queue();
     }
 
     public static void removeTrackedGuild(SlashCommandInteractionEvent event) {
         String guildPrefix = event.getOption("guild_prefix").getAsString();
         ConfigManager.getDatabaseInstance().trackedGuilds.remove(guildPrefix);
-        event.reply("removed " + guildPrefix).setEphemeral(true).queue();
+        event.reply("removed " + guildPrefix + " from tracked guilds").queue();
     }
 
     public static void viewActiveHours(SlashCommandInteractionEvent event) {
