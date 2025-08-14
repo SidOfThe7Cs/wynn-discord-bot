@@ -276,7 +276,7 @@ public class VerificationCommands {
                 sb.append("Failed to get role ID for lvl role ").append(matchedRole).append("\n"); // unset in config
             }
             sb.append(removeLvlRolesExcept(member, lvlRoleId));
-        } sb.append(removeLvlRolesExcept(member, null));
+        } else sb.append(removeLvlRolesExcept(member, null));
 
         // their wynncraft server rank so admin/content team
         String wynnRankRoleId = switch (playerData.rank) {

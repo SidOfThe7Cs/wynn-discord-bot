@@ -21,4 +21,6 @@ allow playtime command to specify interval and max
 inactivity / promotion / demotion
 
 /trackedguilds add a optional limit to the command
+
+paginate responces
  */
