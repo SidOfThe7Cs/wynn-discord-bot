@@ -25,7 +25,7 @@ public class PromotionCommands {
 
         RequirementList reqList = ConfigManager.getDatabaseInstance().promotionRequirements.computeIfAbsent(rank, k -> new RequirementList());
         reqList.addRequirement(requirement);
-        ConfigManager.save();
+        ConfigManager.saveDatabase();
 
 
         event.reply("added " + requirement + " to " + rank.name()).setEphemeral(true).queue();
@@ -87,7 +87,7 @@ public class PromotionCommands {
             }
             reply = removedAny ? "Removed all matching requirements." : "Requirement not found";
         }
-        ConfigManager.save();
+        ConfigManager.saveDatabase();
 
         event.reply(reply).setEphemeral(true).queue();
     }
@@ -96,7 +96,7 @@ public class PromotionCommands {
         Utils.RankList rank = Utils.RankList.valueOf(event.getOption("rank").getAsString());
         int value = event.getOption("value").getAsInt();
         ConfigManager.getDatabaseInstance().promotionRequirements.get(rank).setOptionalQuantityRequired(value);
-        ConfigManager.save();
+        ConfigManager.saveDatabase();
 
         event.reply("set " + rank + " to " + value).setEphemeral(true).queue();
     }

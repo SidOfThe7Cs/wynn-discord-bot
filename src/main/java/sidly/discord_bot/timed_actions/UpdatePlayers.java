@@ -5,15 +5,15 @@ import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import sidly.discord_bot.Config;
 import sidly.discord_bot.ConfigManager;
+import sidly.discord_bot.MainEntrypoint;
 import sidly.discord_bot.commands.VerificationCommands;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class UpdatePlayers {
     private static final Queue<Member> updateQueue = new ConcurrentLinkedQueue<>();
-    private static JDA jda;
     private static int serverMemberCount = 0;
-    private static Timer timer = new Timer();
+    private static final Timer timer = new Timer();
     private static volatile boolean loadingMembers = false;
 
     public static void updateNext(){
@@ -36,7 +36,7 @@ public class UpdatePlayers {
             return;
         }
 
-        Guild guild = jda.getGuildById(serverId);
+        Guild guild = MainEntrypoint.jda.getGuildById(serverId);
         if (guild != null) {
             guild.loadMembers().onSuccess(members -> {
                 serverMemberCount = members.size();
@@ -52,16 +52,19 @@ public class UpdatePlayers {
         }
     }
 
-    public static void init(JDA jda){
-        UpdatePlayers.jda = jda;
+    public static void init(){
         getAllMembers();
 
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                updateNext();
+                try {
+                    updateNext();
+                } catch (Exception e) {
+                    e.printStackTrace(); // Log and keep going
+                }
             }
-        },  10 * 1000, 17 * 1000); // 90 seconds
+        },  4 * 1000, 1000); // 1 seconds
     }
 
     public static void shutdown() {

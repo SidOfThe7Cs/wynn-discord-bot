@@ -9,6 +9,7 @@ public class PlayerDataShortened {
     public int guildWars;
     public double latestPlaytime;
     public long lastModified;
+    public String lastJoined;
 
     public PlayerDataShortened(PlayerProfile player){
         this.username = player.username;
@@ -17,5 +18,6 @@ public class PlayerDataShortened {
         this.guildWars = (player.globalData == null) ? 0 : player.globalData.wars;
         this.latestPlaytime = player.playtime;
         this.lastModified = System.currentTimeMillis();
+        this.lastJoined = player.lastJoin;
     }
 }

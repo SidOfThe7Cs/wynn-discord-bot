@@ -68,6 +68,7 @@ public class ApiUtils {
                 playtimeHistoryMap.put(apiData.username, new PlaytimeHistoryList());
             }
             playtimeHistoryMap.get(apiData.username).addPlaytimeIfNeeded(playerDataShort);
+            ConfigManager.saveDatabase();
 
             return apiData;
 

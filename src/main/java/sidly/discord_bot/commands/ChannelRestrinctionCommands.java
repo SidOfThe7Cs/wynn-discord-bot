@@ -25,6 +25,6 @@ public class ChannelRestrinctionCommands {
         }
 
         ConfigManager.getConfigInstance().allowedChannels.put(channel.getId(), ehh);
-        ConfigManager.save();
+        ConfigManager.saveConfig();
     }
 }

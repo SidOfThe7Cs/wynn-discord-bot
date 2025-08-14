@@ -1,9 +1,14 @@
 package sidly.discord_bot.commands;
 
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
+import sidly.discord_bot.Config;
 import sidly.discord_bot.ConfigManager;
+import sidly.discord_bot.MainEntrypoint;
 import sidly.discord_bot.Utils;
 import sidly.discord_bot.api.ApiUtils;
 import sidly.discord_bot.api.GuildInfo;
@@ -183,5 +188,56 @@ public class GuildCommands {
 
         embed.setDescription(sb.toString());
         event.replyEmbeds(embed.build()).queue();
+    }
+
+    public static void updatePlayerRanks(){
+        GuildInfo guildinfo = ApiUtils.getGuildInfo(ConfigManager.getConfigInstance().other.get(Config.Settings.YourGuildPrefix));
+        if (guildinfo == null || guildinfo.members == null) return;
+
+        // Get the guild ID from config
+        String guildId = ConfigManager.getConfigInstance().other.get(Config.Settings.YourDiscordServerId);
+        if (guildId == null) {
+            System.err.println("Server ID is not set in config.");
+            return;
+        }
+
+        // Get the guild from JDA
+        Guild guild = MainEntrypoint.jda.getGuildById(guildId);
+        if (guild == null) {
+            System.err.println("Guild not found for ID: " + guildId);
+            return;
+        }
+
+        processRank(guildinfo.members.owner, Config.Roles.OwnerRole, guild);
+        processRank(guildinfo.members.chief, Config.Roles.ChiefRole, guild);
+        processRank(guildinfo.members.strategist, Config.Roles.StrategistRole, guild);
+        processRank(guildinfo.members.captain, Config.Roles.CaptainRole, guild);
+        processRank(guildinfo.members.recruiter, Config.Roles.RecruiterRole, guild);
+        processRank(guildinfo.members.recruit, Config.Roles.RecruitRole, guild);
+
+    }
+
+    public static void processRank(Map<String, GuildInfo.MemberInfo> rankMap, Config.Roles role, Guild guild) {
+        if (rankMap == null || guild == null) return;
+
+        for (Map.Entry<String, GuildInfo.MemberInfo> entry : rankMap.entrySet()) {
+            GuildInfo.MemberInfo info = entry.getValue();
+            if (info == null) continue;
+
+            String username = info.username;
+            if (username == null || username.isEmpty()) continue;
+
+            List<Member> members = guild.getMembersByEffectiveName(username, true);
+            if (members.size() != 1) continue;
+
+            Member member = members.getFirst();
+            String roleId = ConfigManager.getConfigInstance().roles.get(role);
+            if (roleId == null || roleId.isEmpty()) {
+                System.err.println(role.name() + " not set");
+                continue;
+            }
+
+            VerificationCommands.removeRankRolesExcept(member, roleId);
+        }
     }
 }

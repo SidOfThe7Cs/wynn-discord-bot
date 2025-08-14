@@ -16,6 +16,7 @@ import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction;
 import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import sidly.discord_bot.commands.*;
+import sidly.discord_bot.commands.demotion_promotion.InactivityCommands;
 import sidly.discord_bot.commands.demotion_promotion.PlaytimeCommands;
 import sidly.discord_bot.commands.demotion_promotion.PromotionCommands;
 import sidly.discord_bot.commands.demotion_promotion.RequirementType;
@@ -32,6 +33,8 @@ import java.util.stream.Collectors;
 import static net.dv8tion.jda.api.interactions.commands.OptionType.*;
 
 public class MainEntrypoint extends ListenerAdapter {
+
+    public static JDA jda;
 
     private static boolean shuttingDown = false;
     public static void shutdown() {
@@ -207,6 +210,9 @@ public class MainEntrypoint extends ListenerAdapter {
                 .addOption(INTEGER, "days", "average over the last number of days", false));
         AllSlashCommands.trackedguilds.setAction(GuildCommands::viewTrackedGuilds);
 
+        commands.addCommands(AllSlashCommands.getsysteminfo.getBaseCommandData());
+        AllSlashCommands.getsysteminfo.setAction(HelpCommands::getSystemInfo);
+
         commands.addCommands(
                 AllSlashCommands.adddemotionexeption.getBaseCommandData()
                         .addOption(USER, "user", "e", true)
@@ -227,7 +233,9 @@ public class MainEntrypoint extends ListenerAdapter {
 
         commands.addCommands(AllSlashCommands.checkfordemotions.getBaseCommandData());
 
-        commands.addCommands(AllSlashCommands.checkforinactivity.getBaseCommandData());
+        commands.addCommands(AllSlashCommands.checkforinactivity.getBaseCommandData()
+                .addOption(INTEGER, "inactive_threshold", "last login in days ago"));
+        AllSlashCommands.checkforinactivity.setAction(InactivityCommands::checkForInactivity);
 
         commands.addCommands(AllSlashCommands.checkforpromotions.getBaseCommandData());
 
@@ -291,9 +299,12 @@ public class MainEntrypoint extends ListenerAdapter {
         commands.queue();
 
         jda.awaitReady();
+        MainEntrypoint.jda = jda;
 
-        UpdatePlayers.init(jda);
-        TrackedGuilds.init();
+        //if (!ConfigManager.getConfigInstance().other.get(Config.Settings.YourDiscordServerId).equals("1324464322029682698")) {
+            UpdatePlayers.init();
+            TrackedGuilds.init();
+        //}
     }
 
 

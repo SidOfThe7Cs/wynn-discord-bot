@@ -45,6 +45,14 @@ public class ConfigManager {
         save(dataBase, DATABASE_FILE);
     }
 
+    public static void saveConfig() {
+        save(config, CONFIG_FILE);
+    }
+
+    public static void saveDatabase() {
+        save(dataBase, DATABASE_FILE);
+    }
+
     public static void load() {
         config = load(config, CONFIG_FILE, new Config());
         dataBase = load(dataBase, DATABASE_FILE, new Database());
@@ -86,45 +94,6 @@ public class ConfigManager {
             System.err.println("Failed to load " + file.getName());
         }
         return currentInstance;
-    }
-
-
-    @SuppressWarnings("unchecked")
-    public static <T> void mergeMissingDefaultsUNUSED(T target, T defaults) {
-        if (target == null || defaults == null) {
-            throw new IllegalArgumentException("Target and defaults must not be null");
-        }
-
-        Class<?> clazz = target.getClass();
-
-        for (Field field : clazz.getDeclaredFields()) {
-            field.setAccessible(true);
-            try {
-                Object targetValue = field.get(target);
-                Object defaultValue = field.get(defaults);
-
-                if (targetValue == null) {
-                    // Field is completely missing
-                    field.set(target, defaultValue);
-                } else if (targetValue instanceof Map && defaultValue instanceof Map) {
-                    Map<Object, Object> targetMap = (Map<Object, Object>) targetValue;
-                    Map<Object, Object> defaultMap = (Map<Object, Object>) defaultValue;
-
-                    for (Map.Entry<Object, Object> entry : defaultMap.entrySet()) {
-                        targetMap.putIfAbsent(entry.getKey(), entry.getValue());
-                    }
-                } else if (targetValue instanceof Collection<?> targetCol && defaultValue instanceof Collection<?> defaultCol) {
-                    // Optionally merge missing collection values
-                    for (Object item : defaultCol) {
-                        if (!targetCol.contains(item)) {
-                            ((Collection<Object>) targetCol).add(item);
-                        }
-                    }
-                }
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
-            }
-        }
     }
 
     @SuppressWarnings("unchecked")

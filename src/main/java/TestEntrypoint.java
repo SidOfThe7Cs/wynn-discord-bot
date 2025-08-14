@@ -18,21 +18,9 @@ TODO
 
 allow playtime command to specify interval and max
 
-Get current memory usage
-
-inactivity
-
-every 90 seconds update the rank of everyone in your guild
+inactivity / promotion / demotion
 
 fix formating for activeHours
 format /trackedguilds to 2 decimals and sort it by activity and add a optional limit to the command
-
-different ratelimit trackers for
-SHARED: 50 RPM (Guest) / 120 RPM (Authed)
-PLAYER: 50 RPM (Guest) / 120 RPM (Authed)
-GUILD: 50 RPM (Guest) / 120 RPM (Authed)
-ITEMS: 50 RPM (Guest) / 120 RPM (Authed)
-LEADERBOARDS: 50 RPM (Guest) / 120 RPM (Authed)
-MAP: 50 RPM (Guest) / 120 RPM (Authed)
 
  */

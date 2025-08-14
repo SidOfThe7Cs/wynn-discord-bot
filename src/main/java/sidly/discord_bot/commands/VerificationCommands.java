@@ -116,7 +116,7 @@ public class VerificationCommands {
 
         ConfigManager.getDatabaseInstance().verifiedMembersByIgn.put(username, member.getId());
         ConfigManager.getDatabaseInstance().verifiedMembersByDiscordId.put(member.getId(), username);
-        ConfigManager.save();
+        ConfigManager.saveDatabase();
 
         guild.addRoleToMember(member, verifiedRole).queue(success -> {
             Runnable runUpdate = () ->

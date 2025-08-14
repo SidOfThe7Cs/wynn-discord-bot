@@ -36,6 +36,7 @@ public enum AllSlashCommands {
     removetrackedguild("e"),
     activehours("view the active hours of a guild"),
     trackedguilds("view average online for tracked guilds"),
+    getsysteminfo("get the info of the server running the bot"),
     addchannelrestriction("if any channels are whitelisted only whitelisted channels will allow commands"),
     adddemotionexeption("adds a player to be excluded from demotion checks, default length is forever"),
     addinactivityexeption("adds a custom inactivity threshold for a player, default length is forever"),
