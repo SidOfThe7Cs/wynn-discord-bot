@@ -58,6 +58,7 @@ public class ApiUtils {
 
             Type type = new TypeToken<PlayerProfile>(){}.getType();
             PlayerProfile apiData = gson.fromJson(response.body(), type);
+            if (apiData.username == null) return null;
 
             PlayerDataShortened playerDataShort = new PlayerDataShortened(apiData);
             ConfigManager.getDatabaseInstance().allPlayers.put(apiData.username, playerDataShort);
@@ -79,7 +80,6 @@ public class ApiUtils {
     }
 
     public static GuildInfo getGuildInfo(String prefix){
-        prefix = prefix.toUpperCase();
         try {
             HttpClient client = HttpClient.newHttpClient();
             HttpRequest request = HttpRequest.newBuilder()

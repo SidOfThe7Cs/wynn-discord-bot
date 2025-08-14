@@ -18,7 +18,7 @@ public class GuildCommands {
 
     public static void showGuildXpLeaderboard(SlashCommandInteractionEvent event) {
         // Get guild members
-        GuildInfo guild = ApiUtils.getGuildInfo(event.getOption("guild_prefix").getAsString().toUpperCase());
+        GuildInfo guild = ApiUtils.getGuildInfo(event.getOption("guild_prefix").getAsString());
         GuildInfo.Members members = guild.members;
 
         if (members == null) {
@@ -64,7 +64,7 @@ public class GuildCommands {
     }
 
     public static void showOnlineMembers(SlashCommandInteractionEvent event) {
-        GuildInfo guild = ApiUtils.getGuildInfo(event.getOption("guild_prefix").getAsString().toUpperCase());
+        GuildInfo guild = ApiUtils.getGuildInfo(event.getOption("guild_prefix").getAsString());
         GuildInfo.Members members = guild.members;
         int count = guild.online;
 
@@ -101,19 +101,19 @@ public class GuildCommands {
     }
 
     public static void addTrackedGuild(SlashCommandInteractionEvent event) {
-        String guildPrefix = event.getOption("guild_prefix").getAsString().toUpperCase();
+        String guildPrefix = event.getOption("guild_prefix").getAsString();
         ConfigManager.getDatabaseInstance().trackedGuilds.add(guildPrefix);
         event.reply("added " + guildPrefix).setEphemeral(true).queue();
     }
 
     public static void removeTrackedGuild(SlashCommandInteractionEvent event) {
-        String guildPrefix = event.getOption("guild_prefix").getAsString().toUpperCase();
+        String guildPrefix = event.getOption("guild_prefix").getAsString();
         ConfigManager.getDatabaseInstance().trackedGuilds.remove(guildPrefix);
-        event.reply("added " + guildPrefix).setEphemeral(true).queue();
+        event.reply("removed " + guildPrefix).setEphemeral(true).queue();
     }
 
     public static void viewActiveHours(SlashCommandInteractionEvent event) {
-        String guildPrefix = event.getOption("guild_prefix").getAsString().toUpperCase();
+        String guildPrefix = event.getOption("guild_prefix").getAsString();
         int days = Optional.ofNullable(event.getOption("days"))
                 .map(OptionMapping::getAsInt)
                 .orElse(-1);
