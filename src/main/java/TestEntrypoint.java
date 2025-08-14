@@ -20,7 +20,7 @@ allow playtime command to specify interval and max
 
 inactivity / promotion / demotion
 
-fix formating for activeHours
-format /trackedguilds to 2 decimals and sort it by activity and add a optional limit to the command
+/trackedguilds add a optional limit to the command
 
+test charactor limit on /checkforinactivity
  */

@@ -189,25 +189,41 @@ public class GuildCommands {
         embed.setTitle("Average activity for tracked guilds");
         StringBuilder sb = new StringBuilder();
 
-        for (String trackedGuild : ConfigManager.getDatabaseInstance().trackedGuilds) {
-            GuildDataActivity guildDataActivity = ConfigManager.getDatabaseInstance().trackedGuildActivity.get(trackedGuild);
+        ConfigManager.getDatabaseInstance().trackedGuilds.stream()
+                .sorted((g1, g2) -> {
+                    GuildDataActivity gda1 = ConfigManager.getDatabaseInstance().trackedGuildActivity.get(g1);
+                    GuildDataActivity gda2 = ConfigManager.getDatabaseInstance().trackedGuildActivity.get(g2);
 
-            String averagePlayers = "?";
-            String averageCaptains = "?";
-            String guildName = "?";
+                    double avg1 = gda1 != null ? gda1.getAverageOnline(days, false) : -1;
+                    double avg2 = gda2 != null ? gda2.getAverageOnline(days, false) : -1;
 
-            if (guildDataActivity != null) {
-                averagePlayers = String.valueOf(guildDataActivity.getAverageOnline(days, false));
-                averageCaptains = String.valueOf(guildDataActivity.getAverageOnline(days, true));
-                guildName = guildDataActivity.getGuildName();
-            }
+                    return Double.compare(avg2, avg1); // descending order
+                })
+                .forEach(trackedGuild -> {
+                    GuildDataActivity guildDataActivity = ConfigManager.getDatabaseInstance().trackedGuildActivity.get(trackedGuild);
 
-            sb.append("[**").append(trackedGuild).append("**] ").append(guildName).append("\n");
-            sb.append("Avg. Online: ").append(averagePlayers).append("\n");
-            sb.append("Avg. Captains+: ").append(averageCaptains).append("\n");
+                    String averagePlayers = "?";
+                    String averageCaptains = "?";
+                    String guildName = "?";
+
+                    if (guildDataActivity != null) {
+                        averagePlayers = String.format("%.2f", guildDataActivity.getAverageOnline(days, false));
+                        averageCaptains = String.format("%.2f", guildDataActivity.getAverageOnline(days, true));
+                        guildName = guildDataActivity.getGuildName();
+                    }
+
+                    sb.append("[**").append(trackedGuild).append("**] ").append(guildName).append("\n");
+                    sb.append("Avg. Online: ").append(averagePlayers).append("\n");
+                    sb.append("Avg. Captains+: ").append(averageCaptains).append("\n");
+                });
+
+
+        String description = sb.toString();
+        if (description.length() > 4096) {
+            description = description.substring(0, 4096);
+            embed.setFooter("Character limit hit");
         }
-
-        embed.setDescription(sb.toString());
+        embed.setDescription(description);
         event.replyEmbeds(embed.build()).queue();
     }
 
