@@ -111,7 +111,7 @@ public class GuildCommands {
                             ConfigManager.getDatabaseInstance().allPlayers.get(member.username);
 
 
-                    if (playerDataShortened != null && playerDataShortened.supportRank.equals("champion")) {
+                    if (playerDataShortened != null && playerDataShortened.supportRank != null && playerDataShortened.supportRank.equals("champion")) {
                         username += " [" + playerDataShortened.supportRank.toUpperCase() + "]";
                     }
 
