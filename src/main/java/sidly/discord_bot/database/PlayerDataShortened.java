@@ -10,6 +10,7 @@ public class PlayerDataShortened {
     public double latestPlaytime;
     public long lastModified;
     public String lastJoined;
+    public String supportRank;
 
     public PlayerDataShortened(PlayerProfile player){
         this.username = player.username;
@@ -19,5 +20,6 @@ public class PlayerDataShortened {
         this.latestPlaytime = player.playtime;
         this.lastModified = System.currentTimeMillis();
         this.lastJoined = player.lastJoin;
+        this.supportRank = player.supportRank;
     }
 }

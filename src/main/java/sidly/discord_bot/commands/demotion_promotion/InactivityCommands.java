@@ -67,12 +67,17 @@ public class InactivityCommands {
 
         for (Map.Entry<String, Integer> entry : result) {
             Long l = lastUpdatedMap.get(entry.getKey());
-            sb.append(Utils.escapeDiscordMarkdown(entry.getKey())).append("\n");
-            sb.append("last joined ").append(entry.getValue()).append(" days ago • last updated ")
-                    .append(Utils.getDiscordTimestamp(l, true));
+            sb.append("**").append(Utils.escapeDiscordMarkdown(entry.getKey()));
+            sb.append("** last joined ").append(entry.getValue()).append(" days ago • last updated ")
+                    .append(Utils.getDiscordTimestamp(l, true)).append("\n");
         }
 
-        embed.setDescription(sb.toString());
+        String description = sb.toString();
+        if (description.length() > 4096) {
+            description = description.substring(0, 4096);
+            embed.setFooter("Character limit hit");
+        }
+        embed.setDescription(description);
         event.replyEmbeds(embed.build()).queue();
     }
 }

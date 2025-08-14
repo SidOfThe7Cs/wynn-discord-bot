@@ -9,6 +9,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -167,5 +168,22 @@ public class Utils {
     public static String getTimestampFromInt(int hour){
         long epochSeconds = LocalDate.now().atTime(hour, 0).toEpochSecond(ZoneOffset.UTC);
         return getDiscordTimestamp(epochSeconds * 1000, false);
+    }
+
+    public static List<String> padToLongest(List<String> input) {
+        if (input == null || input.isEmpty()) return new ArrayList<>();
+
+        // Find the maximum length
+        int maxLength = input.stream().mapToInt(String::length).max().orElse(0);
+
+        List<String> paddedList = new ArrayList<>();
+        for (String str : input) {
+            if (str == null) str = "";
+            int padding = maxLength - str.length();
+            paddedList.add(str + "\u2005".repeat(Math.max(0, padding))
+            );
+        }
+
+        return paddedList;
     }
 }

@@ -13,6 +13,7 @@ import sidly.discord_bot.Utils;
 import sidly.discord_bot.api.ApiUtils;
 import sidly.discord_bot.api.GuildInfo;
 import sidly.discord_bot.database.GuildDataActivity;
+import sidly.discord_bot.database.PlayerDataShortened;
 
 import java.awt.*;
 import java.util.*;
@@ -70,6 +71,7 @@ public class GuildCommands {
 
     public static void showOnlineMembers(SlashCommandInteractionEvent event) {
         GuildInfo guild = ApiUtils.getGuildInfo(event.getOption("guild_prefix").getAsString());
+        if (guild == null) return;
         GuildInfo.Members members = guild.members;
         int count = guild.online;
 
@@ -82,7 +84,6 @@ public class GuildCommands {
                 .setTitle("Online Members in " + guild.name + " [" + guild.prefix + "]" + "\n" + count + "/" + guild.members.total)
                 .setColor(Color.CYAN)
                 .setFooter("Last updated");
-
 
 
         embed.addField("Owner", membersList(members.owner), false);
@@ -98,12 +99,28 @@ public class GuildCommands {
     // Helper function to build a string of online members for a rank
     static String membersList(Map<String, GuildInfo.MemberInfo> map) {
         if (map == null || map.isEmpty()) return "_None_";
+
         return map.values().stream()
                 .filter(member -> member.online)
-                .map(member -> Utils.escapeDiscordMarkdown(member.username))
+                .map(member -> {
+                    // Escape username
+                    String username = Utils.escapeDiscordMarkdown(member.username);
+
+                    // Get PlayerDataShortened and append support rank if present
+                    PlayerDataShortened playerDataShortened =
+                            ConfigManager.getDatabaseInstance().allPlayers.get(member.username);
+
+
+                    if (playerDataShortened != null && playerDataShortened.supportRank.equals("champion")) {
+                        username += " [" + playerDataShortened.supportRank.toUpperCase() + "]";
+                    }
+
+                    return username;
+                })
                 .sorted()
                 .collect(Collectors.joining("\n"));
     }
+
 
     public static void addTrackedGuild(SlashCommandInteractionEvent event) {
         String guildPrefix = event.getOption("guild_prefix").getAsString();
@@ -132,9 +149,12 @@ public class GuildCommands {
 
         EmbedBuilder embed = new EmbedBuilder();
         embed.setColor(Color.CYAN);
-        embed.setTitle("[" + guildPrefix + "] " + guildDataActivity.getGuildName() + "Active Hours");
+        embed.setTitle("[" + guildPrefix + "] " + guildDataActivity.getGuildName() + "Active Hours\n");
         StringBuilder sb = new StringBuilder();
-        sb.append(" Hour ┃ Players ┃ Captains\n━━━━━━╋━━━━━━━━━╋━━━━━━━━━\n");
+
+        List<String> hours = new ArrayList<>();
+        List<String> players = new ArrayList<>();
+        List<String> captains = new ArrayList<>();
 
         for (int hour = 0; hour < 24; hour++) {
             double averagePlayers = guildDataActivity.getAverageOnline(hour, days, false);
@@ -144,14 +164,15 @@ public class GuildCommands {
             String playersStr = averagePlayers < 0 ? "--.--" : String.format("%02.2f", averagePlayers);
             String captainsStr = averageCaptains < 0 ? "--.--" : String.format("%02.2f", averageCaptains);
 
-            sb.append(String.format(
-                    "%s ┃ %6s  ┃ %6s%n",
-                    Utils.getTimestampFromInt(hour),
-                    playersStr,
-                    captainsStr
-            ));
-
+            hours.add(Utils.getTimestampFromInt(hour));
+            players.add(playersStr);
+            captains.add(captainsStr);
         }
+
+        embed.addField("Hours", String.join("\n", hours), true);
+        embed.addField("Players", String.join("\n", players), true);
+        embed.addField("Captains", String.join("\n", captains), true);
+
 
         embed.setDescription(sb.toString());
         event.replyEmbeds(embed.build()).queue();

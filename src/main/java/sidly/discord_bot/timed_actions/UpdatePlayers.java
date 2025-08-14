@@ -64,7 +64,7 @@ public class UpdatePlayers {
                     e.printStackTrace(); // Log and keep going
                 }
             }
-        },  4 * 1000, 1000); // 1 seconds
+        },  4 * 1000, 2000); // 2 seconds
     }
 
     public static void shutdown() {

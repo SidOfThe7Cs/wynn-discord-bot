@@ -262,20 +262,21 @@ public class VerificationCommands {
 
         // add their highest lvl role
         int highestLvl = playerData.getHighestLevel();
-        Config.LvlRoles matchedRole;
-        if (highestLvl >= 106) {
-            matchedRole = Config.LvlRoles.Lvl106Role;
-        } else {
-            int roundedLvl = (highestLvl <= 1) ? 1 : ((highestLvl + 4) / 5) * 5;
-            String enumName = "Lvl" + roundedLvl + "Role";
-            matchedRole = Config.LvlRoles.valueOf(enumName);
-        }
-        String lvlRoleId = ConfigManager.getConfigInstance().lvlRoles.get(matchedRole);
-        if (lvlRoleId != null && lvlRoleId.isEmpty()) {
-            sb.append("Failed to get role ID for lvl role ").append(matchedRole).append("\n"); // unset in config
-        }
-        sb.append(removeLvlRolesExcept(member, lvlRoleId));
-
+        if (highestLvl != 0) {
+            Config.LvlRoles matchedRole;
+            if (highestLvl >= 106) {
+                matchedRole = Config.LvlRoles.Lvl106Role;
+            } else {
+                int roundedLvl = (highestLvl <= 1) ? 1 : ((highestLvl + 4) / 5) * 5;
+                String enumName = "Lvl" + roundedLvl + "Role";
+                matchedRole = Config.LvlRoles.valueOf(enumName);
+            }
+            String lvlRoleId = ConfigManager.getConfigInstance().lvlRoles.get(matchedRole);
+            if (lvlRoleId != null && lvlRoleId.isEmpty()) {
+                sb.append("Failed to get role ID for lvl role ").append(matchedRole).append("\n"); // unset in config
+            }
+            sb.append(removeLvlRolesExcept(member, lvlRoleId));
+        } sb.append(removeLvlRolesExcept(member, null));
 
         // their wynncraft server rank so admin/content team
         String wynnRankRoleId = switch (playerData.rank) {
