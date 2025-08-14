@@ -1,11 +1,12 @@
 package sidly.discord_bot.commands;
 
 import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
+import net.dv8tion.jda.api.interactions.components.ActionRow;
+import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import sidly.discord_bot.Config;
 import sidly.discord_bot.ConfigManager;
 import sidly.discord_bot.MainEntrypoint;
@@ -14,8 +15,9 @@ import sidly.discord_bot.api.ApiUtils;
 import sidly.discord_bot.api.GuildInfo;
 import sidly.discord_bot.database.GuildDataActivity;
 import sidly.discord_bot.database.PlayerDataShortened;
+import sidly.discord_bot.page.PageBuilder;
 
-import java.awt.*;
+import java.awt.Color;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -111,7 +113,7 @@ public class GuildCommands {
                             ConfigManager.getDatabaseInstance().allPlayers.get(member.username);
 
 
-                    if (playerDataShortened != null && playerDataShortened.supportRank != null && playerDataShortened.supportRank.equals("champion")) {
+                    if (playerDataShortened != null && playerDataShortened.supportRank != null && !playerDataShortened.supportRank.isEmpty()) {
                         username += " [" + playerDataShortened.supportRank.toUpperCase() + "]";
                     }
 
@@ -178,54 +180,77 @@ public class GuildCommands {
         event.replyEmbeds(embed.build()).queue();
     }
 
+    public static int guildDays = -1;
     public static void viewTrackedGuilds(SlashCommandInteractionEvent event) {
-        int days = Optional.ofNullable(event.getOption("days"))
-                .map(OptionMapping::getAsInt)
-                .orElse(-1);
+         guildDays = Optional.ofNullable(event.getOption("days"))
+            .map(OptionMapping::getAsInt)
+            .orElse(-1);
 
+        Button leftButton = Button.primary("pagination:guilds:left", "◀️");
+        Button rightButton = Button.primary("pagination:guilds:right", "▶️");
 
-        EmbedBuilder embed = new EmbedBuilder();
-        embed.setColor(Color.CYAN);
-        embed.setTitle("Average activity for tracked guilds");
-        StringBuilder sb = new StringBuilder();
+        ActionRow row = ActionRow.of(leftButton, rightButton);
+        EmbedBuilder embed = buildGuildsPage();
 
-        ConfigManager.getDatabaseInstance().trackedGuilds.stream()
+        if (embed == null) {
+            event.reply("no guilds").setEphemeral(true).queue();
+            return;
+        }
+
+        event.replyEmbeds(embed.build())
+                .addComponents(row)
+                .queue(message -> {
+
+                });
+    }
+
+    public static EmbedBuilder buildGuildsPage() {
+        PageBuilder.PaginationState paginationState = PageBuilder.PaginationManager.get("guild");
+
+        List<String> sortedGuilds = ConfigManager.getDatabaseInstance().trackedGuilds.stream()
                 .sorted((g1, g2) -> {
                     GuildDataActivity gda1 = ConfigManager.getDatabaseInstance().trackedGuildActivity.get(g1);
                     GuildDataActivity gda2 = ConfigManager.getDatabaseInstance().trackedGuildActivity.get(g2);
 
-                    double avg1 = gda1 != null ? gda1.getAverageOnline(days, false) : -1;
-                    double avg2 = gda2 != null ? gda2.getAverageOnline(days, false) : -1;
+                    double avg1 = gda1 != null ? gda1.getAverageOnline(guildDays, false) : -1;
+                    double avg2 = gda2 != null ? gda2.getAverageOnline(guildDays, false) : -1;
 
-                    return Double.compare(avg2, avg1); // descending order
+                    return Double.compare(avg2, avg1);
                 })
-                .forEach(trackedGuild -> {
-                    GuildDataActivity guildDataActivity = ConfigManager.getDatabaseInstance().trackedGuildActivity.get(trackedGuild);
+                .toList();
 
-                    String averagePlayers = "?";
-                    String averageCaptains = "?";
-                    String guildName = "?";
-
-                    if (guildDataActivity != null) {
-                        averagePlayers = String.format("%.2f", guildDataActivity.getAverageOnline(days, false));
-                        averageCaptains = String.format("%.2f", guildDataActivity.getAverageOnline(days, true));
-                        guildName = guildDataActivity.getGuildName();
-                    }
-
-                    sb.append("[**").append(trackedGuild).append("**] ").append(guildName).append("\n");
-                    sb.append("Avg. Online: ").append(averagePlayers).append("\n");
-                    sb.append("Avg. Captains+: ").append(averageCaptains).append("\n");
-                });
-
-
-        String description = sb.toString();
-        if (description.length() > 4096) {
-            description = description.substring(0, 4096);
-            embed.setFooter("Character limit hit");
+        if (sortedGuilds.isEmpty()) {
+            return null;
         }
-        embed.setDescription(description);
-        event.replyEmbeds(embed.build()).queue();
+
+        List<String> entries = new ArrayList<>();
+        for (String trackedGuild : sortedGuilds) {
+            GuildDataActivity guildDataActivity = ConfigManager.getDatabaseInstance().trackedGuildActivity.get(trackedGuild);
+            StringBuilder sb = new StringBuilder();
+
+            String averagePlayers = "?";
+            String averageCaptains = "?";
+            String guildName = "?";
+
+            if (guildDataActivity != null) {
+                averagePlayers = String.format("%.2f", guildDataActivity.getAverageOnline(guildDays, false));
+                averageCaptains = String.format("%.2f", guildDataActivity.getAverageOnline(guildDays, true));
+                guildName = guildDataActivity.getGuildName();
+            }
+
+            sb.append("[**").append(trackedGuild).append("**] ").append(guildName).append("\n");
+            sb.append("Avg. Online: ").append(averagePlayers).append("\n");
+            sb.append("Avg. Captains+: ").append(averageCaptains).append("\n\n");
+
+            entries.add(sb.toString());
+        }
+
+        EmbedBuilder embed = PageBuilder.buildEmbedPage(entries, paginationState.currentPage, 10);
+        embed.setTitle("Average activity for tracked guilds (Page " + (paginationState.currentPage+1) + ")");
+
+        return embed;
     }
+
 
     public static void updatePlayerRanks(){
         GuildInfo guildinfo = ApiUtils.getGuildInfo(ConfigManager.getConfigInstance().other.get(Config.Settings.YourGuildPrefix));

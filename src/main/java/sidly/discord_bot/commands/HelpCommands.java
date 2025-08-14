@@ -33,31 +33,25 @@ public class HelpCommands {
     }
 
     public static void getSystemInfo(SlashCommandInteractionEvent event){
-        try {
-            InetAddress localHost = InetAddress.getLocalHost();
-
-            File root = new File("/");
-            String sb = "**Hostname:** " + localHost.getHostName() + "\n" +
-                    "**OS:** " + System.getProperty("os.name") + "\n" +
-                    "**OS Version:** " + System.getProperty("os.version") + "\n" +
-                    "**Architecture:** " + System.getProperty("os.arch") + "\n" +
-                    "**Java Version:** " + System.getProperty("java.version") + "\n" +
-                    "**Available Processors:** " + Runtime.getRuntime().availableProcessors() + "\n" +
-                    "**Total Memory On JVM:** " + Runtime.getRuntime().totalMemory() / 1024 / 1024 + " MB\n" +
-                    "**Free Memory On JVM:** " + Runtime.getRuntime().freeMemory() / 1024 / 1024 + " MB\n" +
-                    "**Total Storage:** " + root.getTotalSpace() / 1024 / 1024 / 1024 + " GB\n" +
-                    "**Free Storage:** " + root.getFreeSpace() / 1024 / 1024 / 1024 + " GB\n";
+        File root = new File("/");
+        String sb =
+                "**OS:** " + System.getProperty("os.name") + "\n" +
+                "**OS Version:** " + System.getProperty("os.version") + "\n" +
+                "**Architecture:** " + System.getProperty("os.arch") + "\n" +
+                "**Java Version:** " + System.getProperty("java.version") + "\n" +
+                "**Available Processors:** " + Runtime.getRuntime().availableProcessors() + "\n" +
+                "**Total Memory On JVM:** " + Runtime.getRuntime().totalMemory() / 1024 / 1024 + " MB\n" +
+                "**Free Memory On JVM:** " + Runtime.getRuntime().freeMemory() / 1024 / 1024 + " MB\n" +
+                "**Total Storage:** " + root.getTotalSpace() / 1024 / 1024 / 1024 + " GB\n" +
+                "**Free Storage:** " + root.getFreeSpace() / 1024 / 1024 / 1024 + " GB\n";
 
 
-            EmbedBuilder embed = new EmbedBuilder();
-            embed.setTitle("Host Machine Info");
-            embed.setColor(Color.CYAN);
-            embed.setDescription(sb);
+        EmbedBuilder embed = new EmbedBuilder();
+        embed.setTitle("Host Machine Info");
+        embed.setColor(Color.CYAN);
+        embed.setDescription(sb);
 
-            event.replyEmbeds(embed.build()).setEphemeral(true).queue();
+        event.replyEmbeds(embed.build()).setEphemeral(true).queue();
 
-        } catch (UnknownHostException e) {
-            event.reply("Failed to retrieve server info: " + e.getMessage()).setEphemeral(true).queue();
-        }
     }
 }

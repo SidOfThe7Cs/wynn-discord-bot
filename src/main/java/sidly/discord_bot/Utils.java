@@ -1,10 +1,13 @@
 package sidly.discord_bot;
 
+import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 
+import java.awt.*;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -185,5 +188,19 @@ public class Utils {
         }
 
         return paddedList;
+    }
+
+    public static MessageEmbed getEmbed(String title, String description){
+        EmbedBuilder embed = new EmbedBuilder();
+        embed.setColor(Color.CYAN);
+        embed.setTitle(title);
+
+        if (description.length() > 4096) {
+            description = description.substring(0, 4096);
+            embed.setFooter("Character limit hit");
+        }
+        embed.setDescription(description);
+
+        return embed.build();
     }
 }

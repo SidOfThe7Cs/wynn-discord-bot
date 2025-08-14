@@ -20,6 +20,7 @@ import sidly.discord_bot.commands.demotion_promotion.InactivityCommands;
 import sidly.discord_bot.commands.demotion_promotion.PlaytimeCommands;
 import sidly.discord_bot.commands.demotion_promotion.PromotionCommands;
 import sidly.discord_bot.commands.demotion_promotion.RequirementType;
+import sidly.discord_bot.page.PageBuilder;
 import sidly.discord_bot.timed_actions.TrackedGuilds;
 import sidly.discord_bot.timed_actions.UpdatePlayers;
 
@@ -209,6 +210,8 @@ public class MainEntrypoint extends ListenerAdapter {
         commands.addCommands(AllSlashCommands.trackedguilds.getBaseCommandData()
                 .addOption(INTEGER, "days", "average over the last number of days", false));
         AllSlashCommands.trackedguilds.setAction(GuildCommands::viewTrackedGuilds);
+        PageBuilder.PaginationManager.register("guild", GuildCommands::buildGuildsPage);
+
 
         commands.addCommands(AllSlashCommands.getsysteminfo.getBaseCommandData());
         AllSlashCommands.getsysteminfo.setAction(HelpCommands::getSystemInfo);
@@ -319,6 +322,11 @@ public class MainEntrypoint extends ListenerAdapter {
     @Override
     public void onButtonInteraction(ButtonInteractionEvent event) {
         String fullId = event.getComponentId();
+
+        if (fullId.startsWith("pagination")){
+            PageBuilder.handlePagination(event);
+            return;
+        }
 
         if (fullId.startsWith("verify_confirm_") || fullId.startsWith("verify_deny_")) {
             // Remove prefix
