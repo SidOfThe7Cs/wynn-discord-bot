@@ -120,6 +120,11 @@ public class GuildCommands {
 
         GuildDataActivity guildDataActivity = ConfigManager.getDatabaseInstance().trackedGuildActivity.get(guildPrefix);
 
+        if (guildDataActivity == null) {
+            event.reply("guild not found").setEphemeral(true).queue();
+            return;
+        }
+
         EmbedBuilder embed = new EmbedBuilder();
         embed.setColor(Color.CYAN);
         embed.setTitle("[" + guildPrefix + "] " + guildDataActivity.getGuildName() + "Active Hours");
@@ -160,8 +165,13 @@ public class GuildCommands {
             embed.setTitle("Average activity for tracked guilds");
             StringBuilder sb = new StringBuilder();
 
-            double averagePlayers = guildDataActivity.getAverageOnline(days, false);
-            double averageCaptains = guildDataActivity.getAverageOnline(days, true);
+            String averagePlayers = "?";
+            String averageCaptains = "?";;
+
+            if (guildDataActivity != null) {
+                averagePlayers = String.valueOf(guildDataActivity.getAverageOnline(days, false));
+                averageCaptains = String.valueOf(guildDataActivity.getAverageOnline(days, true));
+            }
 
             sb.append("[**").append(trackedGuild).append("**] ").append(guildDataActivity.getGuildName()).append("\n");
             sb.append("Avg. Online: ").append(averagePlayers).append("\n");
