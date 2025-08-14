@@ -167,14 +167,16 @@ public class GuildCommands {
             GuildDataActivity guildDataActivity = ConfigManager.getDatabaseInstance().trackedGuildActivity.get(trackedGuild);
 
             String averagePlayers = "?";
-            String averageCaptains = "?";;
+            String averageCaptains = "?";
+            String guildName = "?";
 
             if (guildDataActivity != null) {
                 averagePlayers = String.valueOf(guildDataActivity.getAverageOnline(days, false));
                 averageCaptains = String.valueOf(guildDataActivity.getAverageOnline(days, true));
+                guildName = guildDataActivity.getGuildName();
             }
 
-            sb.append("[**").append(trackedGuild).append("**] ").append(guildDataActivity.getGuildName()).append("\n");
+            sb.append("[**").append(trackedGuild).append("**] ").append(guildName).append("\n");
             sb.append("Avg. Online: ").append(averagePlayers).append("\n");
             sb.append("Avg. Captains+: ").append(averageCaptains).append("\n");
         }
