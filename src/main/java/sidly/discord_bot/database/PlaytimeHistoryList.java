@@ -24,6 +24,24 @@ public class PlaytimeHistoryList {
         }
     }
 
+    public double getAverage(int weeks) {
+        if (playtimeHistory.isEmpty()) {
+            return 0;
+        }
+
+        // Limit to the available number of entries
+        double count = Math.min(weeks, playtimeHistory.size());
+        double total = 0;
+
+        // Start from the end and work backwards
+        for (int i = playtimeHistory.size() - (int)count; i < playtimeHistory.size(); i++) {
+            total += playtimeHistory.get(i).playtime;
+        }
+
+        return total / count;
+    }
+
+
     public PlaytimeHistoryList() {
     }
 

@@ -124,6 +124,10 @@ public class ApiUtils {
             trackedGuildActivity.get(prefix).add(onlinePlayerCount, false);
             trackedGuildActivity.get(prefix).add(onlineCaptainPlusCount, true);
 
+            if (ConfigManager.getConfigInstance().other.get(Config.Settings.YourGuildPrefix).equals(prefix)){
+                ConfigManager.getDatabaseInstance().yourGuildInfo = apiData;
+            }
+
             return apiData;
 
         } catch (IOException e) {

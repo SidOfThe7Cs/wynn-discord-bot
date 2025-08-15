@@ -241,6 +241,7 @@ public class MainEntrypoint extends ListenerAdapter {
         AllSlashCommands.checkforinactivity.setAction(InactivityCommands::checkForInactivity);
 
         commands.addCommands(AllSlashCommands.checkforpromotions.getBaseCommandData());
+        AllSlashCommands.checkforpromotions.setAction(PromotionCommands::checkForPromotions);
 
 
 

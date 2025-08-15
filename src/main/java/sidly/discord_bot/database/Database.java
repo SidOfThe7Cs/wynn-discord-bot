@@ -1,6 +1,7 @@
 package sidly.discord_bot.database;
 
 import sidly.discord_bot.Utils;
+import sidly.discord_bot.api.GuildInfo;
 import sidly.discord_bot.commands.demotion_promotion.RequirementList;
 
 import java.util.*;
@@ -13,6 +14,7 @@ public class Database {
     public Map<String, PlaytimeHistoryList> playtimeHistory;
     public Map<String, GuildDataActivity> trackedGuildActivity;
     public List<String> trackedGuilds;
+    public GuildInfo yourGuildInfo;
 
     public Database() {
         this.promotionRequirements = new HashMap<>();

@@ -11,6 +11,8 @@ public class PlayerDataShortened {
     public long lastModified;
     public String lastJoined;
     public String supportRank;
+    public int highestLvl;
+    public int wars;
 
     public PlayerDataShortened(PlayerProfile player){
         this.username = player.username;
@@ -21,5 +23,9 @@ public class PlayerDataShortened {
         this.lastModified = System.currentTimeMillis();
         this.lastJoined = player.lastJoin;
         this.supportRank = player.supportRank;
+        this.highestLvl = player.getHighestLevel();
+        if (player.globalData != null) {
+            this.wars = player.globalData.wars;
+        } else this.wars = 0;
     }
 }
