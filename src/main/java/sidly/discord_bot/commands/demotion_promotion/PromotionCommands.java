@@ -37,7 +37,7 @@ public class PromotionCommands {
         ConfigManager.saveDatabase();
 
 
-        event.reply("added " + requirement + " to " + rank.name()).setEphemeral(true).queue();
+        event.reply("added " + requirement + " to " + rank.name()).queue();
     }
 
     public static void getRequirements(SlashCommandInteractionEvent event) {
@@ -136,12 +136,12 @@ public class PromotionCommands {
         String uuid = playerDataShortened.uuid;
         Utils.RankList playerRank = guildInfo.members.getRankOfMember(uuid);
         if (playerRank == Utils.RankList.Owner || playerRank == Utils.RankList.Chief) {
-            return username + " cant be promoted";
+            return username + " cant be promoted error";
         }
 
         GuildInfo.MemberInfo guildMemberInfo = guildInfo.members.getMemberInfo(uuid);
 
-        if (guildMemberInfo == null) return "guild member info is null";
+        if (guildMemberInfo == null) return "guild member info is null error";
 
         // And get promotion requirements map
         Map<Utils.RankList, RequirementList> promotionRequirements = ConfigManager.getDatabaseInstance().promotionRequirements;
@@ -162,7 +162,7 @@ public class PromotionCommands {
             }
         }
 
-        if (member == null) return "username not in discord";
+        if (member == null) return "username not in discord error";
 
         // Loop through all RequirementTypes to check progress:
 
@@ -301,9 +301,11 @@ public class PromotionCommands {
         StringBuilder sb = new StringBuilder();
         for (Map.Entry<String, GuildInfo. MemberInfo> entry : guildInfo.members.getAllMembers().entrySet()) {
             String progress = checkPromotionProgress(entry.getValue().username, guildInfo);
-            if (!progress.contains("❌")) {
+            if (!progress.contains("❌") && !progress.contains("error") ) {
                 Utils.RankList rank = guildInfo.members.getRankOfMember(entry.getKey());
-                sb.append(entry.getValue().username).append(" from ").append(rank.name()).append("to whatever is next\n");
+                sb.append("**");
+                sb.append(entry.getValue().username).append(" from ").append(rank.name()).append(" to whatever is next**\n");
+                sb.append(progress).append("\n");
             }
         }
 
