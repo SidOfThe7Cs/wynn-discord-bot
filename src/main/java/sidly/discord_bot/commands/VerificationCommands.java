@@ -141,10 +141,10 @@ public class VerificationCommands {
             );
 
             if (modChannel != null) {
-                String baseId = event.getUser().getId() + "|" + username + "|" + multiSelectorIndex;
+                String baseId = event.getUser().getId() + ":" + username + ":" + multiSelectorIndex;
 
-                Button confirmButton = Button.success("verify_confirm_" + baseId, "Confirm");
-                Button denyButton = Button.danger("verify_deny_" + baseId, "Deny");
+                Button confirmButton = Button.success("verC:" + baseId, "Confirm");
+                Button denyButton = Button.danger("verD:" + baseId, "Deny");
 
                 EmbedBuilder modEmbed = new EmbedBuilder()
                         .setColor(Color.ORANGE)
@@ -179,11 +179,12 @@ public class VerificationCommands {
         ConfigManager.getDatabaseInstance().verifiedMembersByDiscordId.put(member.getId(), username);
         ConfigManager.saveDatabase();
 
-        Utils.removeRole(member, ConfigManager.getConfigInstance().roles.get(Config.Roles.UnVerifiedRole));
+        StringBuilder sb = new StringBuilder();
+        sb.append(Utils.removeRole(member, ConfigManager.getConfigInstance().roles.get(Config.Roles.UnVerifiedRole)));
         guild.addRoleToMember(member, verifiedRole).queue(success -> {
             Runnable runUpdate = () ->
                     guild.retrieveMember(UserSnowflake.fromId(member.getId())).queue(m ->
-                            future.complete(VerificationCommands.updatePlayer(m))
+                            future.complete(sb.append(VerificationCommands.updatePlayer(m)).toString())
                     );
 
             // is there owner dont change nick
@@ -209,11 +210,15 @@ public class VerificationCommands {
         if (member == null){
             return "member was null updatePlayer()";
         }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("**Updates Roles For** ").append(member.getAsMention()).append("\n");
+
         // check if there verified
         String verifiedRoleId = ConfigManager.getConfigInstance().roles.get(Config.Roles.VerifiedRole);
         if (!Utils.hasRole(member, verifiedRoleId)) {
             return member.getAsMention() + " is not verified";
-        } else Utils.removeRole(member, ConfigManager.getConfigInstance().roles.get(Config.Roles.UnVerifiedRole));
+        } else sb.append(Utils.removeRole(member, ConfigManager.getConfigInstance().roles.get(Config.Roles.UnVerifiedRole)));
 
         String fullEffectiveName = member.getEffectiveName();
         String nickname = fullEffectiveName.split("\\[")[0].trim();
@@ -227,6 +232,9 @@ public class VerificationCommands {
             Matcher matcher = Pattern.compile("\\[(\\d+)]").matcher(fullEffectiveName);
             if (matcher.find()) {
                 int number = Integer.parseInt(matcher.group(1));
+
+                nickname += " [" + number + "]";
+
                 int index = number - 1;
                 String targetKey = null;
                 if (index >= 0 && index < playerData.playersMultiselectorMap.size()) {
@@ -241,9 +249,6 @@ public class VerificationCommands {
             System.out.println("unverifying " + nickname + " multi");
             return removeRolesUnverify(member);
         }
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("**Updates Roles For** ").append(member.getAsMention()).append("\n");
 
         boolean isOwner = member.getGuild().getOwnerIdLong() == member.getIdLong();
         boolean isMember;

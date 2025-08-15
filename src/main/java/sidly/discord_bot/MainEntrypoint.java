@@ -329,21 +329,11 @@ public class MainEntrypoint extends ListenerAdapter {
             return;
         } else if (fullId.startsWith("verification")) {
             VerificationCommands.verify(event);
-        } else if (fullId.startsWith("verify_confirm_") || fullId.startsWith("verify_deny_")) {
-            // Remove prefix
-            String payload = fullId.substring(fullId.indexOf('_', 7) + 1);
-            // Explanation: indexOf('_', 7) finds the underscore after "verify_" prefix,
-            // then +1 to skip it and get the payload after that.
-
-            // Payload format: "userId|username"
-            String[] parts = payload.split("\\|", 2);
-            if (parts.length < 2) {
-                event.reply("Invalid button data").setEphemeral(true).queue();
-                return;
-            }
-            String userId = parts[0];
-            String username = parts[1];
-            int multiselecterIndex = Integer.parseInt(parts[2]);
+        } else if (fullId.startsWith("verC:") || fullId.startsWith("verD:")) {
+            String[] parts = fullId.split(":");
+            String userId = parts[1];
+            String username = parts[2];
+            int multiselecterIndex = Integer.parseInt(parts[3]);
 
             event.getGuild().retrieveMemberById(userId).queue(
                     member -> {
@@ -352,7 +342,7 @@ public class MainEntrypoint extends ListenerAdapter {
                             return;
                         }
 
-                        if (fullId.startsWith("verify_confirm_")) {
+                        if (fullId.startsWith("verC:")) {
                             event.reply("Verification approved!").setEphemeral(true).queue();
 
                             // after the private channel opens run the verificationComplete and then when that completes send the user the results
