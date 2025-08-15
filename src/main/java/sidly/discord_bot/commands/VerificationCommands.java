@@ -4,6 +4,9 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
+import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback;
+import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import sidly.discord_bot.Config;
 import sidly.discord_bot.ConfigManager;
@@ -12,18 +15,34 @@ import sidly.discord_bot.api.ApiUtils;
 import sidly.discord_bot.api.PlayerProfile;
 
 import java.awt.Color;
-import java.util.Arrays;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class VerificationCommands {
+    private static Map<Integer, String> uuidMap = new ConcurrentHashMap<>();
 
-    public static void verify(SlashCommandInteractionEvent event) {
-        String username = event.getOption("username").getAsString();
+    public static void verify(IReplyCallback event) {
+        String username;
+        int multiSelectorIndex;
+        if (event instanceof SlashCommandInteractionEvent slashEvent) {
+            multiSelectorIndex = 0;
+            username = slashEvent.getOption("username").getAsString();
+        } else if (event instanceof ButtonInteractionEvent buttonEvent) {
+            String[] parts = buttonEvent.getComponentId().split(":");
+            username = uuidMap.remove(Integer.parseInt(parts[1]));
+            multiSelectorIndex = Integer.parseInt(buttonEvent.getButton().getLabel());
+        } else {
+            multiSelectorIndex = 0;
+            return;
+        }
 
         Member member = event.getMember();
+
         if (member == null){
             event.reply("member was null").setEphemeral(true).queue();
             return;
@@ -41,24 +60,66 @@ public class VerificationCommands {
         if (playerData == null){
             event.reply("playerData was null").setEphemeral(true).queue();
             return;
+        } else if (playerData.playersMultiselectorMap != null) {
+            StringBuilder sb = new StringBuilder();
+            List<Button> buttons = new ArrayList<>();
+            int counter = 0;
+            if (playerData.playersMultiselectorMap.size() > 4) {
+                event.reply("more than 4 options were returned please report this").setEphemeral(true).queue();
+                return;
+            }
+            for (Map.Entry<String, PlayerProfile> entry : playerData.playersMultiselectorMap.entrySet()) {
+                PlayerProfile playerprofile = ApiUtils.getPlayerData(entry.getKey()); // get by uuid
+
+                if (playerprofile != null) {
+                    counter++;
+                    sb.append("#").append(counter).append(": ").append("\n");
+                    sb.append("support rank: ").append(playerprofile.supportRank).append("\n");
+                    sb.append("linked too: ").append(playerprofile.forumLink).append("\n");
+                    sb.append("playtime: ").append(playerprofile.playtime).append("\n");
+                    if (playerprofile.characters != null) {
+                        sb.append("Characters:\n");
+                        for (Map.Entry<String, PlayerProfile.CharacterData> character : playerprofile.characters.entrySet()) {
+                            sb.append(character.getValue().type).append(" level ").append(character.getValue().level).append("\n");
+                        }
+                    }
+                    sb.append("guild:\n").append(playerprofile.guild).append("\n\n");
+
+                    // add a button that runs /verify uuid on click
+                    int index = 0;
+                    while (uuidMap.containsKey(index)) index++;
+                    Button button = Button.primary("verification:" + index, String.valueOf(counter));
+                    uuidMap.put(index, playerprofile.uuid);
+                    buttons.add(button);
+                }
+            }
+
+            event.replyEmbeds(Utils.getEmbed("Multiple Verification Options", sb.toString())).addComponents(ActionRow.of(buttons)).setEphemeral(true).queue();
+            return;
         }
 
+        username = playerData.username;
+
         Utils.RankList rankOfMember = playerData.getRank();
-        boolean requireConfirmation = switch (rankOfMember) {
-            case Utils.RankList.Owner -> true;
-            case Utils.RankList.Chief -> true;
-            case Utils.RankList.Strategist -> true;
-            case Utils.RankList.Captain -> true;
-            default -> false;
-        };
+        boolean requireConfirmation;
+        if (rankOfMember != null) {
+            requireConfirmation = switch (rankOfMember) {
+                case Utils.RankList.Owner -> true;
+                case Utils.RankList.Chief -> true;
+                case Utils.RankList.Strategist -> true;
+                case Utils.RankList.Captain -> true;
+                default -> false;
+            };
+        } else requireConfirmation = false;
 
         EmbedBuilder embed = new EmbedBuilder();
         embed.setColor(Color.BLUE);
         embed.setTitle("Verification");
 
+        String finalUsername = username;
         event.deferReply(true).queue(hook -> {
             if (!requireConfirmation) {
-                CompletableFuture<String> stringCompletableFuture = completeVerification(member, username, member.getGuild());
+                CompletableFuture<String> stringCompletableFuture = completeVerification(member, finalUsername, member.getGuild(), multiSelectorIndex);
                 stringCompletableFuture.thenAccept(result -> {
                     // result is the String returned from completeVerification
                     embed.setDescription("Verification complete: \n" + result);
@@ -80,7 +141,7 @@ public class VerificationCommands {
             );
 
             if (modChannel != null) {
-                String baseId = event.getUser().getId() + "|" + username;
+                String baseId = event.getUser().getId() + "|" + username + "|" + multiSelectorIndex;
 
                 Button confirmButton = Button.success("verify_confirm_" + baseId, "Confirm");
                 Button denyButton = Button.danger("verify_deny_" + baseId, "Deny");
@@ -104,7 +165,7 @@ public class VerificationCommands {
 
     }
 
-    public static CompletableFuture<String> completeVerification(Member member, String username, Guild guild) {
+    public static CompletableFuture<String> completeVerification(Member member, String username, Guild guild, int multiselecterIndex) {
         CompletableFuture<String> future = new CompletableFuture<>();
         Role verifiedRole = Utils.getRoleFromGuild(guild, ConfigManager.getConfigInstance().roles.get(Config.Roles.VerifiedRole));
         String prefix = ConfigManager.getConfigInstance().other.get(Config.Settings.YourGuildPrefix);
@@ -118,6 +179,7 @@ public class VerificationCommands {
         ConfigManager.getDatabaseInstance().verifiedMembersByDiscordId.put(member.getId(), username);
         ConfigManager.saveDatabase();
 
+        Utils.removeRole(member, ConfigManager.getConfigInstance().roles.get(Config.Roles.UnVerifiedRole));
         guild.addRoleToMember(member, verifiedRole).queue(success -> {
             Runnable runUpdate = () ->
                     guild.retrieveMember(UserSnowflake.fromId(member.getId())).queue(m ->
@@ -133,6 +195,9 @@ public class VerificationCommands {
             String newNick = prefix.equals(ConfigManager.getConfigInstance().other.get(Config.Settings.YourGuildPrefix))
                     ? username // if in your guild
                     : username + " [" + prefix + "]"; // if different guild
+            if (multiselecterIndex != 0){
+                newNick += " [" + multiselecterIndex + "]";
+            }
             guild.modifyNickname(member, newNick).queue(nickSuccess -> runUpdate.run());
         });
 
@@ -148,11 +213,32 @@ public class VerificationCommands {
         String verifiedRoleId = ConfigManager.getConfigInstance().roles.get(Config.Roles.VerifiedRole);
         if (!Utils.hasRole(member, verifiedRoleId)) {
             return member.getAsMention() + " is not verified";
-        }
+        } else Utils.removeRole(member, ConfigManager.getConfigInstance().roles.get(Config.Roles.UnVerifiedRole));
 
-        String nickname = member.getEffectiveName().split("\\[")[0].trim();
+        String fullEffectiveName = member.getEffectiveName();
+        String nickname = fullEffectiveName.split("\\[")[0].trim();
+
+
         PlayerProfile playerData = ApiUtils.getPlayerData(nickname);
         if (playerData == null) {
+            System.out.println("unverifying " + nickname);
+            return removeRolesUnverify(member);
+        } else if (playerData.playersMultiselectorMap != null) {
+            Matcher matcher = Pattern.compile("\\[(\\d+)]").matcher(fullEffectiveName);
+            if (matcher.find()) {
+                int number = Integer.parseInt(matcher.group(1));
+                int index = number - 1;
+                String targetKey = null;
+                if (index >= 0 && index < playerData.playersMultiselectorMap.size()) {
+                    targetKey = new ArrayList<>(playerData.playersMultiselectorMap.keySet()).get(index);
+                }
+                if (targetKey != null) {
+                    playerData = ApiUtils.getPlayerData(targetKey);
+                } else return "failed to get uuid from multiselecter";
+            } else return "multiselecter but no number in username";
+        }
+        if (playerData == null) {
+            System.out.println("unverifying " + nickname + " multi");
             return removeRolesUnverify(member);
         }
 
@@ -453,5 +539,4 @@ public class VerificationCommands {
 
         return sb.toString();
     }
-
 }

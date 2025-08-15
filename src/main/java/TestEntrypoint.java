@@ -20,4 +20,8 @@ allow playtime command to specify interval and max
 
 inactivity / promotion / demotion
 
+timer commands and status
+
+join and leave messages
+
  */

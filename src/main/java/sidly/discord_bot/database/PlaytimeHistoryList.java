@@ -25,21 +25,25 @@ public class PlaytimeHistoryList {
     }
 
     public double getAverage(int weeks) {
-        if (playtimeHistory.isEmpty()) {
+        if (playtimeHistory.size() < 2) { // Need at least 2 points to calculate an increase
             return 0;
         }
 
-        // Limit to the available number of entries
-        double count = Math.min(weeks, playtimeHistory.size());
-        double total = 0;
+        // Limit to available number of *intervals* (one less than entries)
+        int count = Math.min(weeks, playtimeHistory.size() - 1);
+        double totalIncrease = 0;
 
-        // Start from the end and work backwards
-        for (int i = playtimeHistory.size() - (int)count; i < playtimeHistory.size(); i++) {
-            total += playtimeHistory.get(i).playtime;
+        // Start from the end and calculate increases between consecutive entries
+        for (int i = playtimeHistory.size() - count; i < playtimeHistory.size(); i++) {
+            double current = playtimeHistory.get(i).playtime;
+            double previous = playtimeHistory.get(i - 1).playtime;
+            totalIncrease += (current - previous);
         }
 
-        return total / count;
+        // Average the increases
+        return totalIncrease / count;
     }
+
 
 
     public PlaytimeHistoryList() {

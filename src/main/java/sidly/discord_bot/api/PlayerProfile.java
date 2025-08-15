@@ -6,6 +6,11 @@ import java.util.List;
 import java.util.Map;
 
 public class PlayerProfile {
+    public PlayerProfile(Map<String, PlayerProfile> playersMap) {
+        this.playersMultiselectorMap = playersMap;
+    }
+
+    public Map<String, PlayerProfile> playersMultiselectorMap;
     public String username;
     public boolean online;
     public String server;

@@ -2,6 +2,7 @@ package sidly.discord_bot.api;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import sidly.discord_bot.Config;
 import sidly.discord_bot.ConfigManager;
@@ -16,6 +17,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -51,11 +53,26 @@ public class ApiUtils {
             if (status == 404) {
                 return null;
             }
-            if (status == 300) System.out.println("a multiselector was actually returned and i havent added handling for it " + username);
+
+            String body = response.body().trim();
+            if (!(body.startsWith("{") || body.startsWith("["))) {
+                System.out.println("status code: " + status);
+                System.err.println("Unexpected response: " + body);
+                return null;
+            }
             parseRateLimit(response);
 
-            // Parse response with Gson
             Gson gson = new GsonBuilder().create();
+
+
+            if (status == 300) {
+                JsonObject objects = gson.fromJson(response.body(), JsonObject.class).getAsJsonObject("objects");
+
+                Type mapType = new TypeToken<LinkedHashMap<String, PlayerProfile>>(){}.getType();
+                LinkedHashMap<String, PlayerProfile> playersMap = gson.fromJson(objects, mapType);
+                return new PlayerProfile(playersMap);
+            }
+
 
             Type type = new TypeToken<PlayerProfile>(){}.getType();
             PlayerProfile apiData = gson.fromJson(response.body(), type);

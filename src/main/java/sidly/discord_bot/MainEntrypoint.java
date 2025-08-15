@@ -267,7 +267,7 @@ public class MainEntrypoint extends ListenerAdapter {
         AllSlashCommands.getpromotionrequirements.setAction(PromotionCommands::getRequirements);
 
         commands.addCommands(AllSlashCommands.checkpromotionprogress.getBaseCommandData()
-                .addOption(STRING, "username", "e", true));
+                .addOption(USER, "user", "e", true));
         AllSlashCommands.checkpromotionprogress.setAction(PromotionCommands::checkPromotionProgress);
 
         commands.addCommands(AllSlashCommands.setpromotionoptionalrequirement.getBaseCommandData().addOptions(
@@ -327,9 +327,9 @@ public class MainEntrypoint extends ListenerAdapter {
         if (fullId.startsWith("pagination")){
             PageBuilder.handlePagination(event);
             return;
-        }
-
-        if (fullId.startsWith("verify_confirm_") || fullId.startsWith("verify_deny_")) {
+        } else if (fullId.startsWith("verification")) {
+            VerificationCommands.verify(event);
+        } else if (fullId.startsWith("verify_confirm_") || fullId.startsWith("verify_deny_")) {
             // Remove prefix
             String payload = fullId.substring(fullId.indexOf('_', 7) + 1);
             // Explanation: indexOf('_', 7) finds the underscore after "verify_" prefix,
@@ -343,6 +343,7 @@ public class MainEntrypoint extends ListenerAdapter {
             }
             String userId = parts[0];
             String username = parts[1];
+            int multiselecterIndex = Integer.parseInt(parts[2]);
 
             event.getGuild().retrieveMemberById(userId).queue(
                     member -> {
@@ -356,7 +357,7 @@ public class MainEntrypoint extends ListenerAdapter {
 
                             // after the private channel opens run the verificationComplete and then when that completes send the user the results
                             member.getUser().openPrivateChannel().queue(privateChannel -> {
-                                CompletableFuture<String> verificationFuture = VerificationCommands.completeVerification(member, username, event.getGuild());
+                                CompletableFuture<String> verificationFuture = VerificationCommands.completeVerification(member, username, event.getGuild(), multiselecterIndex);
                                 verificationFuture.thenAccept(result -> privateChannel.sendMessage(result).queue());
                             });
 
