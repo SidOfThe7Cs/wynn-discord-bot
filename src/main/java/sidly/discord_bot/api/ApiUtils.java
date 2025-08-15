@@ -90,7 +90,7 @@ public class ApiUtils {
             return apiData;
 
         } catch (IOException e) {
-            System.err.println("IOException");
+            System.err.println("IOException: " + username);
             throw new RuntimeException(e);
         } catch (InterruptedException e) {
             System.err.println("InterruptedException");
