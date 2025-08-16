@@ -3,8 +3,11 @@ package sidly.discord_bot;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.entities.channel.Channel;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
+import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
@@ -439,6 +442,35 @@ public class MainEntrypoint extends ListenerAdapter {
         Role role = Utils.getRoleFromGuild(guild, unverifiedRoleId);
         if (role != null) {
             guild.addRoleToMember(member, role).queue();
+        }
+
+        String message = ConfigManager.getConfigInstance().other.get(Config.Settings.GuildJoinMessage);
+
+        String channelId = ConfigManager.getConfigInstance().channels.get(Config.Channels.WelcomeChannel);
+        if (channelId != null && !channelId.isEmpty()) {
+            TextChannel channel = guild.getTextChannelById(channelId);
+
+            if (channel != null) {
+                message = message.replace("%user%", member.getAsMention());
+                channel.sendMessage(message).queue();
+            }
+        }
+    }
+
+    @Override
+    public void onGuildMemberRemove(GuildMemberRemoveEvent event) {
+        User user = event.getUser();
+        Guild guild = event.getGuild();
+        String message = ConfigManager.getConfigInstance().other.get(Config.Settings.GuildLeaveMessage);
+
+        String channelId = ConfigManager.getConfigInstance().channels.get(Config.Channels.WelcomeChannel);
+        if (channelId != null && !channelId.isEmpty()) {
+            TextChannel channel = guild.getTextChannelById(channelId);
+
+            if (channel != null) {
+                message = message.replace("%user%", user.getEffectiveName());
+                channel.sendMessage(message).queue();
+            }
         }
     }
 

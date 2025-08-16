@@ -94,7 +94,9 @@ public class Config {
         YourGuildPrefix,
         MaxContentCompletion,
         YourDiscordServerId,
-        ApiToken
+        ApiToken,
+        GuildLeaveMessage,
+        GuildJoinMessage
     }
 
     public enum LvlRoles {

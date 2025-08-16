@@ -10,8 +10,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.URISyntaxException;
-import java.util.Collection;
-import java.util.Map;
+import java.util.*;
 
 public class ConfigManager {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
@@ -58,13 +57,25 @@ public class ConfigManager {
         dataBase = load(dataBase, DATABASE_FILE, new Database());
     }
 
+    @SuppressWarnings("unchecked")
     private static <T> void save(T object, File file) {
         try (FileWriter writer = new FileWriter(file)) {
-            GSON.toJson(object, writer);
+            T copy;
+            if (object instanceof List<?>) {
+                copy = (T) new ArrayList<>((List<?>) object);
+            } else if (object instanceof Map<?, ?>) {
+                copy = (T) new HashMap<>((Map<?, ?>) object);
+            } else {
+                // fallback: rely on GSON to snapshot it directly
+                copy = object;
+            }
+
+            GSON.toJson(copy, writer);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+
 
     public static <T> T load(T currentInstance, File file, T defaults) {
 
