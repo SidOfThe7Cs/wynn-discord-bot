@@ -492,7 +492,8 @@ public class MainEntrypoint extends ListenerAdapter {
             TextChannel channel = guild.getTextChannelById(channelId);
 
             if (channel != null) {
-                message = message.replace("%user%", user.getEffectiveName());
+                String username = "**" + user.getEffectiveName() + "**";
+                message = message.replace("%user%", username);
                 channel.sendMessage(message).queue();
             }
         }

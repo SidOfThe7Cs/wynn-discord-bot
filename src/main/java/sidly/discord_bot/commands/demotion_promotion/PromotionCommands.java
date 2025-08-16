@@ -4,6 +4,7 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import sidly.discord_bot.Config;
 import sidly.discord_bot.ConfigManager;
@@ -67,6 +68,11 @@ public class PromotionCommands {
                             .append(req.getValue())
                             .append(req.isRequired() ? "" : " (Optional)")
                             .append("\n");
+
+                }
+                if (requirements.getOptionalQuantityRequired() > 0) {
+                    reqText.append("- Optional Required: ");
+                    reqText.append(requirements.getOptionalQuantityRequired());
                 }
             }
 
@@ -112,7 +118,8 @@ public class PromotionCommands {
     }
 
     public static void checkPromotionProgress(SlashCommandInteractionEvent event) {
-        String username = event.getOption("user").getAsUser().getEffectiveName();
+        User user = event.getOption("user").getAsUser();
+        String username = event.getGuild().getMember(user).getEffectiveName();
 
         GuildInfo guildInfo = ApiUtils.getGuildInfo(ConfigManager.getConfigInstance().other.get(Config.Settings.YourGuildPrefix));
         String s = checkPromotionProgress(username, guildInfo);
@@ -179,7 +186,9 @@ public class PromotionCommands {
                         if (!req.isRequired()){
                             optionalCounter++;
                         }
-                    } else sb.append("❌");
+                    } else if (req.isRequired()){
+                        sb.append("❌");
+                    } else sb.append(":no_entry_sign:");
                     sb.append(" XPContributed: ").append(playerXPContribution).append(" / ").append(value).append('\n');
                     break;
                 case TopXpContributor:
@@ -189,7 +198,9 @@ public class PromotionCommands {
                         if (!req.isRequired()){
                             optionalCounter++;
                         }
-                    } else sb.append("❌");
+                    } else if (req.isRequired()){
+                        sb.append("❌");
+                    } else sb.append(":no_entry_sign:");
                     sb.append(" TopXpContributor: ").append(playerXPContributionRank).append(" / ").append(value).append('\n');
                     break;
                 case Level:
@@ -199,7 +210,9 @@ public class PromotionCommands {
                         if (!req.isRequired()){
                             optionalCounter++;
                         }
-                    } else sb.append("❌");
+                    } else if (req.isRequired()){
+                        sb.append("❌");
+                    } else sb.append(":no_entry_sign:");
                     sb.append(" Level: ").append(playerLevel).append(" / ").append(value).append('\n');
                     break;
                 case DaysInGuild:
@@ -209,7 +222,9 @@ public class PromotionCommands {
                         if (!req.isRequired()){
                             optionalCounter++;
                         }
-                    } else sb.append("❌");
+                    } else if (req.isRequired()){
+                        sb.append("❌");
+                    } else sb.append(":no_entry_sign:");
                     sb.append(" DaysInGuild: ").append(daysInGuild).append(" / ").append(value).append('\n');
                     break;
                 case GuildWars:
@@ -220,7 +235,9 @@ public class PromotionCommands {
                             optionalCounter++;
                         }
 
-                    } else sb.append("❌");
+                    } else if (req.isRequired()){
+                        sb.append("❌");
+                    } else sb.append(":no_entry_sign:");
                     sb.append(" GuildWars: ").append(guildWars).append(" / ").append(value).append('\n');
                     break;
                 case WarBuild:
@@ -240,7 +257,9 @@ public class PromotionCommands {
                         if (!req.isRequired()){
                             optionalCounter++;
                         }
-                    } else sb.append("❌");
+                    } else if (req.isRequired()){
+                        sb.append("❌");
+                    } else sb.append(":no_entry_sign:");
                     sb.append(" WarBuild: ").append(buildCount).append(" / ").append(value).append('\n');
                     break;
                 case WeeklyPlaytime:
@@ -252,7 +271,9 @@ public class PromotionCommands {
                         if (!req.isRequired()) {
                             optionalCounter++;
                         }
-                    } else sb.append("❌");
+                    } else if (req.isRequired()){
+                        sb.append("❌");
+                    } else sb.append(":no_entry_sign:");
                     sb.append(" WeeklyPlaytime: ").append(average).append(" / ").append(value).append('\n');
                     break;
                 case Eco:
@@ -263,7 +284,9 @@ public class PromotionCommands {
                         if (!req.isRequired()) {
                             optionalCounter++;
                         }
-                    } else sb.append("❌");
+                    } else if (req.isRequired()){
+                        sb.append("❌");
+                    } else sb.append(":no_entry_sign:");
                     sb.append(" Eco: ").append(ecoInt).append(" / ").append(value).append('\n');
                     break;
                 case Verified:
@@ -274,7 +297,9 @@ public class PromotionCommands {
                         if (!req.isRequired()) {
                             optionalCounter++;
                         }
-                    } else sb.append("❌");
+                    } else if (req.isRequired()){
+                        sb.append("❌");
+                    } else sb.append(":no_entry_sign:");
                     sb.append(" Verified: ").append(verifiedInt).append(" / ").append(value).append('\n');
                     break;
                 default:

@@ -22,7 +22,9 @@ inactivity / promotion / demotion
 
 timer commands and status
 
+skey weekly playtime to be acurate instead of just entries
 
 database and 6 api token and track all guilds
+
 
  */
