@@ -219,6 +219,30 @@ public class MainEntrypoint extends ListenerAdapter {
         commands.addCommands(AllSlashCommands.getsysteminfo.getBaseCommandData());
         AllSlashCommands.getsysteminfo.setAction(HelpCommands::getSystemInfo);
 
+        commands.addCommands(AllSlashCommands.gettimerstatus.getBaseCommandData());
+        AllSlashCommands.gettimerstatus.setAction(TimerCommands::getTimerStatus);
+
+        commands.addCommands(AllSlashCommands.starttimer.getBaseCommandData().addOptions(
+                        new OptionData(OptionType.STRING, "timer_name", "the name of the timer to start", true)
+                                .addChoices(
+                                        new Command.Choice("playerUpdater", "playerUpdater"),
+                                        new Command.Choice("guildTracker", "guildTracker"),
+                                        new Command.Choice("yourGuildRankUpdater", "yourGuildRankUpdater")
+                                )
+                )
+        );
+        AllSlashCommands.starttimer.setAction(TimerCommands::startTimer);
+
+        commands.addCommands(AllSlashCommands.stoptimer.getBaseCommandData().addOptions(
+                new OptionData(OptionType.STRING, "timer_name", "the name of the timer to start", true)
+                        .addChoices(
+                                new Command.Choice("playerUpdater", "playerUpdater"),
+                                new Command.Choice("guildTracker", "guildTracker"),
+                                new Command.Choice("yourGuildRankUpdater", "yourGuildRankUpdater")
+                        )
+        ));
+        AllSlashCommands.stoptimer.setAction(TimerCommands::stopTimer);
+
         commands.addCommands(
                 AllSlashCommands.adddemotionexeption.getBaseCommandData()
                         .addOption(USER, "user", "e", true)

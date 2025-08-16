@@ -11,11 +11,22 @@ import java.util.concurrent.TimeUnit;
 
 public class TrackedGuilds {
     private static int index = 0;
-    private static final Timer timer = new Timer();
+    private static Timer timer;
+    private static boolean yourGuildTrackerRunning = false;
+    private static DynamicTimer guildTracker;
+    private static boolean guildTrackerRunning = false;
 
     public static void init(){
-        new DynamicTimer(ConfigManager.getDatabaseInstance().trackedGuilds, TrackedGuilds::trackNext, TimeUnit.MINUTES.toMillis(8), 2000).start();
+        startTrackedGuildsTimer();
+        startYourGuildTracker();
+    }
 
+    public static void startYourGuildTracker(){
+        if (yourGuildTrackerRunning) {
+            return;
+        }
+        timer = new Timer();
+        yourGuildTrackerRunning = true;
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
@@ -28,6 +39,15 @@ public class TrackedGuilds {
         },  4 * 1000, 25 * 1000); // 25 seconds
     }
 
+    public static void startTrackedGuildsTimer() {
+        if (guildTrackerRunning) {
+            return;
+        }
+        guildTrackerRunning = true;
+        guildTracker = new DynamicTimer(ConfigManager.getDatabaseInstance().trackedGuilds, TrackedGuilds::trackNext, TimeUnit.MINUTES.toMillis(8), 2000);
+        guildTracker.start();
+    }
+
     private static void trackNext() {
         List<String> guilds = ConfigManager.getDatabaseInstance().trackedGuilds;
         if (guilds.isEmpty()) return;
@@ -38,4 +58,23 @@ public class TrackedGuilds {
 
         ApiUtils.getGuildInfo(prefix);
     }
+
+    public static void stopYourGuildTracker(){
+        yourGuildTrackerRunning = false;
+        timer.cancel();
+    }
+
+    public static void stopAllGuildTracker(){
+        guildTrackerRunning = false;
+        guildTracker.cancel();
+    }
+
+    public static boolean getYourGuildTrackerTimerStatus() {
+        return yourGuildTrackerRunning;
+    }
+
+    public static boolean getAllGuildTrackerTimerStatus() {
+        return guildTrackerRunning;
+    }
+
 }

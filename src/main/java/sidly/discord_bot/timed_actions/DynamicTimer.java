@@ -42,10 +42,18 @@ public class DynamicTimer {
 
     private long calculateDelay(int size) {
         if (size <= 0) {
-            return this.targetMillisPerItemInSet; // no elements, default to slow pace
+            return this.targetMillisPerItemInSet;
         }
         long delay = targetMillisPerItemInSet / size;
-        return Math.max(3000, delay); // never faster than 3 second between runs
+        return Math.max(minMillis, delay);
+    }
+
+    public void cancel() {
+        if (currentTask != null && !currentTask.isCancelled()) {
+            currentTask.cancel(false);
+            currentTask = null;
+        }
+        scheduler.shutdown();
     }
 }
 

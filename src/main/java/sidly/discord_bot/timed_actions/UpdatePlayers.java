@@ -13,8 +13,14 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class UpdatePlayers {
     private static final Queue<Member> updateQueue = new ConcurrentLinkedQueue<>();
     private static int serverMemberCount = 0;
-    private static final Timer timer = new Timer();
+    private static Timer timer;
     private static volatile boolean loadingMembers = false;
+
+    public static boolean isRunning() {
+        return isRunning;
+    }
+
+    private static boolean isRunning = false;
 
     public static void updateNext(){
         if (updateQueue.size() < serverMemberCount / 4 || updateQueue.isEmpty()){
@@ -53,6 +59,11 @@ public class UpdatePlayers {
     }
 
     public static void init(){
+        if (isRunning) {
+            return;
+        }
+        isRunning = true;
+        timer = new Timer();
         getAllMembers();
 
         timer.scheduleAtFixedRate(new TimerTask() {
@@ -68,6 +79,7 @@ public class UpdatePlayers {
     }
 
     public static void shutdown() {
+        isRunning = false;
         timer.cancel();
     }
 }

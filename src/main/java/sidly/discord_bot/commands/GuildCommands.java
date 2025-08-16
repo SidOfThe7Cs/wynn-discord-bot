@@ -126,7 +126,10 @@ public class GuildCommands {
 
     public static void addTrackedGuild(SlashCommandInteractionEvent event) {
         String guildPrefix = event.getOption("guild_prefix").getAsString();
-        ConfigManager.getDatabaseInstance().trackedGuilds.add(guildPrefix);
+        List<String> guilds = ConfigManager.getDatabaseInstance().trackedGuilds;
+        if (guilds != null && !guilds.contains(guildPrefix)) {
+            guilds.add(guildPrefix);
+        }
         event.reply("added " + guildPrefix + " to tracked guilds").queue();
     }
 

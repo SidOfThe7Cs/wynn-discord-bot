@@ -22,6 +22,7 @@ inactivity / promotion / demotion
 
 timer commands and status
 
-join and leave messages
+
+database and 6 api token and track all guilds
 
  */
