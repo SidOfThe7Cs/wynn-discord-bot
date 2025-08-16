@@ -18,13 +18,20 @@ TODO
 
 allow playtime command to specify interval and max
 
-inactivity / promotion / demotion
-
-timer commands and status
+inactivity
 
 skey weekly playtime to be acurate instead of just entries
+pageinate listcommands and checkforpromotions
+defer reply for checkforprotions
+checkprotionprogress formattion
+make GuildCommands.updatePlayer send a message to mod channel
+pafination enum
+
+Addeception cmds
+Backup database
+Get all timer average weekly playtime
+Make cmd that shows a players average playtime over the last week / 5 weeks / 20 weeks / alltime
 
 database and 6 api token and track all guilds
-
 
  */

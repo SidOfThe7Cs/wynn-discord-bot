@@ -19,9 +19,11 @@ import sidly.discord_bot.database.PlayerDataShortened;
 import sidly.discord_bot.database.PlaytimeHistoryList;
 
 import java.awt.*;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class PromotionCommands {
 
@@ -175,144 +177,132 @@ public class PromotionCommands {
 
         StringBuilder sb = new StringBuilder();
         int requiredOptionalRequirements = requirementList.getOptionalQuantityRequired();
-        int optionalCounter = 0;
-        for (Requirement req : requirementList.getRequirements()) {
-            Integer value = req.getValue();
-            switch (req.getType()) {
-                case XPContributed:
-                    long playerXPContribution = guildMemberInfo.contributed;
-                    if (playerXPContribution >= value) {
-                        sb.append("✅ ");
-                        if (!req.isRequired()){
-                            optionalCounter++;
-                        }
-                    } else if (req.isRequired()){
-                        sb.append("❌");
-                    } else sb.append(":no_entry_sign:");
-                    sb.append(" XPContributed: ").append(playerXPContribution).append(" / ").append(value).append('\n');
-                    break;
-                case TopXpContributor:
-                    int playerXPContributionRank = guildMemberInfo.contributionRank;
-                    if (playerXPContributionRank <= value) {
-                        sb.append("✅ ");
-                        if (!req.isRequired()){
-                            optionalCounter++;
-                        }
-                    } else if (req.isRequired()){
-                        sb.append("❌");
-                    } else sb.append(":no_entry_sign:");
-                    sb.append(" TopXpContributor: ").append(playerXPContributionRank).append(" / ").append(value).append('\n');
-                    break;
-                case Level:
-                    int playerLevel = playerDataShortened.highestLvl;
-                    if (playerLevel >= value) {
-                        sb.append("✅ ");
-                        if (!req.isRequired()){
-                            optionalCounter++;
-                        }
-                    } else if (req.isRequired()){
-                        sb.append("❌");
-                    } else sb.append(":no_entry_sign:");
-                    sb.append(" Level: ").append(playerLevel).append(" / ").append(value).append('\n');
-                    break;
-                case DaysInGuild:
-                    long daysInGuild = Utils.daysSinceIso(guildMemberInfo.joined);
-                    if (daysInGuild >= value) {
-                        sb.append("✅ ");
-                        if (!req.isRequired()){
-                            optionalCounter++;
-                        }
-                    } else if (req.isRequired()){
-                        sb.append("❌");
-                    } else sb.append(":no_entry_sign:");
-                    sb.append(" DaysInGuild: ").append(daysInGuild).append(" / ").append(value).append('\n');
-                    break;
-                case GuildWars:
-                    int guildWars = playerDataShortened.wars;
-                    if (guildWars >= value) {
-                        sb.append("✅ ");
-                        if (!req.isRequired()){
-                            optionalCounter++;
-                        }
 
-                    } else if (req.isRequired()){
-                        sb.append("❌");
-                    } else sb.append(":no_entry_sign:");
-                    sb.append(" GuildWars: ").append(guildWars).append(" / ").append(value).append('\n');
-                    break;
-                case WarBuild:
-                    boolean dps = Utils.hasRole(member, ConfigManager.getConfigInstance().roles.get(Config.Roles.TrialDpsRole));
-                    boolean tank = Utils.hasRole(member, ConfigManager.getConfigInstance().roles.get(Config.Roles.TrialTankRole));
-                    boolean healer = Utils.hasRole(member, ConfigManager.getConfigInstance().roles.get(Config.Roles.TrialHealerRole));
-                    boolean solo = Utils.hasRole(member, ConfigManager.getConfigInstance().roles.get(Config.Roles.TrialSoloRole));
+        Map<Boolean, List<Requirement>> partitioned = requirementList.getRequirements().stream()
+                .collect(Collectors.partitioningBy(Requirement::isRequired));
 
-                    int buildCount = 0;
-                    if (dps) buildCount++;
-                    if (tank) buildCount++;
-                    if (healer) buildCount++;
-                    if (solo) buildCount++;
+        List<Requirement> required = partitioned.get(true).stream()
+                .sorted(Comparator.comparingInt(r -> r.getType().ordinal()))
+                .toList();
 
-                    if (buildCount >= value) {
-                        sb.append("✅ ");
-                        if (!req.isRequired()){
-                            optionalCounter++;
-                        }
-                    } else if (req.isRequired()){
-                        sb.append("❌");
-                    } else sb.append(":no_entry_sign:");
-                    sb.append(" WarBuild: ").append(buildCount).append(" / ").append(value).append('\n');
-                    break;
-                case WeeklyPlaytime:
-                    double average = 0;
-                    PlaytimeHistoryList playtimeHistoryList = ConfigManager.getDatabaseInstance().playtimeHistory.get(username);
-                    if (playtimeHistoryList != null && playtimeHistoryList.getAverage(10) > value) {
-                        average = playtimeHistoryList.getAverage(10);
-                        sb.append("✅ ");
-                        if (!req.isRequired()) {
-                            optionalCounter++;
-                        }
-                    } else if (req.isRequired()){
-                        sb.append("❌");
-                    } else sb.append(":no_entry_sign:");
-                    sb.append(" WeeklyPlaytime: ").append(average).append(" / ").append(value).append('\n');
-                    break;
-                case Eco:
-                    boolean eco = Utils.hasRole(member, ConfigManager.getConfigInstance().roles.get(Config.Roles.TrialEcoRole));
-                    int ecoInt = eco ? 1 : 0;
-                    if (ecoInt >= value) {
-                        sb.append("✅ ");
-                        if (!req.isRequired()) {
-                            optionalCounter++;
-                        }
-                    } else if (req.isRequired()){
-                        sb.append("❌");
-                    } else sb.append(":no_entry_sign:");
-                    sb.append(" Eco: ").append(ecoInt).append(" / ").append(value).append('\n');
-                    break;
-                case Verified:
-                    boolean verified = Utils.hasRole(member, ConfigManager.getConfigInstance().roles.get(Config.Roles.VerifiedRole));
-                    int verifiedInt = verified ? 1 : 0;
-                    if (verifiedInt >= value) {
-                        sb.append("✅ ");
-                        if (!req.isRequired()) {
-                            optionalCounter++;
-                        }
-                    } else if (req.isRequired()){
-                        sb.append("❌");
-                    } else sb.append(":no_entry_sign:");
-                    sb.append(" Verified: ").append(verifiedInt).append(" / ").append(value).append('\n');
-                    break;
-                default:
-                    break;
-            }
+        List<Requirement> optional = partitioned.get(false).stream()
+                .sorted(Comparator.comparingInt(r -> r.getType().ordinal()))
+                .toList();
+
+
+        sb.append("Required:\n");
+        for (Requirement req : required) {
+            sb.append(checkRequirement(req, guildMemberInfo, playerDataShortened, member, username));
         }
+
+        StringBuilder optionalOutputB = new StringBuilder();
+        for (Requirement req : optional) {
+            optionalOutputB.append(checkRequirement(req, guildMemberInfo, playerDataShortened, member, username));
+        }
+        String optionalOutput = optionalOutputB.toString();
+        long optionalCounter = optionalOutput.chars().filter(ch -> ch == '✅').count();
 
         if (optionalCounter >= requiredOptionalRequirements){
             sb.append("✅ ");
         }else sb.append("❌");
-        sb.append(optionalCounter).append(" of ").append(requiredOptionalRequirements).append(" optional requirements are met").append('\n');
+        sb.append("Optional Requirements: ").append(optionalCounter).append(" / ").append(requiredOptionalRequirements).append('\n');
+
+        if (!optional.isEmpty()) {
+            sb.append("-# Optional: (at least ").append(requiredOptionalRequirements).append(" must be met)");
+        }
+        sb.append(optionalOutput);
 
         return sb.toString();
+    }
+
+    public static String checkRequirement(Requirement req, GuildInfo.MemberInfo guildMemberInfo, PlayerDataShortened playerDataShortened, Member member, String username){
+        StringBuilder sb = new StringBuilder();
+        Integer requirementCount = req.getValue();
+        if (!req.isRequired()) sb.append("-# ");
+        switch (req.getType()) {
+            case XPContributed:
+                long playerXPContribution = guildMemberInfo.contributed;
+                sb.append(getSymbol(req.isRequired(), playerXPContribution, requirementCount));
+                sb.append(" XPContributed: ").append(playerXPContribution).append(" / ").append(requirementCount).append('\n');
+                break;
+            case TopXpContributor:
+                int playerXPContributionRank = guildMemberInfo.contributionRank;
+                sb.append(getSymbol(req.isRequired(), requirementCount, playerXPContributionRank));
+                sb.append(" TopXpContributor: ").append(playerXPContributionRank).append(" / ").append(requirementCount).append('\n');
+                break;
+            case Level:
+                int playerLevel = playerDataShortened.highestLvl;
+                sb.append(getSymbol(req.isRequired(), playerLevel, requirementCount));
+                sb.append(" Level: ").append(playerLevel).append(" / ").append(requirementCount).append('\n');
+                break;
+            case DaysInGuild:
+                long daysInGuild = Utils.daysSinceIso(guildMemberInfo.joined);
+                sb.append(getSymbol(req.isRequired(), (int) daysInGuild, requirementCount));
+                sb.append(" DaysInGuild: ").append(daysInGuild).append(" / ").append(requirementCount).append('\n');
+                break;
+            case GuildWars:
+                int guildWars = playerDataShortened.wars;
+                sb.append(getSymbol(req.isRequired(), guildWars, requirementCount));
+                sb.append(" GuildWars: ").append(guildWars).append(" / ").append(requirementCount).append('\n');
+                break;
+            case WarBuild:
+                boolean dps = Utils.hasRole(member, ConfigManager.getConfigInstance().roles.get(Config.Roles.TrialDpsRole));
+                boolean tank = Utils.hasRole(member, ConfigManager.getConfigInstance().roles.get(Config.Roles.TrialTankRole));
+                boolean healer = Utils.hasRole(member, ConfigManager.getConfigInstance().roles.get(Config.Roles.TrialHealerRole));
+                boolean solo = Utils.hasRole(member, ConfigManager.getConfigInstance().roles.get(Config.Roles.TrialSoloRole));
+
+                int buildCount = 0;
+                if (dps) buildCount++;
+                if (tank) buildCount++;
+                if (healer) buildCount++;
+                if (solo) buildCount++;
+
+                sb.append(getSymbol(req.isRequired(), buildCount, requirementCount));
+                sb.append(" WarBuild: ").append(buildCount).append(" / ").append(requirementCount).append('\n');
+                break;
+            case WeeklyPlaytime:
+                double average = 0;
+                PlaytimeHistoryList playtimeHistoryList = ConfigManager.getDatabaseInstance().playtimeHistory.get(username);
+                if (playtimeHistoryList != null && playtimeHistoryList.getAverage(10) > requirementCount) {
+                    average = playtimeHistoryList.getAverage(10);
+                    sb.append("✅ ");
+                } else if (req.isRequired()){
+                    sb.append("❌");
+                } else sb.append(":no_entry_sign:");
+                sb.append(" WeeklyPlaytime: ").append(average).append(" / ").append(requirementCount).append('\n');
+                break;
+            case Eco:
+                boolean eco = Utils.hasRole(member, ConfigManager.getConfigInstance().roles.get(Config.Roles.TrialEcoRole));
+                int ecoInt = eco ? 1 : 0;
+                sb.append(getSymbol(req.isRequired(), ecoInt, requirementCount));
+                sb.append(" Eco: ").append(ecoInt).append(" / ").append(requirementCount).append('\n');
+                break;
+            case Verified:
+                boolean verified = Utils.hasRole(member, ConfigManager.getConfigInstance().roles.get(Config.Roles.VerifiedRole));
+                int verifiedInt = verified ? 1 : 0;
+                sb.append(getSymbol(req.isRequired(), verifiedInt, requirementCount));
+                sb.append(" Verified: ").append(verifiedInt).append(" / ").append(requirementCount).append('\n');
+                break;
+            default:
+                break;
+        }
+        return sb.toString();
+    }
+
+    public static String getSymbol(boolean optional, int value, int requirement) {
+        if (value >= requirement) {
+            return "✅ ";
+        } else if (!optional){
+            return "❌";
+        } else return ":no_entry_sign:";
+    }
+
+    public static String getSymbol(boolean optional, long value, int requirement) {
+        if (value >= requirement) {
+            return "✅ ";
+        } else if (!optional){
+            return "❌";
+        } else return ":no_entry_sign:";
     }
 
     public static void checkForPromotions(SlashCommandInteractionEvent event) {

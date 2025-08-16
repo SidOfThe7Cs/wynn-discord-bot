@@ -1,13 +1,13 @@
 package sidly.discord_bot.commands.demotion_promotion;
 
 public enum RequirementType {
+    Verified,
+    DaysInGuild,
     XPContributed,
     TopXpContributor,
     Level,
-    DaysInGuild,
     GuildWars,
     WarBuild,
     WeeklyPlaytime,
     Eco,
-    Verified
 }

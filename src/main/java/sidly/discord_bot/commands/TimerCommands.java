@@ -32,7 +32,7 @@ public class TimerCommands {
                 TrackedGuilds.startYourGuildTracker();
                 break;
         }
-        event.reply("timer " + timerName + " started").setEphemeral(true).queue();
+        event.reply("timer " + timerName + " started").queue();
     }
 
     public static void stopTimer(SlashCommandInteractionEvent event) {
@@ -48,6 +48,6 @@ public class TimerCommands {
                 TrackedGuilds.stopYourGuildTracker();
                 break;
         }
-        event.reply("timer " + timerName + " stopped").setEphemeral(true).queue();
+        event.reply("timer " + timerName + " stopped").queue();
     }
 }
