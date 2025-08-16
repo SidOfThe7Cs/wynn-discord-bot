@@ -3,7 +3,6 @@ package sidly.discord_bot;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.*;
-import net.dv8tion.jda.api.entities.channel.Channel;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
@@ -24,6 +23,7 @@ import sidly.discord_bot.commands.demotion_promotion.PlaytimeCommands;
 import sidly.discord_bot.commands.demotion_promotion.PromotionCommands;
 import sidly.discord_bot.commands.demotion_promotion.RequirementType;
 import sidly.discord_bot.page.PageBuilder;
+import sidly.discord_bot.page.PaginationIds;
 import sidly.discord_bot.timed_actions.TrackedGuilds;
 import sidly.discord_bot.timed_actions.UpdatePlayers;
 
@@ -158,6 +158,7 @@ public class MainEntrypoint extends ListenerAdapter {
 
         commands.addCommands(AllSlashCommands.listcommands.getBaseCommandData());
         AllSlashCommands.listcommands.setAction(HelpCommands::listCommands);
+        PageBuilder.PaginationManager.register(PaginationIds.COMMANDLIST.name(), HelpCommands::buildCommandListPage);
 
         commands.addCommands(AllSlashCommands.setrolerequirement.getBaseCommandData().addOptions(
                 new OptionData(OptionType.STRING, "command", "Command to add requirement to", true).setAutoComplete(true),
@@ -213,7 +214,7 @@ public class MainEntrypoint extends ListenerAdapter {
         commands.addCommands(AllSlashCommands.trackedguilds.getBaseCommandData()
                 .addOption(INTEGER, "days", "average over the last number of days", false));
         AllSlashCommands.trackedguilds.setAction(GuildCommands::viewTrackedGuilds);
-        PageBuilder.PaginationManager.register("guild", GuildCommands::buildGuildsPage);
+        PageBuilder.PaginationManager.register(PaginationIds.GUILD.name(), GuildCommands::buildGuildsPage);
 
 
         commands.addCommands(AllSlashCommands.getsysteminfo.getBaseCommandData());
@@ -269,7 +270,7 @@ public class MainEntrypoint extends ListenerAdapter {
 
         commands.addCommands(AllSlashCommands.checkforpromotions.getBaseCommandData());
         AllSlashCommands.checkforpromotions.setAction(PromotionCommands::checkForPromotions);
-
+        PageBuilder.PaginationManager.register(PaginationIds.PROMOTIONS.name(), PromotionCommands::buildPromotionsPage);
 
 
         commands.addCommands(AllSlashCommands.addpromotionrequirement.getBaseCommandData().addOptions(

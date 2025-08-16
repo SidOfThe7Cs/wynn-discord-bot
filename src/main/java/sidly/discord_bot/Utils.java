@@ -5,7 +5,11 @@ import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.Role;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
+import net.dv8tion.jda.api.interactions.components.ActionRow;
+import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import sidly.discord_bot.page.PaginationIds;
 
 import java.awt.*;
 import java.time.Instant;
@@ -26,6 +30,11 @@ public class Utils {
 
     public static boolean hasRole(Member user, String roleId){
         return user != null && user.getRoles().stream().anyMatch(role -> role.getId().equals(roleId));
+    }
+
+    public static boolean hasRole(Member member, Config.Roles role) {
+        String s = ConfigManager.getConfigInstance().roles.get(role);
+        return  hasRole(member, s);
     }
 
     public static boolean hasAtLeastRank(Member user, String roleId) {
@@ -202,5 +211,30 @@ public class Utils {
         embed.setDescription(description);
 
         return embed.build();
+    }
+
+    public static void sendToModChannel(String text, boolean ignoreTitle) {
+        Guild guild = MainEntrypoint.jda.getGuildById(ConfigManager.getConfigInstance().other.get(Config.Settings.YourDiscordServerId));
+        TextChannel modChannel = guild.getTextChannelById(
+                ConfigManager.getConfigInstance().channels.get(Config.Channels.ModerationChannel)
+        );
+
+        boolean stop = false;
+        long lineBreakCount = text.chars().filter(ch -> ch == '\n').count();
+        if (ignoreTitle && lineBreakCount < 2) stop = true;
+
+        if (modChannel != null && !stop) {
+            EmbedBuilder modEmbed = new EmbedBuilder()
+                    .setColor(Color.ORANGE)
+                    .setDescription(text);
+
+            modChannel.sendMessageEmbeds(modEmbed.build()).queue();
+        }
+    }
+
+    public static ActionRow getPaginationActionRow(PaginationIds id){
+        Button leftButton = Button.primary("pagination:" + id.name() + ":left", "◀️");
+        Button rightButton = Button.primary("pagination:" + id.name() + ":right", "▶️");
+        return ActionRow.of(leftButton, rightButton);
     }
 }

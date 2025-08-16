@@ -30,21 +30,24 @@ public class PageBuilder {
         }
         state.currentPage = page;
 
-
-
         EmbedBuilder embed = state.function.get();
 
         Button leftButton = Button.primary("pagination:" + key + ":left", "◀️");
         Button rightButton = Button.primary("pagination:" + key + ":right", "▶️");
+
+        if (embed == null) embed = new EmbedBuilder().setTitle("nothing");
 
         event.editMessageEmbeds(embed.build())
                 .setComponents(ActionRow.of(leftButton, rightButton))
                 .queue();
     }
 
-    public static EmbedBuilder buildEmbedPage(List<String> sortedEntries, int page, int entriesPerPage) {
+    public static EmbedBuilder buildEmbedPage(List<String> sortedEntries, int page, int entriesPerPage, String title) {
+        if (sortedEntries.isEmpty()) return null;
         EmbedBuilder embed = new EmbedBuilder();
         embed.setColor(Color.CYAN);
+
+        embed.setTitle(title + " (Page " + (page + 1) + ")");
 
         StringBuilder sb = new StringBuilder();
 

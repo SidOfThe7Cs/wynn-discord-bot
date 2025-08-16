@@ -389,20 +389,8 @@ public class VerificationCommands {
         }
 
         // Send to mod channel
-        TextChannel modChannel = member.getGuild().getTextChannelById(
-                ConfigManager.getConfigInstance().channels.get(Config.Channels.ModerationChannel)
-        );
-
         String text = sb.toString();
-        long lineBreakCount = text.chars().filter(ch -> ch == '\n').count();
-
-        if (modChannel != null && lineBreakCount > 1) {
-            EmbedBuilder modEmbed = new EmbedBuilder()
-                    .setColor(Color.ORANGE)
-                    .setDescription(text);
-
-            modChannel.sendMessageEmbeds(modEmbed.build()).queue();
-        }
+        Utils.sendToModChannel(text, true);
         return text;
     }
 

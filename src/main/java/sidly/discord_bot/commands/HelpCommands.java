@@ -3,6 +3,9 @@ package sidly.discord_bot.commands;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import sidly.discord_bot.ConfigManager;
+import sidly.discord_bot.Utils;
+import sidly.discord_bot.page.PageBuilder;
+import sidly.discord_bot.page.PaginationIds;
 
 import java.awt.*;
 import java.io.File;
@@ -10,26 +13,21 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class HelpCommands {
     public static void listCommands(SlashCommandInteractionEvent event) {
-        EmbedBuilder embed = new EmbedBuilder();
-        embed.setTitle("List of All Bot Commands");
-        embed.setColor(Color.CYAN);
+        EmbedBuilder embed = buildCommandListPage();
 
-        StringBuilder sb = new StringBuilder();
-
-        for (AllSlashCommands command : AllSlashCommands.values()){
-            sb.append("**").append(command.name()).append("**").append("\n");
-            sb.append(command.getDescription()).append("\n");
-            if (command.getRequiredRole() != null) {
-                sb.append("requires <@&").append(ConfigManager.getConfigInstance().roles.get(command.getRequiredRole())).append(">\n");
-            }
-            if (command.getAction() == null) sb.append("this command currently does nothing\n");
+        if (embed == null) {
+            event.reply("no guilds").setEphemeral(true).queue();
+            return;
         }
-        embed.setDescription(sb.toString());
 
-        event.replyEmbeds(embed.build()).setEphemeral(true).queue();
+        event.replyEmbeds(embed.build())
+                .addComponents(Utils.getPaginationActionRow(PaginationIds.COMMANDLIST))
+                .queue();
     }
 
     public static void getSystemInfo(SlashCommandInteractionEvent event){
@@ -53,5 +51,22 @@ public class HelpCommands {
 
         event.replyEmbeds(embed.build()).setEphemeral(true).queue();
 
+    }
+
+    public static EmbedBuilder buildCommandListPage() {
+        List<String> entries = new ArrayList<>();
+        PageBuilder.PaginationState paginationState = PageBuilder.PaginationManager.get(PaginationIds.COMMANDLIST.name());
+
+        for (AllSlashCommands command : AllSlashCommands.values()){
+            StringBuilder sb = new StringBuilder();
+            sb.append("**").append(command.name()).append("**").append("\n");
+            sb.append(command.getDescription()).append("\n");
+            if (command.getRequiredRole() != null) {
+                sb.append("requires <@&").append(ConfigManager.getConfigInstance().roles.get(command.getRequiredRole())).append(">\n");
+            }
+            if (command.getAction() == null) sb.append("this command currently does nothing\n");
+            entries.add(sb.toString());
+        }
+        return PageBuilder.buildEmbedPage(entries, paginationState.currentPage, 20, "List of All Bot Commands");
     }
 }

@@ -21,11 +21,6 @@ allow playtime command to specify interval and max
 inactivity
 
 skey weekly playtime to be acurate instead of just entries
-pageinate listcommands and checkforpromotions
-defer reply for checkforprotions
-checkprotionprogress formattion
-make GuildCommands.updatePlayer send a message to mod channel
-pafination enum
 
 Addeception cmds
 Backup database

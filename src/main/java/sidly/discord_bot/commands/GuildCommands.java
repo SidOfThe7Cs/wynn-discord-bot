@@ -16,6 +16,7 @@ import sidly.discord_bot.api.GuildInfo;
 import sidly.discord_bot.database.GuildDataActivity;
 import sidly.discord_bot.database.PlayerDataShortened;
 import sidly.discord_bot.page.PageBuilder;
+import sidly.discord_bot.page.PaginationIds;
 
 import java.awt.Color;
 import java.util.*;
@@ -189,10 +190,8 @@ public class GuildCommands {
             .map(OptionMapping::getAsInt)
             .orElse(-1);
 
-        Button leftButton = Button.primary("pagination:guild:left", "◀️");
-        Button rightButton = Button.primary("pagination:guild:right", "▶️");
 
-        ActionRow row = ActionRow.of(leftButton, rightButton);
+
         EmbedBuilder embed = buildGuildsPage();
 
         if (embed == null) {
@@ -201,14 +200,12 @@ public class GuildCommands {
         }
 
         event.replyEmbeds(embed.build())
-                .addComponents(row)
-                .queue(message -> {
-
-                });
+                .addComponents(Utils.getPaginationActionRow(PaginationIds.GUILD))
+                .queue();
     }
 
     public static EmbedBuilder buildGuildsPage() {
-        PageBuilder.PaginationState paginationState = PageBuilder.PaginationManager.get("guild");
+        PageBuilder.PaginationState paginationState = PageBuilder.PaginationManager.get(PaginationIds.GUILD.name());
 
         List<String> sortedGuilds = ConfigManager.getDatabaseInstance().trackedGuilds.stream()
                 .sorted((g1, g2) -> {
@@ -248,10 +245,7 @@ public class GuildCommands {
             entries.add(sb.toString());
         }
 
-        EmbedBuilder embed = PageBuilder.buildEmbedPage(entries, paginationState.currentPage, 10);
-        embed.setTitle("Average activity for tracked guilds (Page " + (paginationState.currentPage+1) + ")");
-
-        return embed;
+        return PageBuilder.buildEmbedPage(entries, paginationState.currentPage, 10, "Average activity for tracked guilds");
     }
 
 
@@ -273,18 +267,25 @@ public class GuildCommands {
             return;
         }
 
-        processRank(guildinfo.members.owner, Config.Roles.OwnerRole, guild);
-        processRank(guildinfo.members.chief, Config.Roles.ChiefRole, guild);
-        processRank(guildinfo.members.strategist, Config.Roles.StrategistRole, guild);
-        processRank(guildinfo.members.captain, Config.Roles.CaptainRole, guild);
-        processRank(guildinfo.members.recruiter, Config.Roles.RecruiterRole, guild);
-        processRank(guildinfo.members.recruit, Config.Roles.RecruitRole, guild);
+        StringBuilder sb = new StringBuilder();
+        sb.append("Updated Player Ranks\n");
+
+        sb.append(processRank(guildinfo.members.owner, Config.Roles.OwnerRole, guild));
+        sb.append(processRank(guildinfo.members.chief, Config.Roles.ChiefRole, guild));
+        sb.append(processRank(guildinfo.members.strategist, Config.Roles.StrategistRole, guild));
+        sb.append(processRank(guildinfo.members.captain, Config.Roles.CaptainRole, guild));
+        sb.append(processRank(guildinfo.members.recruiter, Config.Roles.RecruiterRole, guild));
+        sb.append(processRank(guildinfo.members.recruit, Config.Roles.RecruitRole, guild));
+
+        Utils.sendToModChannel(sb.toString(), true);
 
     }
 
-    public static void processRank(Map<String, GuildInfo.MemberInfo> rankMap, Config.Roles role, Guild guild) {
-        if (rankMap == null || guild == null) return;
+    public static String processRank(Map<String, GuildInfo.MemberInfo> rankMap, Config.Roles role, Guild guild) {
+        if (rankMap == null || guild == null) return "";
 
+        StringBuilder sb = new StringBuilder();
+        // for each member in guild (wynncraft guild from api)
         for (Map.Entry<String, GuildInfo.MemberInfo> entry : rankMap.entrySet()) {
             GuildInfo.MemberInfo info = entry.getValue();
             if (info == null) continue;
@@ -292,17 +293,33 @@ public class GuildCommands {
             String username = info.username;
             if (username == null || username.isEmpty()) continue;
 
+            // get discord member with matching username
             List<Member> members = guild.getMembersByEffectiveName(username, true);
             if (members.size() != 1) continue;
 
+            // if they are verified
             Member member = members.getFirst();
-            String roleId = ConfigManager.getConfigInstance().roles.get(role);
-            if (roleId == null || roleId.isEmpty()) {
-                System.err.println(role.name() + " not set");
-                continue;
-            }
+            if (Utils.hasRole(member, Config.Roles.VerifiedRole)) {
 
-            VerificationCommands.removeRankRolesExcept(member, roleId);
+                sb.append("**Updates Roles For **").append(member.getAsMention()).append("\n");
+
+                String roleId = ConfigManager.getConfigInstance().roles.get(role);
+                if (roleId == null || roleId.isEmpty()) {
+                    System.err.println(role.name() + " not set\n");
+                    continue;
+                }
+
+                // apply the member role
+                String s1 = Utils.addRole(member, Config.Roles.MemberRole);
+
+                // apply the right rank
+                String s2 = VerificationCommands.removeRankRolesExcept(member, roleId);
+
+                if (s1.isEmpty() && s2.isEmpty()) return "";
+                else sb.append(s1).append(s2);
+
+            }
         }
+        return sb.toString();
     }
 }

@@ -12,17 +12,14 @@ import sidly.discord_bot.MainEntrypoint;
 import sidly.discord_bot.Utils;
 import sidly.discord_bot.api.ApiUtils;
 import sidly.discord_bot.api.GuildInfo;
-import sidly.discord_bot.api.PlayerProfile;
-import sidly.discord_bot.database.Database;
-import sidly.discord_bot.database.GuildDataActivity;
 import sidly.discord_bot.database.PlayerDataShortened;
 import sidly.discord_bot.database.PlaytimeHistoryList;
+import sidly.discord_bot.page.PageBuilder;
+import sidly.discord_bot.page.PaginationIds;
 
 import java.awt.*;
-import java.util.Comparator;
-import java.util.Iterator;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 public class PromotionCommands {
@@ -306,26 +303,41 @@ public class PromotionCommands {
     }
 
     public static void checkForPromotions(SlashCommandInteractionEvent event) {
-        GuildInfo guildInfo = ApiUtils.getGuildInfo(ConfigManager.getConfigInstance().other.get(Config.Settings.YourGuildPrefix));
 
-        if (guildInfo == null || guildInfo.members == null) {
-            event.reply("guild null").setEphemeral(true).queue();
+        EmbedBuilder embed = buildPromotionsPage();
+
+        if (embed == null) {
+            event.reply("no guilds").setEphemeral(true).queue();
             return;
         }
 
-        StringBuilder sb = new StringBuilder();
-        for (Map.Entry<String, GuildInfo. MemberInfo> entry : guildInfo.members.getAllMembers().entrySet()) {
+        event.replyEmbeds(embed.build())
+                .addComponents(Utils.getPaginationActionRow(PaginationIds.PROMOTIONS))
+                .queue();
+    }
+
+    public static EmbedBuilder buildPromotionsPage() {
+        GuildInfo guildInfo = ApiUtils.getGuildInfo(ConfigManager.getConfigInstance().other.get(Config.Settings.YourGuildPrefix));
+        PageBuilder.PaginationState paginationState = PageBuilder.PaginationManager.get(PaginationIds.PROMOTIONS.name());
+
+        if (guildInfo == null || guildInfo.members == null) {
+            return null;
+        }
+
+
+        List<String> entries = new ArrayList<>();
+        for (Map.Entry<String, GuildInfo.MemberInfo> entry : guildInfo.members.getAllMembers().entrySet()) {
+            StringBuilder sb = new StringBuilder();
             String progress = checkPromotionProgress(entry.getValue().username, guildInfo);
             if (!progress.contains("❌")) {
                 Utils.RankList rank = guildInfo.members.getRankOfMember(entry.getKey());
                 Object promoteTo = Utils.RankList.values()[rank.ordinal() - 1];
                 sb.append("**");
-                sb.append(entry.getValue().username).append(" from ").append(rank.name()).append(" to ").append(promoteTo).append("**\n");
+                sb.append(entry.getValue().username).append("** is eligible for **").append(promoteTo).append("** rank\n");
                 sb.append(progress).append("\n");
+                entries.add(sb.toString());
             }
         }
-
-        MessageEmbed embed = Utils.getEmbed("Promotions", sb.toString());
-        event.replyEmbeds(embed).queue();
+        return PageBuilder.buildEmbedPage(entries, paginationState.currentPage, 10, "Promotions");
     }
 }
