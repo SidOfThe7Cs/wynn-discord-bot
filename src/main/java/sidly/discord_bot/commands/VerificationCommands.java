@@ -12,6 +12,7 @@ import sidly.discord_bot.Config;
 import sidly.discord_bot.ConfigManager;
 import sidly.discord_bot.Utils;
 import sidly.discord_bot.api.ApiUtils;
+import sidly.discord_bot.api.GuildInfo;
 import sidly.discord_bot.api.PlayerProfile;
 
 import java.awt.Color;
@@ -100,18 +101,22 @@ public class VerificationCommands {
 
         username = playerData.username;
 
-        Utils.RankList rankOfMember = playerData.getRank();
         boolean requireConfirmation;
-        if (rankOfMember != null) {
-            requireConfirmation = switch (rankOfMember) {
-                case Utils.RankList.Owner -> true;
-                case Utils.RankList.Chief -> true;
-                case Utils.RankList.Strategist -> true;
-                case Utils.RankList.Captain -> true;
-                default -> false;
-            };
-        } else requireConfirmation = false;
-
+        GuildInfo guildInfo = ApiUtils.getGuildInfo(ConfigManager.getConfigInstance().other.get(Config.Settings.YourGuildPrefix));
+        if (guildInfo.members.getAllMembers().containsKey(playerData.uuid)) {
+            Utils.RankList rankOfMember = playerData.getRank();
+            if (rankOfMember != null) {
+                requireConfirmation = switch (rankOfMember) {
+                    case Utils.RankList.Owner -> true;
+                    case Utils.RankList.Chief -> true;
+                    case Utils.RankList.Strategist -> true;
+                    case Utils.RankList.Captain -> true;
+                    default -> false;
+                };
+            } else requireConfirmation = false;
+        } else {
+            requireConfirmation = false;
+        }
         EmbedBuilder embed = new EmbedBuilder();
         embed.setColor(Color.BLUE);
         embed.setTitle("Verification");
@@ -155,8 +160,6 @@ public class VerificationCommands {
                         .setActionRow(confirmButton, denyButton)
                         .queue();
             }
-        } else {
-
         }
 
         if (event.getGuild().getOwnerIdLong() == member.getIdLong()){
