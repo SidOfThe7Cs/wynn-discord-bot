@@ -133,6 +133,7 @@ public class Utils {
     }
 
     public static long daysSinceIso(String isoTimestamp) {
+        if (isoTimestamp == null || isoTimestamp.isEmpty()) return -1;
         try {
             // Parse the ISO-8601 timestamp string into an Instant
             Instant past = Instant.parse(isoTimestamp);

@@ -9,10 +9,6 @@ import sidly.discord_bot.page.PaginationIds;
 
 import java.awt.*;
 import java.io.File;
-import java.lang.management.ManagementFactory;
-import java.lang.management.OperatingSystemMXBean;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,7 +22,7 @@ public class HelpCommands {
         }
 
         event.replyEmbeds(embed.build())
-                .addComponents(Utils.getPaginationActionRow(PaginationIds.COMMANDLIST))
+                .addComponents(Utils.getPaginationActionRow(PaginationIds.COMMAND_LIST))
                 .queue();
     }
 
@@ -55,7 +51,7 @@ public class HelpCommands {
 
     public static EmbedBuilder buildCommandListPage() {
         List<String> entries = new ArrayList<>();
-        PageBuilder.PaginationState paginationState = PageBuilder.PaginationManager.get(PaginationIds.COMMANDLIST.name());
+        PageBuilder.PaginationState paginationState = PageBuilder.PaginationManager.get(PaginationIds.COMMAND_LIST.name());
 
         for (AllSlashCommands command : AllSlashCommands.values()){
             StringBuilder sb = new StringBuilder();

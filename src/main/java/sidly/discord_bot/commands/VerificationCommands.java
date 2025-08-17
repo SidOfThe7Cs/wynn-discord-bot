@@ -232,21 +232,23 @@ public class VerificationCommands {
             System.out.println("unverifying " + nickname);
             return removeRolesUnverify(member);
         } else if (playerData.playersMultiselectorMap != null) {
-            Matcher matcher = Pattern.compile("\\[(\\d+)]").matcher(fullEffectiveName);
-            if (matcher.find()) {
-                int number = Integer.parseInt(matcher.group(1));
-
-                nickname += " [" + number + "]";
-
-                int index = number - 1;
-                String targetKey = null;
-                if (index >= 0 && index < playerData.playersMultiselectorMap.size()) {
-                    targetKey = new ArrayList<>(playerData.playersMultiselectorMap.keySet()).get(index);
+            // select the user who logged in most recently
+            PlayerProfile playerDataMostRecent = null;
+            int mostRecentLogin = Integer.MAX_VALUE;
+            for (Map.Entry<String, PlayerProfile> entry : playerData.playersMultiselectorMap.entrySet()) {
+                PlayerProfile playerDataFromApi = ApiUtils.getPlayerData(entry.getKey());
+                if (playerDataFromApi == null) {
+                    continue;
                 }
-                if (targetKey != null) {
-                    playerData = ApiUtils.getPlayerData(targetKey);
-                } else return "failed to get uuid from multiselecter";
-            } else return "multiselecter but no number in username";
+                int lastLoginDayAgo = (int) Utils.daysSinceIso(playerDataFromApi.lastJoin);
+                if (lastLoginDayAgo == -1) continue;
+                if (playerDataMostRecent == null || lastLoginDayAgo < mostRecentLogin) {
+                    mostRecentLogin = lastLoginDayAgo;
+                    playerDataMostRecent = playerDataFromApi;
+                }
+            }
+            playerData = playerDataMostRecent;
+
         }
         if (playerData == null) {
             System.out.println("unverifying " + nickname + " multi");

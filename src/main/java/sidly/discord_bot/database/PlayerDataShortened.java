@@ -1,5 +1,6 @@
 package sidly.discord_bot.database;
 
+import sidly.discord_bot.Utils;
 import sidly.discord_bot.api.PlayerProfile;
 
 public class PlayerDataShortened {
@@ -10,6 +11,7 @@ public class PlayerDataShortened {
     public double latestPlaytime;
     public long lastModified;
     public String lastJoined;
+    public String firstJoined;
     public String supportRank;
     public int highestLvl;
     public int wars;
@@ -27,5 +29,12 @@ public class PlayerDataShortened {
         if (player.globalData != null) {
             this.wars = player.globalData.wars;
         } else this.wars = 0;
+        this.firstJoined = player.firstJoin;
+    }
+
+    public double getAllTimeWeeklyAverage() {
+        long days = Utils.daysSinceIso(firstJoined);
+        double weeks = (double) (days / 7L);
+        return latestPlaytime / weeks;
     }
 }

@@ -20,12 +20,12 @@ allow playtime command to specify interval and max
 
 inactivity
 
-skey weekly playtime to be acurate instead of just entries
-
-Addeception cmds
+Add exception cmds
 Backup database
-Get all timer average weekly playtime
-Make cmd that shows a players average playtime over the last week / 5 weeks / 20 weeks / alltime
+
+store uuid for multiselector
+use uuid as key for all database that you can
+create a table that maps discord getEffectiveName.toLowerCase() to uuids
 
 database and 6 api token and track all guilds
 

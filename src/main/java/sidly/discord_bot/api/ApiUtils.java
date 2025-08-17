@@ -67,7 +67,6 @@ public class ApiUtils {
 
             if (status == 300) {
                 JsonObject objects = gson.fromJson(response.body(), JsonObject.class).getAsJsonObject("objects");
-
                 Type mapType = new TypeToken<LinkedHashMap<String, PlayerProfile>>(){}.getType();
                 LinkedHashMap<String, PlayerProfile> playersMap = gson.fromJson(objects, mapType);
                 return new PlayerProfile(playersMap);

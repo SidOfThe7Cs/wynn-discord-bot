@@ -3,7 +3,6 @@ package sidly.discord_bot.api;
 import sidly.discord_bot.Utils;
 
 import java.util.*;
-import java.util.function.BiConsumer;
 
 public class GuildInfo {
     public String uuid;

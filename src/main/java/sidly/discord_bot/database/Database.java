@@ -5,6 +5,7 @@ import sidly.discord_bot.api.GuildInfo;
 import sidly.discord_bot.commands.demotion_promotion.RequirementList;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Database {
     public Map<Utils.RankList, RequirementList> promotionRequirements;
@@ -17,12 +18,12 @@ public class Database {
     public GuildInfo yourGuildInfo;
 
     public Database() {
-        this.promotionRequirements = new HashMap<>();
-        this.verifiedMembersByDiscordId = new HashMap<>();
-        this.verifiedMembersByIgn = new HashMap<>();
-        this.allPlayers = new HashMap<>();
-        this.playtimeHistory = new HashMap<>();
-        this.trackedGuildActivity = new HashMap<>();
+        this.promotionRequirements = new ConcurrentHashMap<>();
+        this.verifiedMembersByDiscordId = new ConcurrentHashMap<>();
+        this.verifiedMembersByIgn = new ConcurrentHashMap<>();
+        this.allPlayers = new ConcurrentHashMap<>();
+        this.playtimeHistory = new ConcurrentHashMap<>();
+        this.trackedGuildActivity = new ConcurrentHashMap<>();
         this.trackedGuilds = new ArrayList<>();
     }
 

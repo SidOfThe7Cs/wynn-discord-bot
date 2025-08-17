@@ -19,7 +19,6 @@ import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction;
 import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import sidly.discord_bot.commands.*;
 import sidly.discord_bot.commands.demotion_promotion.InactivityCommands;
-import sidly.discord_bot.commands.demotion_promotion.PlaytimeCommands;
 import sidly.discord_bot.commands.demotion_promotion.PromotionCommands;
 import sidly.discord_bot.commands.demotion_promotion.RequirementType;
 import sidly.discord_bot.page.PageBuilder;
@@ -158,7 +157,7 @@ public class MainEntrypoint extends ListenerAdapter {
 
         commands.addCommands(AllSlashCommands.listcommands.getBaseCommandData());
         AllSlashCommands.listcommands.setAction(HelpCommands::listCommands);
-        PageBuilder.PaginationManager.register(PaginationIds.COMMANDLIST.name(), HelpCommands::buildCommandListPage);
+        PageBuilder.PaginationManager.register(PaginationIds.COMMAND_LIST.name(), HelpCommands::buildCommandListPage);
 
         commands.addCommands(AllSlashCommands.setrolerequirement.getBaseCommandData().addOptions(
                 new OptionData(OptionType.STRING, "command", "Command to add requirement to", true).setAutoComplete(true),
@@ -179,6 +178,10 @@ public class MainEntrypoint extends ListenerAdapter {
                 .addOption(USER, "user", "user", true));
         AllSlashCommands.updateplayerroles.setAction(VerificationCommands::updateRoles);
 
+        commands.addCommands(AllSlashCommands.averageplaytime.getBaseCommandData());
+        AllSlashCommands.averageplaytime.setAction(InactivityCommands::getAveragePlaytime);
+        PageBuilder.PaginationManager.register(PaginationIds.AVERAGE_PLAYTIME.name(), InactivityCommands::buildAveragePlaytimePage);
+
         commands.addCommands(AllSlashCommands.getratelimitinfo.getBaseCommandData());
         AllSlashCommands.getratelimitinfo.setAction(RateLimitCommands::getRateLimitInfo);
 
@@ -193,10 +196,6 @@ public class MainEntrypoint extends ListenerAdapter {
                         )
         ));
         AllSlashCommands.addchannelrestriction.setAction(ChannelRestrinctionCommands::addRestriction);
-
-        commands.addCommands(AllSlashCommands.getallplayersaverageplaytime.getBaseCommandData()
-                .addOption(INTEGER, "weeks", "average over the last number of week", true));
-        AllSlashCommands.getallplayersaverageplaytime.setAction(PlaytimeCommands::getAllPlayersPlaytime);
 
         commands.addCommands(AllSlashCommands.addtrackedguild.getBaseCommandData()
                 .addOption(STRING, "guild_prefix", "e", true));

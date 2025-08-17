@@ -25,25 +25,68 @@ public class PlaytimeHistoryList {
     }
 
     public double getAverage(int weeks) {
-        if (playtimeHistory.size() < 2) { // Need at least 2 points to calculate an increase
+        if (playtimeHistory.size() < 2) {
             return 0;
         }
 
-        // Limit to available number of *intervals* (one less than entries)
-        int count = Math.min(weeks, playtimeHistory.size() - 1);
-        double totalIncrease = 0;
+        // Start from the end and go back up to 'weeks' entries
+        int endIndex = playtimeHistory.size() - 1;
+        int startIndex = Math.max(0, playtimeHistory.size() - weeks - 1);
 
-        // Start from the end and calculate increases between consecutive entries
-        for (int i = playtimeHistory.size() - count; i < playtimeHistory.size(); i++) {
-            double current = playtimeHistory.get(i).playtime;
-            double previous = playtimeHistory.get(i - 1).playtime;
-            totalIncrease += (current - previous);
+        double startPlaytime = playtimeHistory.get(startIndex).playtime;
+        double endPlaytime = playtimeHistory.get(endIndex).playtime;
+
+        long startTime = playtimeHistory.get(startIndex).timeLogged; // assuming millis or seconds
+        long endTime = playtimeHistory.get(endIndex).timeLogged;
+
+        // Total increase across the real time span
+        double totalIncrease = endPlaytime - startPlaytime;
+        long timeSpan = endTime - startTime;
+
+        if (timeSpan <= 0) {
+            return 0;
         }
 
-        // Average the increases
-        return totalIncrease / count;
+        // Scale to a 7-day (per-week) rate
+        double millisInWeek = TimeUnit.DAYS.toMillis(7);
+        return totalIncrease / (timeSpan / millisInWeek);
     }
 
+    public double getLinear10WeekAverage() {
+        if (playtimeHistory.size() < 2) {
+            return 0;
+        }
+
+        double totalWeighted = 0;
+        double totalWeights = 0;
+
+        // Max 10 weeks back (so up to 11 entries)
+        int count = Math.min(10, playtimeHistory.size() - 1);
+
+        for (int i = 0; i < count; i++) {
+            int currentIndex = playtimeHistory.size() - 1 - i;
+            int prevIndex = currentIndex - 1;
+
+            double current = playtimeHistory.get(currentIndex).playtime;
+            double previous = playtimeHistory.get(prevIndex).playtime;
+
+            long startTime = playtimeHistory.get(prevIndex).timeLogged;
+            long endTime = playtimeHistory.get(currentIndex).timeLogged;
+            long timeSpan = endTime - startTime;
+            double millisInWeek = TimeUnit.DAYS.toMillis(7);
+            double timeSpanWeeks = (double) timeSpan / millisInWeek;
+            double increase = (current - previous) / timeSpanWeeks;
+
+
+            // Weight = (3/4)^i
+            double weight = Math.pow(0.75, i);
+
+            totalWeighted += increase * weight;
+            totalWeights += weight;
+        }
+
+        return totalWeighted / totalWeights;
+    }
 
 
     public PlaytimeHistoryList() {
