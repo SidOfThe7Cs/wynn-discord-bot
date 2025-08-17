@@ -205,7 +205,7 @@ public class PromotionCommands {
         sb.append("Optional Requirements: ").append(optionalCounter).append(" / ").append(requiredOptionalRequirements).append('\n');
 
         if (!optional.isEmpty()) {
-            sb.append("-# Optional: (at least ").append(requiredOptionalRequirements).append(" must be met)");
+            sb.append("-# Optional: (at least ").append(requiredOptionalRequirements).append(" must be met)\n");
         }
         sb.append(optionalOutput);
 
@@ -219,27 +219,27 @@ public class PromotionCommands {
         switch (req.getType()) {
             case XPContributed:
                 long playerXPContribution = guildMemberInfo.contributed;
-                sb.append(getSymbol(req.isRequired(), playerXPContribution, requirementCount));
+                sb.append(getSymbol(playerXPContribution, requirementCount));
                 sb.append(" XPContributed: ").append(playerXPContribution).append(" / ").append(requirementCount).append('\n');
                 break;
             case TopXpContributor:
                 int playerXPContributionRank = guildMemberInfo.contributionRank;
-                sb.append(getSymbol(req.isRequired(), requirementCount, playerXPContributionRank));
+                sb.append(getSymbol(requirementCount, playerXPContributionRank));
                 sb.append(" TopXpContributor: ").append(playerXPContributionRank).append(" / ").append(requirementCount).append('\n');
                 break;
             case Level:
                 int playerLevel = playerDataShortened.highestLvl;
-                sb.append(getSymbol(req.isRequired(), playerLevel, requirementCount));
+                sb.append(getSymbol(playerLevel, requirementCount));
                 sb.append(" Level: ").append(playerLevel).append(" / ").append(requirementCount).append('\n');
                 break;
             case DaysInGuild:
                 long daysInGuild = Utils.daysSinceIso(guildMemberInfo.joined);
-                sb.append(getSymbol(req.isRequired(), (int) daysInGuild, requirementCount));
+                sb.append(getSymbol((int) daysInGuild, requirementCount));
                 sb.append(" DaysInGuild: ").append(daysInGuild).append(" / ").append(requirementCount).append('\n');
                 break;
             case GuildWars:
                 int guildWars = playerDataShortened.wars;
-                sb.append(getSymbol(req.isRequired(), guildWars, requirementCount));
+                sb.append(getSymbol(guildWars, requirementCount));
                 sb.append(" GuildWars: ").append(guildWars).append(" / ").append(requirementCount).append('\n');
                 break;
             case WarBuild:
@@ -254,7 +254,7 @@ public class PromotionCommands {
                 if (healer) buildCount++;
                 if (solo) buildCount++;
 
-                sb.append(getSymbol(req.isRequired(), buildCount, requirementCount));
+                sb.append(getSymbol(buildCount, requirementCount));
                 sb.append(" WarBuild: ").append(buildCount).append(" / ").append(requirementCount).append('\n');
                 break;
             case WeeklyPlaytime:
@@ -271,13 +271,13 @@ public class PromotionCommands {
             case Eco:
                 boolean eco = Utils.hasRole(member, ConfigManager.getConfigInstance().roles.get(Config.Roles.TrialEcoRole));
                 int ecoInt = eco ? 1 : 0;
-                sb.append(getSymbol(req.isRequired(), ecoInt, requirementCount));
+                sb.append(getSymbol(ecoInt, requirementCount));
                 sb.append(" Eco: ").append(ecoInt).append(" / ").append(requirementCount).append('\n');
                 break;
             case Verified:
                 boolean verified = Utils.hasRole(member, ConfigManager.getConfigInstance().roles.get(Config.Roles.VerifiedRole));
                 int verifiedInt = verified ? 1 : 0;
-                sb.append(getSymbol(req.isRequired(), verifiedInt, requirementCount));
+                sb.append(getSymbol(verifiedInt, requirementCount));
                 sb.append(" Verified: ").append(verifiedInt).append(" / ").append(requirementCount).append('\n');
                 break;
             default:
@@ -286,20 +286,16 @@ public class PromotionCommands {
         return sb.toString();
     }
 
-    public static String getSymbol(boolean optional, int value, int requirement) {
+    public static String getSymbol(int value, int requirement) {
         if (value >= requirement) {
             return "✅ ";
-        } else if (!optional){
-            return "❌";
-        } else return ":no_entry_sign:";
+        } else return "❌";
     }
 
-    public static String getSymbol(boolean optional, long value, int requirement) {
+    public static String getSymbol(long value, int requirement) {
         if (value >= requirement) {
             return "✅ ";
-        } else if (!optional){
-            return "❌";
-        } else return ":no_entry_sign:";
+        } else return "❌";
     }
 
     public static void checkForPromotions(SlashCommandInteractionEvent event) {
@@ -307,7 +303,7 @@ public class PromotionCommands {
         EmbedBuilder embed = buildPromotionsPage();
 
         if (embed == null) {
-            event.reply("no guilds").setEphemeral(true).queue();
+            event.reply("no promotions").setEphemeral(true).queue();
             return;
         }
 
@@ -324,12 +320,11 @@ public class PromotionCommands {
             return null;
         }
 
-
         List<String> entries = new ArrayList<>();
         for (Map.Entry<String, GuildInfo.MemberInfo> entry : guildInfo.members.getAllMembers().entrySet()) {
             StringBuilder sb = new StringBuilder();
             String progress = checkPromotionProgress(entry.getValue().username, guildInfo);
-            if (!progress.contains("❌")) {
+            if (!progress.split("-#")[0].contains("❌")) {
                 Utils.RankList rank = guildInfo.members.getRankOfMember(entry.getKey());
                 Object promoteTo = Utils.RankList.values()[rank.ordinal() - 1];
                 sb.append("**");
