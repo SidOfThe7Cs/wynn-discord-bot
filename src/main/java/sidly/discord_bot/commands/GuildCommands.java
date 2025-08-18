@@ -5,16 +5,18 @@ import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
-import net.dv8tion.jda.api.interactions.components.ActionRow;
-import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import sidly.discord_bot.Config;
 import sidly.discord_bot.ConfigManager;
 import sidly.discord_bot.MainEntrypoint;
 import sidly.discord_bot.Utils;
 import sidly.discord_bot.api.ApiUtils;
 import sidly.discord_bot.api.GuildInfo;
-import sidly.discord_bot.database.GuildDataActivity;
+import sidly.discord_bot.database.records.GuildAverages;
 import sidly.discord_bot.database.PlayerDataShortened;
+import sidly.discord_bot.database.tables.GuildActivity;
+import sidly.discord_bot.database.tables.Players;
+import sidly.discord_bot.database.tables.TrackedGuilds;
+import sidly.discord_bot.database.tables.UuidMap;
 import sidly.discord_bot.page.PageBuilder;
 import sidly.discord_bot.page.PaginationIds;
 
@@ -103,16 +105,17 @@ public class GuildCommands {
     static String membersList(Map<String, GuildInfo.MemberInfo> map) {
         if (map == null || map.isEmpty()) return "_None_";
 
-        return map.values().stream()
-                .filter(member -> member.online)
-                .map(member -> {
+        return map.entrySet().stream()
+                .filter(entry -> entry.getValue().online)
+                .map(entry -> {
+                    String key = entry.getKey();
+                    GuildInfo.MemberInfo member = entry.getValue();
+
                     // Escape username
                     String username = Utils.escapeDiscordMarkdown(member.username);
 
-                    // Get PlayerDataShortened and append support rank if present
-                    PlayerDataShortened playerDataShortened =
-                            ConfigManager.getDatabaseInstance().allPlayers.get(member.username);
-
+                    // Get PlayerDataShortened using the key
+                    PlayerDataShortened playerDataShortened = Players.get(key);
 
                     if (playerDataShortened != null && playerDataShortened.supportRank != null && !playerDataShortened.supportRank.isEmpty()) {
                         username += " [" + playerDataShortened.supportRank.toUpperCase() + "]";
@@ -122,40 +125,40 @@ public class GuildCommands {
                 })
                 .sorted()
                 .collect(Collectors.joining("\n"));
+
     }
 
 
     public static void addTrackedGuild(SlashCommandInteractionEvent event) {
         String guildPrefix = event.getOption("guild_prefix").getAsString();
-        List<String> guilds = ConfigManager.getDatabaseInstance().trackedGuilds;
-        if (guilds != null && !guilds.contains(guildPrefix)) {
-            guilds.add(guildPrefix);
+        if (!TrackedGuilds.isTracked(guildPrefix)) {
+            TrackedGuilds.add(guildPrefix);
         }
         event.reply("added " + guildPrefix + " to tracked guilds").queue();
     }
 
     public static void removeTrackedGuild(SlashCommandInteractionEvent event) {
         String guildPrefix = event.getOption("guild_prefix").getAsString();
-        ConfigManager.getDatabaseInstance().trackedGuilds.remove(guildPrefix);
+        //TODO
         event.reply("removed " + guildPrefix + " from tracked guilds").queue();
     }
 
     public static void viewActiveHours(SlashCommandInteractionEvent event) {
         String guildPrefix = event.getOption("guild_prefix").getAsString();
+        String uuid = UuidMap.getMinecraftIdByUsername(guildPrefix);
         int days = Optional.ofNullable(event.getOption("days"))
                 .map(OptionMapping::getAsInt)
                 .orElse(-1);
 
-        GuildDataActivity guildDataActivity = ConfigManager.getDatabaseInstance().trackedGuildActivity.get(guildPrefix);
 
-        if (guildDataActivity == null) {
+        if (!GuildActivity.containsPrefix(guildPrefix)) {
             event.reply("guild not found").setEphemeral(true).queue();
             return;
         }
 
         EmbedBuilder embed = new EmbedBuilder();
         embed.setColor(Color.CYAN);
-        embed.setTitle("[" + guildPrefix + "] " + guildDataActivity.getGuildName() + "Active Hours\n");
+        embed.setTitle("[" + guildPrefix + "] " + GuildActivity.getGuildName(uuid) + "Active Hours\n");
         StringBuilder sb = new StringBuilder();
 
         List<String> hours = new ArrayList<>();
@@ -163,8 +166,8 @@ public class GuildCommands {
         List<String> captains = new ArrayList<>();
 
         for (int hour = 0; hour < 24; hour++) {
-            double averagePlayers = guildDataActivity.getAverageOnline(hour, days, false);
-            double averageCaptains = guildDataActivity.getAverageOnline(hour, days, true);
+            double averagePlayers = GuildActivity.getAverageOnline(uuid, hour, days, false);
+            double averageCaptains = GuildActivity.getAverageOnline(uuid, hour, days, true);
 
             // If the average is negative (no data), show "--.00"
             String playersStr = averagePlayers < 0 ? "--.--" : String.format("%02.2f", averagePlayers);
@@ -207,38 +210,21 @@ public class GuildCommands {
     public static EmbedBuilder buildGuildsPage() {
         PageBuilder.PaginationState paginationState = PageBuilder.PaginationManager.get(PaginationIds.GUILD.name());
 
-        List<String> sortedGuilds = ConfigManager.getDatabaseInstance().trackedGuilds.stream()
-                .sorted((g1, g2) -> {
-                    GuildDataActivity gda1 = ConfigManager.getDatabaseInstance().trackedGuildActivity.get(g1);
-                    GuildDataActivity gda2 = ConfigManager.getDatabaseInstance().trackedGuildActivity.get(g2);
-
-                    double avg1 = gda1 != null ? gda1.getAverageOnline(guildDays, false) : -1;
-                    double avg2 = gda2 != null ? gda2.getAverageOnline(guildDays, false) : -1;
-
-                    return Double.compare(avg2, avg1);
-                })
-                .toList();
+        List<GuildAverages> sortedGuilds = GuildActivity.getGuildAverages(guildDays);
 
         if (sortedGuilds.isEmpty()) {
             return null;
         }
 
         List<String> entries = new ArrayList<>();
-        for (String trackedGuild : sortedGuilds) {
-            GuildDataActivity guildDataActivity = ConfigManager.getDatabaseInstance().trackedGuildActivity.get(trackedGuild);
+        for (GuildAverages trackedGuild : sortedGuilds) {
             StringBuilder sb = new StringBuilder();
 
-            String averagePlayers = "?";
-            String averageCaptains = "?";
-            String guildName = "?";
+            String averagePlayers = String.format("%.2f", trackedGuild.averageOnline());
+            String averageCaptains = String.format("%.2f", trackedGuild.averageCaptains());
+            String guildName = GuildActivity.getGuildName(trackedGuild.uuid());
 
-            if (guildDataActivity != null) {
-                averagePlayers = String.format("%.2f", guildDataActivity.getAverageOnline(guildDays, false));
-                averageCaptains = String.format("%.2f", guildDataActivity.getAverageOnline(guildDays, true));
-                guildName = guildDataActivity.getGuildName();
-            }
-
-            sb.append("[**").append(trackedGuild).append("**] ").append(guildName).append("\n");
+            sb.append("[**").append(UuidMap.getUsernameByMinecraftId(trackedGuild.uuid())).append("**] ").append(guildName).append("\n");
             sb.append("Avg. Online: ").append(averagePlayers).append("\n");
             sb.append("Avg. Captains+: ").append(averageCaptains).append("\n\n");
 
@@ -249,36 +235,34 @@ public class GuildCommands {
     }
 
 
-    public static void updatePlayerRanks(){
+    public static String updatePlayerRanks(){
         GuildInfo guildinfo = ApiUtils.getGuildInfo(ConfigManager.getConfigInstance().other.get(Config.Settings.YourGuildPrefix));
-        if (guildinfo == null || guildinfo.members == null) return;
+        if (guildinfo == null || guildinfo.members == null) return "";
 
         // Get the guild ID from config
         String guildId = ConfigManager.getConfigInstance().other.get(Config.Settings.YourDiscordServerId);
         if (guildId == null) {
             System.err.println("Server ID is not set in config.");
-            return;
+            return "";
         }
 
         // Get the guild from JDA
         Guild guild = MainEntrypoint.jda.getGuildById(guildId);
         if (guild == null) {
             System.err.println("Guild not found for ID: " + guildId);
-            return;
+            return "";
         }
 
-        StringBuilder sb = new StringBuilder();
-        sb.append("Updated Player Ranks\n");
+        String text = "Updated Player Ranks\n" +
+                processRank(guildinfo.members.owner, Config.Roles.OwnerRole, guild) +
+                processRank(guildinfo.members.chief, Config.Roles.ChiefRole, guild) +
+                processRank(guildinfo.members.strategist, Config.Roles.StrategistRole, guild) +
+                processRank(guildinfo.members.captain, Config.Roles.CaptainRole, guild) +
+                processRank(guildinfo.members.recruiter, Config.Roles.RecruiterRole, guild) +
+                processRank(guildinfo.members.recruit, Config.Roles.RecruitRole, guild);
 
-        sb.append(processRank(guildinfo.members.owner, Config.Roles.OwnerRole, guild));
-        sb.append(processRank(guildinfo.members.chief, Config.Roles.ChiefRole, guild));
-        sb.append(processRank(guildinfo.members.strategist, Config.Roles.StrategistRole, guild));
-        sb.append(processRank(guildinfo.members.captain, Config.Roles.CaptainRole, guild));
-        sb.append(processRank(guildinfo.members.recruiter, Config.Roles.RecruiterRole, guild));
-        sb.append(processRank(guildinfo.members.recruit, Config.Roles.RecruitRole, guild));
-
-        Utils.sendToModChannel(sb.toString(), true);
-
+        Utils.sendToModChannel(text, true);
+        return text;
     }
 
     public static String processRank(Map<String, GuildInfo.MemberInfo> rankMap, Config.Roles role, Guild guild) {
@@ -321,5 +305,10 @@ public class GuildCommands {
             }
         }
         return sb.toString();
+    }
+
+    public static void updatePlayerRanks(SlashCommandInteractionEvent event) {
+        String result = updatePlayerRanks();
+        event.replyEmbeds(Utils.getEmbed("", result)).setEphemeral(true).queue();
     }
 }

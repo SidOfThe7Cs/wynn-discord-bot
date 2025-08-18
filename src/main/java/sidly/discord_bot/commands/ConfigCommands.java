@@ -102,7 +102,7 @@ public class ConfigCommands {
         Config.LvlRoles option = Config.LvlRoles.valueOf(setting);
 
         ConfigManager.getConfigInstance().lvlRoles.put(option, id);
-        ConfigManager.saveConfig();
+        ConfigManager.save();
 
         event.reply(event.getUser().getName() + " has changed the " + setting + " to " + id).setEphemeral(false).queue();
     }
@@ -130,7 +130,7 @@ public class ConfigCommands {
         }
 
         ConfigManager.getConfigInstance().other.put(option, value);
-        ConfigManager.saveConfig();
+        ConfigManager.save();
 
         event.reply(event.getUser().getName() + " has changed the " + setting + " to " + value).setEphemeral(ephemeral).queue();
     }
@@ -149,7 +149,7 @@ public class ConfigCommands {
         }
 
         ConfigManager.getConfigInstance().roles.put(option, id);
-        ConfigManager.saveConfig();
+        ConfigManager.save();
 
         event.reply(event.getUser().getName() + " has changed the " + setting + " to " + id).setEphemeral(false).queue();
     }
@@ -168,7 +168,7 @@ public class ConfigCommands {
         }
 
         ConfigManager.getConfigInstance().channels.put(option, id);
-        ConfigManager.saveConfig();
+        ConfigManager.save();
 
         event.reply(event.getUser().getName() + " has changed the " + setting + " to " + id).setEphemeral(false).queue();
     }

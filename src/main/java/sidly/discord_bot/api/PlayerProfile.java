@@ -11,6 +11,12 @@ public class PlayerProfile {
     }
 
     public Map<String, PlayerProfile> playersMultiselectorMap;
+
+    public PlayerProfile(int statusCode) {
+        this.statusCode = statusCode;
+    }
+
+    public int statusCode;
     public String username;
     public boolean online;
     public String server;

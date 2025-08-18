@@ -14,6 +14,9 @@ import sidly.discord_bot.api.ApiUtils;
 import sidly.discord_bot.api.GuildInfo;
 import sidly.discord_bot.database.PlayerDataShortened;
 import sidly.discord_bot.database.PlaytimeHistoryList;
+import sidly.discord_bot.database.tables.Players;
+import sidly.discord_bot.database.tables.PlaytimeHistory;
+import sidly.discord_bot.database.tables.UuidMap;
 import sidly.discord_bot.page.PageBuilder;
 import sidly.discord_bot.page.PaginationIds;
 
@@ -32,9 +35,8 @@ public class PromotionCommands {
 
         Requirement requirement = new Requirement(type, value, required);
 
-        RequirementList reqList = ConfigManager.getDatabaseInstance().promotionRequirements.computeIfAbsent(rank, k -> new RequirementList());
+        RequirementList reqList = ConfigManager.getConfigInstance().promotionRequirements.computeIfAbsent(rank, k -> new RequirementList());
         reqList.addRequirement(requirement);
-        ConfigManager.saveDatabase();
 
 
         event.reply("added " + requirement + " to " + rank.name()).queue();
@@ -42,7 +44,7 @@ public class PromotionCommands {
 
     public static void getRequirements(SlashCommandInteractionEvent event) {
 
-        if (ConfigManager.getDatabaseInstance().promotionRequirements == null || ConfigManager.getDatabaseInstance().promotionRequirements.isEmpty()) {
+        if (ConfigManager.getConfigInstance().promotionRequirements == null || ConfigManager.getConfigInstance().promotionRequirements.isEmpty()) {
             event.reply("No promotion requirements found.").setEphemeral(true).queue();
             return;
         }
@@ -51,7 +53,7 @@ public class PromotionCommands {
                 .setTitle("Promotion Requirements")
                 .setColor(Color.CYAN);
 
-        for (Map.Entry<Utils.RankList, RequirementList> entry : ConfigManager.getDatabaseInstance().promotionRequirements.entrySet()) {
+        for (Map.Entry<Utils.RankList, RequirementList> entry : ConfigManager.getConfigInstance().promotionRequirements.entrySet()) {
             Utils.RankList rank = entry.getKey();
             RequirementList requirements = entry.getValue();
 
@@ -86,7 +88,7 @@ public class PromotionCommands {
         RequirementType type = RequirementType.valueOf(event.getOption("requirement").getAsString());
         String reply;
 
-        RequirementList requirements = ConfigManager.getDatabaseInstance().promotionRequirements.get(rank);
+        RequirementList requirements = ConfigManager.getConfigInstance().promotionRequirements.get(rank);
         if (requirements == null || requirements.isEmpty()) {
             reply = "no requirements were found";
         } else {
@@ -102,7 +104,6 @@ public class PromotionCommands {
             reply = removedAny ? "Removed all matching requirements: " : "Requirement not found: ";
             reply += rank + " " + type;
         }
-        ConfigManager.saveDatabase();
 
         event.reply(reply).queue();
     }
@@ -110,8 +111,7 @@ public class PromotionCommands {
     public static void setPromotionOptionalRequirement(SlashCommandInteractionEvent event) {
         Utils.RankList rank = Utils.RankList.valueOf(event.getOption("rank").getAsString());
         int value = event.getOption("value").getAsInt();
-        ConfigManager.getDatabaseInstance().promotionRequirements.get(rank).setOptionalQuantityRequired(value);
-        ConfigManager.saveDatabase();
+        ConfigManager.getConfigInstance().promotionRequirements.get(rank).setOptionalQuantityRequired(value);
 
         event.reply("set " + rank + " to " + value).queue();
     }
@@ -134,7 +134,7 @@ public class PromotionCommands {
 
     public static String checkPromotionProgress(String username, GuildInfo guildInfo) {
 
-        PlayerDataShortened playerDataShortened = ConfigManager.getDatabaseInstance().allPlayers.get(username);
+        PlayerDataShortened playerDataShortened = Players.get(UuidMap.getMinecraftIdByUsername(username.toLowerCase()));
 
         if (playerDataShortened == null || guildInfo == null || guildInfo.members == null) return "null error ❌";
 
@@ -150,7 +150,7 @@ public class PromotionCommands {
         if (guildMemberInfo == null) return "guild member info is null error ❌";
 
         // And get promotion requirements map
-        Map<Utils.RankList, RequirementList> promotionRequirements = ConfigManager.getDatabaseInstance().promotionRequirements;
+        Map<Utils.RankList, RequirementList> promotionRequirements = ConfigManager.getConfigInstance().promotionRequirements;
         RequirementList requirementList = null;
         int currentIndex = playerRank.ordinal();
         if (currentIndex > 0) { // Make sure there is a rank above
@@ -259,8 +259,8 @@ public class PromotionCommands {
                 break;
             case WeeklyPlaytime:
                 double average = 0;
-                PlaytimeHistoryList playtimeHistoryList = ConfigManager.getDatabaseInstance().playtimeHistory.get(username);
-                if (playtimeHistoryList != null && playtimeHistoryList.getAverage(10) > requirementCount) {
+                PlaytimeHistoryList playtimeHistoryList = PlaytimeHistory.getPlaytimeHistory(playerDataShortened.uuid);
+                if (playtimeHistoryList.getAverage(10) > requirementCount) {
                     average = playtimeHistoryList.getAverage(10);
                     sb.append("✅ ");
                 } else if (req.isRequired()){

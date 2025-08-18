@@ -16,6 +16,8 @@ public class PlayerDataShortened {
     public int highestLvl;
     public int wars;
 
+    public PlayerDataShortened() {}
+
     public PlayerDataShortened(PlayerProfile player){
         this.username = player.username;
         this.uuid = player.uuid;
@@ -31,6 +33,7 @@ public class PlayerDataShortened {
         } else this.wars = 0;
         this.firstJoined = player.firstJoin;
     }
+
 
     public double getAllTimeWeeklyAverage() {
         long days = Utils.daysSinceIso(firstJoined);

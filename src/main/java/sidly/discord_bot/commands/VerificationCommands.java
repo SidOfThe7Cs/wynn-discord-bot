@@ -14,50 +14,45 @@ import sidly.discord_bot.Utils;
 import sidly.discord_bot.api.ApiUtils;
 import sidly.discord_bot.api.GuildInfo;
 import sidly.discord_bot.api.PlayerProfile;
+import sidly.discord_bot.database.tables.Players;
+import sidly.discord_bot.database.tables.UuidMap;
 
 import java.awt.Color;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class VerificationCommands {
-    private static Map<Integer, String> uuidMap = new ConcurrentHashMap<>();
+    private static final Map<Integer, uuidAndUsername> uuidMap = new ConcurrentHashMap<>();
+    private record uuidAndUsername(String uuid, String username) {}
 
     public static void verify(IReplyCallback event) {
-        String username;
+        uuidAndUsername ids;
         int multiSelectorIndex;
         if (event instanceof SlashCommandInteractionEvent slashEvent) {
             multiSelectorIndex = 0;
-            username = slashEvent.getOption("username").getAsString();
+            String username = slashEvent.getOption("username").getAsString();
+            ids = new uuidAndUsername(UuidMap.getMinecraftIdByUsername(username), username);
         } else if (event instanceof ButtonInteractionEvent buttonEvent) {
             String[] parts = buttonEvent.getComponentId().split(":");
-            username = uuidMap.remove(Integer.parseInt(parts[1]));
+            ids = uuidMap.remove(Integer.parseInt(parts[1]));
+
             multiSelectorIndex = Integer.parseInt(buttonEvent.getButton().getLabel());
         } else {
-            multiSelectorIndex = 0;
             return;
         }
 
         Member member = event.getMember();
+        String uuid = ids.uuid == null ? ids.username : ids.uuid;
 
         if (member == null){
             event.reply("member was null").setEphemeral(true).queue();
             return;
         }
-        // remove there previous verification
-        if (ConfigManager.getDatabaseInstance().verifiedMembersByDiscordId.containsKey(member.getId())) {
-            ConfigManager.getDatabaseInstance().removeVerification(member.getId());
-        }
-        // only allow one discord account per mc account
-        if (ConfigManager.getDatabaseInstance().verifiedMembersByIgn.containsKey(username)) {
-            event.reply("someone is already verified as that user").setEphemeral(true).queue();
-            return;
-        }
-        PlayerProfile playerData = ApiUtils.getPlayerData(username);
+        //TODO only allow one discord account per mc account
+        PlayerProfile playerData = ApiUtils.getPlayerData(uuid);
         if (playerData == null){
             event.reply("playerData was null").setEphemeral(true).queue();
             return;
@@ -90,7 +85,7 @@ public class VerificationCommands {
                     int index = 0;
                     while (uuidMap.containsKey(index)) index++;
                     Button button = Button.primary("verification:" + index, String.valueOf(counter));
-                    uuidMap.put(index, playerprofile.uuid);
+                    uuidMap.put(index, new uuidAndUsername(playerprofile.uuid, ids.username));
                     buttons.add(button);
                 }
             }
@@ -98,8 +93,6 @@ public class VerificationCommands {
             event.replyEmbeds(Utils.getEmbed("Multiple Verification Options", sb.toString())).addComponents(ActionRow.of(buttons)).setEphemeral(true).queue();
             return;
         }
-
-        username = playerData.username;
 
         boolean requireConfirmation;
         GuildInfo guildInfo = ApiUtils.getGuildInfo(ConfigManager.getConfigInstance().other.get(Config.Settings.YourGuildPrefix));
@@ -121,10 +114,9 @@ public class VerificationCommands {
         embed.setColor(Color.BLUE);
         embed.setTitle("Verification");
 
-        String finalUsername = username;
         event.deferReply(true).queue(hook -> {
             if (!requireConfirmation) {
-                CompletableFuture<String> stringCompletableFuture = completeVerification(member, finalUsername, member.getGuild(), multiSelectorIndex);
+                CompletableFuture<String> stringCompletableFuture = completeVerification(member, ids.username, member.getGuild(), multiSelectorIndex);
                 stringCompletableFuture.thenAccept(result -> {
                     // result is the String returned from completeVerification
                     embed.setDescription("Verification complete: \n" + result);
@@ -146,7 +138,7 @@ public class VerificationCommands {
             );
 
             if (modChannel != null) {
-                String baseId = event.getUser().getId() + ":" + username + ":" + multiSelectorIndex;
+                String baseId = event.getUser().getId() + ":" + ids.username + ":" + multiSelectorIndex;
 
                 Button confirmButton = Button.success("verC:" + baseId, "Confirm");
                 Button denyButton = Button.danger("verD:" + baseId, "Deny");
@@ -154,7 +146,7 @@ public class VerificationCommands {
                 EmbedBuilder modEmbed = new EmbedBuilder()
                         .setColor(Color.ORANGE)
                         .setTitle("Verification Request")
-                        .setDescription(event.getUser().getAsMention() + " claims to be **" + username + "**");
+                        .setDescription(event.getUser().getAsMention() + " claims to be **" + ids.username + "**");
 
                 modChannel.sendMessageEmbeds(modEmbed.build())
                         .setActionRow(confirmButton, denyButton)
@@ -177,10 +169,6 @@ public class VerificationCommands {
             future.complete("verified role is null");
             return future;
         }
-
-        ConfigManager.getDatabaseInstance().verifiedMembersByIgn.put(username, member.getId());
-        ConfigManager.getDatabaseInstance().verifiedMembersByDiscordId.put(member.getId(), username);
-        ConfigManager.saveDatabase();
 
         StringBuilder sb = new StringBuilder();
         sb.append(Utils.removeRole(member, ConfigManager.getConfigInstance().roles.get(Config.Roles.UnVerifiedRole)));
@@ -205,6 +193,7 @@ public class VerificationCommands {
             guild.modifyNickname(member, newNick).queue(nickSuccess -> runUpdate.run());
         });
 
+        UuidMap.addDiscordId(username.toLowerCase(), member.getId());
         return future;
     }
 
@@ -226,11 +215,18 @@ public class VerificationCommands {
         String fullEffectiveName = member.getEffectiveName();
         String nickname = fullEffectiveName.split("\\[")[0].trim();
 
+        String uuid = UuidMap.getMinecraftIdByUsername(nickname) == null ? nickname : UuidMap.getMinecraftIdByUsername(nickname);
 
-        PlayerProfile playerData = ApiUtils.getPlayerData(nickname);
+
+        PlayerProfile playerData = ApiUtils.getPlayerData(uuid);
         if (playerData == null) {
             System.out.println("unverifying " + nickname);
-            return removeRolesUnverify(member);
+
+            String text = removeRolesUnverify(member);
+            Utils.sendToModChannel(text, true);
+            return text;
+        } else if (playerData.statusCode == 520) {
+            return "failed to connect to api";
         } else if (playerData.playersMultiselectorMap != null) {
             // select the user who logged in most recently
             PlayerProfile playerDataMostRecent = null;
@@ -252,8 +248,12 @@ public class VerificationCommands {
         }
         if (playerData == null) {
             System.out.println("unverifying " + nickname + " multi");
-            return removeRolesUnverify(member);
+            String text = removeRolesUnverify(member);
+            Utils.sendToModChannel(text, true);
+            return text;
         }
+
+        UuidMap.addMinecraftId(nickname.toLowerCase(), playerData.uuid);
 
         boolean isOwner = member.getGuild().getOwnerIdLong() == member.getIdLong();
         boolean isMember;
@@ -398,8 +398,7 @@ public class VerificationCommands {
 
     public static void removeVerification(SlashCommandInteractionEvent event) {
         String userId = event.getOption("user_id").getAsString();
-        ConfigManager.getDatabaseInstance().removeVerification(userId);
-        event.reply("removed verification for " + userId).setEphemeral(true).queue();
+        event.reply("did nothing lmao " + userId).setEphemeral(true).queue();
     }
 
     public static void updateRoles(SlashCommandInteractionEvent event) {

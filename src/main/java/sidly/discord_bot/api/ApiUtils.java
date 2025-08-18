@@ -9,6 +9,10 @@ import sidly.discord_bot.ConfigManager;
 import sidly.discord_bot.database.GuildDataActivity;
 import sidly.discord_bot.database.PlayerDataShortened;
 import sidly.discord_bot.database.PlaytimeHistoryList;
+import sidly.discord_bot.database.tables.GuildActivity;
+import sidly.discord_bot.database.tables.PlaytimeHistory;
+import sidly.discord_bot.database.tables.TrackedGuilds;
+import sidly.discord_bot.database.tables.UuidMap;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -58,7 +62,7 @@ public class ApiUtils {
             if (!(body.startsWith("{") || body.startsWith("["))) {
                 System.out.println("status code: " + status);
                 System.err.println("Unexpected response: " + body);
-                return null;
+                return new PlayerProfile(response.statusCode());
             }
             parseRateLimit(response);
 
@@ -76,15 +80,9 @@ public class ApiUtils {
             Type type = new TypeToken<PlayerProfile>(){}.getType();
             PlayerProfile apiData = gson.fromJson(response.body(), type);
             if (apiData.username == null) return null;
+            apiData.statusCode = response.statusCode();
 
-            PlayerDataShortened playerDataShort = new PlayerDataShortened(apiData);
-            ConfigManager.getDatabaseInstance().allPlayers.put(apiData.username, playerDataShort);
-            Map<String, PlaytimeHistoryList> playtimeHistoryMap = ConfigManager.getDatabaseInstance().playtimeHistory;
-            if (playtimeHistoryMap.get(apiData.username) == null){
-                playtimeHistoryMap.put(apiData.username, new PlaytimeHistoryList());
-            }
-            playtimeHistoryMap.get(apiData.username).addPlaytimeIfNeeded(playerDataShort);
-            ConfigManager.saveDatabase();
+            PlaytimeHistory.addPlaytimeIfNeeded(new PlayerDataShortened(apiData));
 
             return apiData;
 
@@ -119,7 +117,7 @@ public class ApiUtils {
             if (status == 404) {
                 return null;
             }
-            if (status == 300) System.out.println("a multiselector was actually returned and i havent added handling for it " + prefix);
+            if (status == 300) System.out.println("a multiselector was actually returned and i havent added handling for it [" + prefix + "]\n");
             parseRateLimit(response);
 
             // Parse response with Gson
@@ -128,8 +126,7 @@ public class ApiUtils {
             Type type = new TypeToken<GuildInfo>(){}.getType();
             GuildInfo apiData = gson.fromJson(response.body(), type);
 
-            Map<String, GuildDataActivity> trackedGuildActivity = ConfigManager.getDatabaseInstance().trackedGuildActivity;
-            if (trackedGuildActivity.get(prefix) == null) trackedGuildActivity.put(prefix, new GuildDataActivity(apiData.name));
+            UuidMap.addMinecraftId(prefix, apiData.uuid);
             int onlinePlayerCount = 0;
             int onlineCaptainPlusCount = 0;
             GuildInfo.Members members = apiData.members;
@@ -137,12 +134,7 @@ public class ApiUtils {
                 onlinePlayerCount = members.getOnlineMembersCount();
                 onlineCaptainPlusCount = members.getOnlineCaptainsPlusCount();
             }
-            trackedGuildActivity.get(prefix).add(onlinePlayerCount, false);
-            trackedGuildActivity.get(prefix).add(onlineCaptainPlusCount, true);
-
-            if (ConfigManager.getConfigInstance().other.get(Config.Settings.YourGuildPrefix).equals(prefix)){
-                ConfigManager.getDatabaseInstance().yourGuildInfo = apiData;
-            }
+            GuildActivity.add(apiData.uuid, prefix, apiData.name, onlinePlayerCount, onlineCaptainPlusCount);
 
             return apiData;
 

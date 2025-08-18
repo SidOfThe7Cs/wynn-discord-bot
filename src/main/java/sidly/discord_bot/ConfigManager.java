@@ -2,7 +2,6 @@ package sidly.discord_bot;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
-import sidly.discord_bot.database.Database;
 
 import java.io.File;
 import java.io.FileReader;
@@ -26,35 +25,19 @@ public class ConfigManager {
     }
 
     public static final File CONFIG_FILE = new File(JAR_DIR, "config.json");
-    private static final File DATABASE_FILE = new File(JAR_DIR,"database.json");
 
     private static Config config = new Config();
-    private static Database dataBase = new Database();
 
     public static Config getConfigInstance(){
         return config;
     }
 
-    public static Database getDatabaseInstance(){
-        return dataBase;
-    }
-
     public static void save() {
         save(config, CONFIG_FILE);
-        save(dataBase, DATABASE_FILE);
-    }
-
-    public static void saveConfig() {
-        save(config, CONFIG_FILE);
-    }
-
-    public static void saveDatabase() {
-        save(dataBase, DATABASE_FILE);
     }
 
     public static void load() {
         config = load(config, CONFIG_FILE, new Config());
-        dataBase = load(dataBase, DATABASE_FILE, new Database());
     }
 
     @SuppressWarnings("unchecked")
@@ -147,4 +130,5 @@ public class ConfigManager {
         config = load(config, CONFIG_FILE, new Config());
         event.reply("reloaded").setEphemeral(true).queue();
     }
+
 }

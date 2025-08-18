@@ -44,12 +44,12 @@ public class TrackedGuilds {
             return;
         }
         guildTrackerRunning = true;
-        guildTracker = new DynamicTimer(ConfigManager.getDatabaseInstance().trackedGuilds, TrackedGuilds::trackNext, TimeUnit.MINUTES.toMillis(8), 2000);
+        guildTracker = new DynamicTimer(sidly.discord_bot.database.tables.TrackedGuilds.get(), TrackedGuilds::trackNext, TimeUnit.MINUTES.toMillis(8), 2000);
         guildTracker.start();
     }
 
     private static void trackNext() {
-        List<String> guilds = ConfigManager.getDatabaseInstance().trackedGuilds;
+        List<String> guilds = sidly.discord_bot.database.tables.TrackedGuilds.get();
         if (guilds.isEmpty()) return;
 
         if (index >= guilds.size()) index = 0;

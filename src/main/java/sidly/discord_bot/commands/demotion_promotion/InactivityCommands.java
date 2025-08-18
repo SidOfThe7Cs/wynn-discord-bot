@@ -15,6 +15,8 @@ import sidly.discord_bot.api.GuildInfo;
 import sidly.discord_bot.database.GuildDataActivity;
 import sidly.discord_bot.database.PlayerDataShortened;
 import sidly.discord_bot.database.PlaytimeHistoryList;
+import sidly.discord_bot.database.tables.Players;
+import sidly.discord_bot.database.tables.PlaytimeHistory;
 import sidly.discord_bot.page.PageBuilder;
 import sidly.discord_bot.page.PaginationIds;
 
@@ -38,7 +40,7 @@ public class InactivityCommands {
         Map<String, GuildInfo.MemberInfo> allMembers = guildinfo.members.getAllMembers();
         for (Map.Entry<String, GuildInfo.MemberInfo> entry : allMembers.entrySet()) {
             String username = entry.getValue().username;
-            PlayerDataShortened playerDataShortened = ConfigManager.getDatabaseInstance().allPlayers.get(username);
+            PlayerDataShortened playerDataShortened = Players.get(entry.getKey());
 
             if (playerDataShortened != null && playerDataShortened.lastJoined != null) {
                 long lastJoin = Utils.daysSinceIso(playerDataShortened.lastJoined);
@@ -103,32 +105,7 @@ public class InactivityCommands {
     public static EmbedBuilder buildAveragePlaytimePage() {
         PageBuilder.PaginationState paginationState = PageBuilder.PaginationManager.get(PaginationIds.AVERAGE_PLAYTIME.name());
 
-        List<String> sortedPlayers = ConfigManager.getDatabaseInstance().playtimeHistory.entrySet().stream()
-                .sorted((g1, g2) -> {
-                    double avg1 = g1.getValue().getLinear10WeekAverage();
-                    double avg2 = g2.getValue().getLinear10WeekAverage();
-                    return Double.compare(avg2, avg1);
-                })
-                .map(Map.Entry::getKey)
-                .toList();
-
-        if (sortedPlayers.isEmpty()) {
-            return null;
-        }
-
-        List<String> entries = new ArrayList<>();
-        for (String username : sortedPlayers) {
-            PlaytimeHistoryList playtimeHistoryList = ConfigManager.getDatabaseInstance().playtimeHistory.get(username);
-            PlayerDataShortened playerDataShortened = ConfigManager.getDatabaseInstance().allPlayers.get(username);
-
-            entries.add("**" + username + "**, " +
-                    String.format("%.2f", playtimeHistoryList.getLinear10WeekAverage()) + ", " +
-                    String.format("%.2f", playtimeHistoryList.getAverage(1)) + ", " +
-                    String.format("%.2f", playtimeHistoryList.getAverage(5)) + ", " +
-                    String.format("%.2f", playtimeHistoryList.getAverage(20)) + ", " +
-                    String.format("%.2f", playerDataShortened.getAllTimeWeeklyAverage()) + "\n");
-
-        }
+        List<String> entries = PlaytimeHistory.getSortedPlaytimeReport();
 
         return PageBuilder.buildEmbedPage(entries, paginationState.currentPage, 30, "Player, 10weeklinearavg, 1weekavg, 5weekavg, 20weekavg, alltimeavg");
     }

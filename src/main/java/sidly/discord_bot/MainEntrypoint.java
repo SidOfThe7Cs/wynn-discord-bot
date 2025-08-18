@@ -21,11 +21,13 @@ import sidly.discord_bot.commands.*;
 import sidly.discord_bot.commands.demotion_promotion.InactivityCommands;
 import sidly.discord_bot.commands.demotion_promotion.PromotionCommands;
 import sidly.discord_bot.commands.demotion_promotion.RequirementType;
+import sidly.discord_bot.database.SQLDB;
 import sidly.discord_bot.page.PageBuilder;
 import sidly.discord_bot.page.PaginationIds;
 import sidly.discord_bot.timed_actions.TrackedGuilds;
 import sidly.discord_bot.timed_actions.UpdatePlayers;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -56,11 +58,12 @@ public class MainEntrypoint extends ListenerAdapter {
 
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) throws InterruptedException, SQLException {
 
         Runtime.getRuntime().addShutdownHook(new Thread(MainEntrypoint::shutdown));
 
         ConfigManager.load();
+        SQLDB.init();
         String token = ConfigManager.getConfigInstance().other.get(Config.Settings.Token);
         if (token == null || token.isEmpty()){
             System.err.println("please assign your bot token in the config file located at " + ConfigManager.CONFIG_FILE.getAbsolutePath());
@@ -218,6 +221,9 @@ public class MainEntrypoint extends ListenerAdapter {
 
         commands.addCommands(AllSlashCommands.getsysteminfo.getBaseCommandData());
         AllSlashCommands.getsysteminfo.setAction(HelpCommands::getSystemInfo);
+
+        commands.addCommands(AllSlashCommands.updateplayerranks.getBaseCommandData());
+        AllSlashCommands.updateplayerranks.setAction(GuildCommands::updatePlayerRanks);
 
         commands.addCommands(AllSlashCommands.gettimerstatus.getBaseCommandData());
         AllSlashCommands.gettimerstatus.setAction(TimerCommands::getTimerStatus);

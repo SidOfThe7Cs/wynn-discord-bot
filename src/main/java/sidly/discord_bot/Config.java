@@ -1,6 +1,7 @@
 package sidly.discord_bot;
 
 import sidly.discord_bot.commands.AllSlashCommands;
+import sidly.discord_bot.commands.demotion_promotion.RequirementList;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -12,6 +13,7 @@ public class Config {
     public Map<String, Boolean> allowedChannels = new HashMap<>();
     public Map<Channels, String> channels = new HashMap<>();
     public Map<Settings, String> other = new HashMap<>();
+    public Map<Utils.RankList, RequirementList> promotionRequirements = new HashMap<>();
 
     public Config() {
         // default values
