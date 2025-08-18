@@ -55,14 +55,15 @@ public class HelpCommands {
 
         for (AllSlashCommands command : AllSlashCommands.values()){
             StringBuilder sb = new StringBuilder();
-            sb.append("**").append(command.name()).append("**").append("\n");
-            sb.append(command.getDescription()).append("\n");
+            sb.append("**").append(command.name()).append("**").append(" ");
             if (command.getRequiredRole() != null) {
                 sb.append("requires <@&").append(ConfigManager.getConfigInstance().roles.get(command.getRequiredRole())).append(">\n");
-            }
+            } else sb.append("\n");
+            sb.append(command.getDescription()).append("\n");
+
             if (command.getAction() == null) sb.append("this command currently does nothing\n");
             entries.add(sb.toString());
         }
-        return PageBuilder.buildEmbedPage(entries, paginationState.currentPage, 20, "List of All Bot Commands");
+        return PageBuilder.buildEmbedPage(entries, paginationState, 20, "List of All Bot Commands");
     }
 }

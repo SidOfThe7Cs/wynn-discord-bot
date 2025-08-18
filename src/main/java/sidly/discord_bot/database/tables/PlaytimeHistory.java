@@ -2,7 +2,6 @@ package sidly.discord_bot.database.tables;
 
 import sidly.discord_bot.database.PlayerDataShortened;
 import sidly.discord_bot.database.PlaytimeHistoryList;
-import sidly.discord_bot.database.SQLDB;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;

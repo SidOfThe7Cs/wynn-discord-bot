@@ -404,7 +404,7 @@ public class MainEntrypoint extends ListenerAdapter {
 
 
 
-        String[] id = event.getComponentId().split(":"); // this is the custom id we specified in our button
+        String[] id = event.getComponentId().split(":");
         String authorId = id[0];
         String type = id[1];
         // Check that the button is for the user that clicked it, otherwise just ignore the event (let interaction fail)

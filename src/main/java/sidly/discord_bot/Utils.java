@@ -203,6 +203,7 @@ public class Utils {
     public static MessageEmbed getEmbed(String title, String description){
         EmbedBuilder embed = new EmbedBuilder();
         embed.setColor(Color.CYAN);
+        title = title.isEmpty() ? "no title specified" : title;
         embed.setTitle(title);
 
         if (description.length() > 4096) {
@@ -214,20 +215,21 @@ public class Utils {
         return embed.build();
     }
 
-    public static void sendToModChannel(String text, boolean ignoreTitle) {
+    public static void sendToModChannel(String title, String text, boolean fakeTitle) {
         Guild guild = MainEntrypoint.jda.getGuildById(ConfigManager.getConfigInstance().other.get(Config.Settings.YourDiscordServerId));
         TextChannel modChannel = guild.getTextChannelById(
                 ConfigManager.getConfigInstance().channels.get(Config.Channels.ModerationChannel)
         );
 
-        boolean stop = false;
-        long lineBreakCount = text.chars().filter(ch -> ch == '\n').count();
-        if (ignoreTitle && lineBreakCount < 2) stop = true;
+        if (text == null || text.isEmpty()) return;
 
-        if (modChannel != null && !stop) {
+        if (fakeTitle) text = title + "\n" + text;
+
+        if (modChannel != null) {
             EmbedBuilder modEmbed = new EmbedBuilder()
                     .setColor(Color.ORANGE)
                     .setDescription(text);
+            if (!fakeTitle) modEmbed.setTitle(title);
 
             modChannel.sendMessageEmbeds(modEmbed.build()).queue();
         }

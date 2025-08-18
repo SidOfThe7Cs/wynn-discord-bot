@@ -3,7 +3,6 @@ package sidly.discord_bot.commands.demotion_promotion;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import sidly.discord_bot.Config;
@@ -189,12 +188,12 @@ public class PromotionCommands {
 
         sb.append("Required:\n");
         for (Requirement req : required) {
-            sb.append(checkRequirement(req, guildMemberInfo, playerDataShortened, member, username));
+            sb.append(checkRequirement(req, guildMemberInfo, playerDataShortened, member));
         }
 
         StringBuilder optionalOutputB = new StringBuilder();
         for (Requirement req : optional) {
-            optionalOutputB.append(checkRequirement(req, guildMemberInfo, playerDataShortened, member, username));
+            optionalOutputB.append(checkRequirement(req, guildMemberInfo, playerDataShortened, member));
         }
         String optionalOutput = optionalOutputB.toString();
         long optionalCounter = optionalOutput.chars().filter(ch -> ch == '✅').count();
@@ -212,7 +211,7 @@ public class PromotionCommands {
         return sb.toString();
     }
 
-    public static String checkRequirement(Requirement req, GuildInfo.MemberInfo guildMemberInfo, PlayerDataShortened playerDataShortened, Member member, String username){
+    public static String checkRequirement(Requirement req, GuildInfo.MemberInfo guildMemberInfo, PlayerDataShortened playerDataShortened, Member member){
         StringBuilder sb = new StringBuilder();
         Integer requirementCount = req.getValue();
         if (!req.isRequired()) sb.append("-# ");
@@ -333,6 +332,6 @@ public class PromotionCommands {
                 entries.add(sb.toString());
             }
         }
-        return PageBuilder.buildEmbedPage(entries, paginationState.currentPage, 10, "Promotions");
+        return PageBuilder.buildEmbedPage(entries, paginationState, 10, "Promotions");
     }
 }

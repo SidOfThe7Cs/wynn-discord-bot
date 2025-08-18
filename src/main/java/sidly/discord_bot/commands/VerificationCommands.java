@@ -14,7 +14,6 @@ import sidly.discord_bot.Utils;
 import sidly.discord_bot.api.ApiUtils;
 import sidly.discord_bot.api.GuildInfo;
 import sidly.discord_bot.api.PlayerProfile;
-import sidly.discord_bot.database.tables.Players;
 import sidly.discord_bot.database.tables.UuidMap;
 
 import java.awt.Color;
@@ -51,7 +50,11 @@ public class VerificationCommands {
             event.reply("member was null").setEphemeral(true).queue();
             return;
         }
-        //TODO only allow one discord account per mc account
+        // only allow one discord account per mc account
+        if (UuidMap.containsMinecraftId(uuid)) {
+            event.reply("someone is already verified as that mc account").setEphemeral(true).queue();
+            return;
+        }
         PlayerProfile playerData = ApiUtils.getPlayerData(uuid);
         if (playerData == null){
             event.reply("playerData was null").setEphemeral(true).queue();
@@ -204,7 +207,6 @@ public class VerificationCommands {
         }
 
         StringBuilder sb = new StringBuilder();
-        sb.append("**Updates Roles For** ").append(member.getAsMention()).append("\n");
 
         // check if there verified
         String verifiedRoleId = ConfigManager.getConfigInstance().roles.get(Config.Roles.VerifiedRole);
@@ -215,42 +217,18 @@ public class VerificationCommands {
         String fullEffectiveName = member.getEffectiveName();
         String nickname = fullEffectiveName.split("\\[")[0].trim();
 
-        String uuid = UuidMap.getMinecraftIdByUsername(nickname) == null ? nickname : UuidMap.getMinecraftIdByUsername(nickname);
+        String uuid = UuidMap.getMinecraftIdByUsername(nickname.toLowerCase()) == null ? nickname : UuidMap.getMinecraftIdByUsername(nickname.toLowerCase());
 
 
         PlayerProfile playerData = ApiUtils.getPlayerData(uuid);
-        if (playerData == null) {
+        if (playerData == null || playerData.playersMultiselectorMap != null) {
             System.out.println("unverifying " + nickname);
 
             String text = removeRolesUnverify(member);
-            Utils.sendToModChannel(text, true);
+            Utils.sendToModChannel("**Updates Roles For **" + member.getAsMention(), text, true);
             return text;
         } else if (playerData.statusCode == 520) {
             return "failed to connect to api";
-        } else if (playerData.playersMultiselectorMap != null) {
-            // select the user who logged in most recently
-            PlayerProfile playerDataMostRecent = null;
-            int mostRecentLogin = Integer.MAX_VALUE;
-            for (Map.Entry<String, PlayerProfile> entry : playerData.playersMultiselectorMap.entrySet()) {
-                PlayerProfile playerDataFromApi = ApiUtils.getPlayerData(entry.getKey());
-                if (playerDataFromApi == null) {
-                    continue;
-                }
-                int lastLoginDayAgo = (int) Utils.daysSinceIso(playerDataFromApi.lastJoin);
-                if (lastLoginDayAgo == -1) continue;
-                if (playerDataMostRecent == null || lastLoginDayAgo < mostRecentLogin) {
-                    mostRecentLogin = lastLoginDayAgo;
-                    playerDataMostRecent = playerDataFromApi;
-                }
-            }
-            playerData = playerDataMostRecent;
-
-        }
-        if (playerData == null) {
-            System.out.println("unverifying " + nickname + " multi");
-            String text = removeRolesUnverify(member);
-            Utils.sendToModChannel(text, true);
-            return text;
         }
 
         UuidMap.addMinecraftId(nickname.toLowerCase(), playerData.uuid);
@@ -392,7 +370,7 @@ public class VerificationCommands {
 
         // Send to mod channel
         String text = sb.toString();
-        Utils.sendToModChannel(text, true);
+        Utils.sendToModChannel("**Updates Roles For** " + member.getAsMention(), text, true);
         return text;
     }
 
@@ -406,9 +384,7 @@ public class VerificationCommands {
         event.getGuild().retrieveMemberById(user.getId()).queue(member -> {
             String changes = updatePlayer(member);
             event.reply("updated " + member.getAsMention() + "\n" + changes).setEphemeral(true).queue();
-        }, failure -> {
-            event.reply("User not found in this guild!").setEphemeral(true).queue();
-        });
+        }, failure -> event.reply("User not found in this guild!").setEphemeral(true).queue());
     }
 
     public static String removeRolesIfNotMember(Member member){

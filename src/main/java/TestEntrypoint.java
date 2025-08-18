@@ -1,8 +1,5 @@
-import sidly.discord_bot.Utils;
 import sidly.discord_bot.database.SQLDB;
-import sidly.discord_bot.database.tables.UuidMap;
 
-import java.io.IOException;
 import java.sql.SQLException;
 
 public class TestEntrypoint {
@@ -32,13 +29,6 @@ allow playtime command to specify interval and max
 inactivity
 
 Add exception cmds
-Backup database
-
-cycle back to page one if max and show Max page count
-
-store uuid for multiselector
-use uuid as key for all database that you can
-create a table that maps discord getEffectiveName.toLowerCase() to uuids
 
 database and 6 api token and track all guilds
 

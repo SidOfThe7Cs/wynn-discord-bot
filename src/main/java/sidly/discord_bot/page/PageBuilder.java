@@ -42,16 +42,21 @@ public class PageBuilder {
                 .queue();
     }
 
-    public static EmbedBuilder buildEmbedPage(List<String> sortedEntries, int page, int entriesPerPage, String title) {
+    public static EmbedBuilder buildEmbedPage(List<String> sortedEntries, PaginationState state, int entriesPerPage, String title) {
         if (sortedEntries.isEmpty()) return null;
         EmbedBuilder embed = new EmbedBuilder();
         embed.setColor(Color.CYAN);
 
-        embed.setTitle(title + " (Page " + (page + 1) + ")");
+        int maxPages = (int) Math.ceil((double) sortedEntries.size() / (double) entriesPerPage);
+        System.out.println(sortedEntries.size() + " " + entriesPerPage + " " + maxPages);
+
+        state.currentPage = (state.currentPage >= maxPages) ? 0 : state.currentPage;
+        embed.setTitle(title + " (Page " + (state.currentPage + 1) + "/" + (maxPages) + ")");
 
         StringBuilder sb = new StringBuilder();
 
-        int start = page * entriesPerPage;
+
+        int start = state.currentPage * entriesPerPage;
         int end = Math.min(start + entriesPerPage, sortedEntries.size());
 
         for (int i = start; i < end; i++) {
@@ -75,7 +80,7 @@ public class PageBuilder {
     }
 
     public static class PaginationManager {
-        private static final Map<String, PaginationState> functions =new HashMap<>();
+        private static final Map<String, PaginationState> functions = new HashMap<>();
 
         public static void register(String name, Supplier<EmbedBuilder> function) {
             functions.put(name, new PaginationState(function, 0));
@@ -84,10 +89,5 @@ public class PageBuilder {
         public static PaginationState get(String name) {
             return functions.get(name);
         }
-
-        public static void reset(String name) {
-            functions.get(name).currentPage = 0;
-        }
-
     }
 }

@@ -1,7 +1,5 @@
 package sidly.discord_bot.database.tables;
 
-import sidly.discord_bot.database.SQLDB;
-
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -88,6 +86,19 @@ public class UuidMap {
             e.printStackTrace();
         }
         return null; // Return null if no match found
+    }
+
+    public static boolean containsMinecraftId(String minecraftId) {
+        String sql = "SELECT 1 FROM uuidMap WHERE minecraft_id = ? LIMIT 1";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setString(1, minecraftId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                return rs.next(); // true if a row exists
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false; // Return false if no match or error
     }
 
 }

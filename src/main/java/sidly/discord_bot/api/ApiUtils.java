@@ -6,12 +6,9 @@ import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import sidly.discord_bot.Config;
 import sidly.discord_bot.ConfigManager;
-import sidly.discord_bot.database.GuildDataActivity;
 import sidly.discord_bot.database.PlayerDataShortened;
-import sidly.discord_bot.database.PlaytimeHistoryList;
 import sidly.discord_bot.database.tables.GuildActivity;
 import sidly.discord_bot.database.tables.PlaytimeHistory;
-import sidly.discord_bot.database.tables.TrackedGuilds;
 import sidly.discord_bot.database.tables.UuidMap;
 
 import java.io.IOException;

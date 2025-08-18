@@ -1,6 +1,5 @@
 package sidly.discord_bot.timed_actions;
 
-import sidly.discord_bot.ConfigManager;
 import sidly.discord_bot.api.ApiUtils;
 import sidly.discord_bot.commands.GuildCommands;
 

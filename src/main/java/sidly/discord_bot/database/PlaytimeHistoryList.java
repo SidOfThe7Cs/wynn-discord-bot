@@ -7,9 +7,8 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class PlaytimeHistoryList {
-    private List<PlaytimeHistoryEntry> playtimeHistory = new ArrayList<>();
+    private final List<PlaytimeHistoryEntry> playtimeHistory;
 
-    public PlaytimeHistoryList() {}
     public PlaytimeHistoryList(List<PlaytimeHistoryEntry> playTimeHistory) {
         this.playtimeHistory = playTimeHistory;
     }

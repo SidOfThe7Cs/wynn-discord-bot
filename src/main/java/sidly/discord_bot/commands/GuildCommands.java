@@ -159,7 +159,6 @@ public class GuildCommands {
         EmbedBuilder embed = new EmbedBuilder();
         embed.setColor(Color.CYAN);
         embed.setTitle("[" + guildPrefix + "] " + GuildActivity.getGuildName(uuid) + "Active Hours\n");
-        StringBuilder sb = new StringBuilder();
 
         List<String> hours = new ArrayList<>();
         List<String> players = new ArrayList<>();
@@ -182,8 +181,6 @@ public class GuildCommands {
         embed.addField("Players", String.join("\n", players), true);
         embed.addField("Captains", String.join("\n", captains), true);
 
-
-        embed.setDescription(sb.toString());
         event.replyEmbeds(embed.build()).queue();
     }
 
@@ -231,7 +228,7 @@ public class GuildCommands {
             entries.add(sb.toString());
         }
 
-        return PageBuilder.buildEmbedPage(entries, paginationState.currentPage, 10, "Average activity for tracked guilds");
+        return PageBuilder.buildEmbedPage(entries, paginationState, 10, "Average activity for tracked guilds");
     }
 
 
@@ -253,7 +250,7 @@ public class GuildCommands {
             return "";
         }
 
-        String text = "Updated Player Ranks\n" +
+        String text =
                 processRank(guildinfo.members.owner, Config.Roles.OwnerRole, guild) +
                 processRank(guildinfo.members.chief, Config.Roles.ChiefRole, guild) +
                 processRank(guildinfo.members.strategist, Config.Roles.StrategistRole, guild) +
@@ -261,7 +258,7 @@ public class GuildCommands {
                 processRank(guildinfo.members.recruiter, Config.Roles.RecruiterRole, guild) +
                 processRank(guildinfo.members.recruit, Config.Roles.RecruitRole, guild);
 
-        Utils.sendToModChannel(text, true);
+        Utils.sendToModChannel("Updated Player Ranks", text, false);
         return text;
     }
 
@@ -309,6 +306,6 @@ public class GuildCommands {
 
     public static void updatePlayerRanks(SlashCommandInteractionEvent event) {
         String result = updatePlayerRanks();
-        event.replyEmbeds(Utils.getEmbed("", result)).setEphemeral(true).queue();
+        event.replyEmbeds(Utils.getEmbed("Updated Players", result)).setEphemeral(true).queue();
     }
 }

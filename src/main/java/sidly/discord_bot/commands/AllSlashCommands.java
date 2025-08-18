@@ -91,7 +91,6 @@ public enum AllSlashCommands {
         }
         if (!allowedChannels.isEmpty()){
             String id = event.getChannel().getId();
-            Boolean b = allowedChannels.get(id);
             if (hasTrue){ // you need to be in a whitelisted channel to run command
                 if (!allowedChannels.containsKey(id) || !allowedChannels.get(id).equals(true)){
                     event.reply("❌ you may not run commands here").setEphemeral(true).queue();

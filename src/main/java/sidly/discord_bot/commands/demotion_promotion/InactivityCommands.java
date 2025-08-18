@@ -1,20 +1,14 @@
 package sidly.discord_bot.commands.demotion_promotion;
 
 import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import sidly.discord_bot.Config;
 import sidly.discord_bot.ConfigManager;
-import sidly.discord_bot.MainEntrypoint;
 import sidly.discord_bot.Utils;
 import sidly.discord_bot.api.ApiUtils;
 import sidly.discord_bot.api.GuildInfo;
-import sidly.discord_bot.database.GuildDataActivity;
 import sidly.discord_bot.database.PlayerDataShortened;
-import sidly.discord_bot.database.PlaytimeHistoryList;
 import sidly.discord_bot.database.tables.Players;
 import sidly.discord_bot.database.tables.PlaytimeHistory;
 import sidly.discord_bot.page.PageBuilder;
@@ -23,7 +17,6 @@ import sidly.discord_bot.page.PaginationIds;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class InactivityCommands {
     public static void checkForInactivity(SlashCommandInteractionEvent event) {
@@ -107,6 +100,6 @@ public class InactivityCommands {
 
         List<String> entries = PlaytimeHistory.getSortedPlaytimeReport();
 
-        return PageBuilder.buildEmbedPage(entries, paginationState.currentPage, 30, "Player, 10weeklinearavg, 1weekavg, 5weekavg, 20weekavg, alltimeavg");
+        return PageBuilder.buildEmbedPage(entries, paginationState, 30, "Player, 10weeklinearavg, 1weekavg, 5weekavg, 20weekavg, alltimeavg");
     }
 }
