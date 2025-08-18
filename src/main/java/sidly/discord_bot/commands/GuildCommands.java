@@ -139,7 +139,9 @@ public class GuildCommands {
 
     public static void removeTrackedGuild(SlashCommandInteractionEvent event) {
         String guildPrefix = event.getOption("guild_prefix").getAsString();
-        //TODO
+        if (TrackedGuilds.isTracked(guildPrefix)) {
+            TrackedGuilds.remove(guildPrefix);
+        }
         event.reply("removed " + guildPrefix + " from tracked guilds").queue();
     }
 

@@ -46,4 +46,15 @@ public class TrackedGuilds {
         return false;
     }
 
+    public static void remove(String prefix) {
+        String sql = "DELETE FROM tracked_guilds WHERE uuid = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setString(1, prefix);
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+
 }
