@@ -261,15 +261,14 @@ public class GuildCommands {
             StringBuilder sb = new StringBuilder();
             String username = member.getEffectiveName().split("\\[")[0].trim().toLowerCase();
             String uuid = UuidMap.getMinecraftIdByUsername(username);
-                Config.Roles rankOfMember = guildinfo.members.getRankOfMemberRole(uuid);
-                String rankId = ConfigManager.getConfigInstance().roles.get(rankOfMember);
-
-                // add there rank should return null and therefor remove all if not in guild
-                sb.append(VerificationCommands.removeRankRolesExcept(member, rankId));
-
-                //if they have roles or not log tothe string builder if there were any updates add there mention
-
             if (uuid == null) continue;
+            Config.Roles rankOfMember = guildinfo.members.getRankOfMemberRole(uuid);
+            String rankId = ConfigManager.getConfigInstance().roles.get(rankOfMember);
+
+            // add there rank should return null and therefor remove all if not in guild
+            sb.append(VerificationCommands.removeRankRolesExcept(member, rankId));
+
+            System.out.println(uuid);
             if (allMembers.containsKey(uuid)) { // they are in the wynncraft guild
                 sb.append(Utils.addRole(member, Config.Roles.MemberRole));
             } else sb.append(Utils.removeRole(member, Config.Roles.MemberRole));

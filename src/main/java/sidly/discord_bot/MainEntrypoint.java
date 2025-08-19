@@ -337,10 +337,8 @@ public class MainEntrypoint extends ListenerAdapter {
         jda.awaitReady();
         MainEntrypoint.jda = jda;
 
-        //if (!ConfigManager.getConfigInstance().other.get(Config.Settings.YourDiscordServerId).equals("1324464322029682698")) {
-            UpdatePlayers.init();
-            TrackedGuilds.init();
-        //}
+        //UpdatePlayers.init();
+        TrackedGuilds.init();
     }
 
 

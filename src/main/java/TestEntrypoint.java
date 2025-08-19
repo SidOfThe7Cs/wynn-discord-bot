@@ -43,6 +43,6 @@ guild playtime per hour averages need to be divided by the number of entries so 
 
 make a way to copy database to me
 
-//remove playerdata
+/remove playerdata
 
  */
