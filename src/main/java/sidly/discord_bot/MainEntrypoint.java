@@ -218,10 +218,6 @@ public class MainEntrypoint extends ListenerAdapter {
         AllSlashCommands.trackedguilds.setAction(GuildCommands::viewTrackedGuilds);
         PageBuilder.PaginationManager.register(PaginationIds.GUILD.name(), GuildCommands::buildGuildsPage);
 
-        //TODO
-        commands.addCommands(AllSlashCommands.tempremoveplayertable.getBaseCommandData());
-        AllSlashCommands.tempremoveplayertable.setAction(HelpCommands::removePlayerTable);
-
         commands.addCommands(AllSlashCommands.getsysteminfo.getBaseCommandData());
         AllSlashCommands.getsysteminfo.setAction(HelpCommands::getSystemInfo);
 

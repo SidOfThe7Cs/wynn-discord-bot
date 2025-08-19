@@ -269,6 +269,7 @@ public class GuildCommands {
 
                 //if they have roles or not log tothe string builder if there were any updates add there mention
 
+            if (uuid == null) continue;
             if (allMembers.containsKey(uuid)) { // they are in the wynncraft guild
                 sb.append(Utils.addRole(member, Config.Roles.MemberRole));
             } else sb.append(Utils.removeRole(member, Config.Roles.MemberRole));

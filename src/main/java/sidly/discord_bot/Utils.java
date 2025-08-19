@@ -207,7 +207,7 @@ public class Utils {
         embed.setTitle(title);
 
         if (description.length() > 4096) {
-            description = description.substring(0, 4096);
+            description = description.substring(0, 4095);
             embed.setFooter("Character limit hit");
         }
         embed.setDescription(description);

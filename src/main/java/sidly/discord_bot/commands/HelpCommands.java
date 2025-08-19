@@ -71,14 +71,4 @@ public class HelpCommands {
         }
         return PageBuilder.buildEmbedPage(entries, paginationState, 20, "List of All Bot Commands");
     }
-
-    //TODO
-    public static void removePlayerTable(SlashCommandInteractionEvent event) {
-        try (Statement stmt = connection.createStatement()) {
-            stmt.executeUpdate("DELETE FROM players");
-            stmt.executeUpdate("DELETE FROM uuidMap");
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
 }
