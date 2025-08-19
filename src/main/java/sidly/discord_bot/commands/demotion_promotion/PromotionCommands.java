@@ -134,9 +134,6 @@ public class PromotionCommands {
     public static String checkPromotionProgress(String username, GuildInfo guildInfo) {
 
         PlayerDataShortened playerDataShortened = Players.get(UuidMap.getMinecraftIdByUsername(username.toLowerCase()));
-        System.out.println(username.toLowerCase());
-        System.out.println(UuidMap.getMinecraftIdByUsername(username.toLowerCase()));
-        System.out.println(playerDataShortened);
 
         if (playerDataShortened == null || guildInfo == null || guildInfo.members == null) return "null error ❌";
 
