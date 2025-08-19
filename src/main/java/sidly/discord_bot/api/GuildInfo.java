@@ -1,5 +1,6 @@
 package sidly.discord_bot.api;
 
+import sidly.discord_bot.Config;
 import sidly.discord_bot.Utils;
 
 import java.util.*;
@@ -36,6 +37,17 @@ public class GuildInfo {
             if (recruit != null && recruit.containsKey(uuid)) return Utils.RankList.Recruit;
             return null; // not found in any rank
         }
+
+        public Config.Roles getRankOfMemberRole(String uuid) {
+            if (owner != null && owner.containsKey(uuid)) return Config.Roles.OwnerRole;
+            if (chief != null && chief.containsKey(uuid)) return Config.Roles.ChiefRole;
+            if (strategist != null && strategist.containsKey(uuid)) return Config.Roles.StrategistRole;
+            if (captain != null && captain.containsKey(uuid)) return Config.Roles.CaptainRole;
+            if (recruiter != null && recruiter.containsKey(uuid)) return Config.Roles.RecruiterRole;
+            if (recruit != null && recruit.containsKey(uuid)) return Config.Roles.RecruitRole;
+            return null; // not found in any rank
+        }
+
         public MemberInfo getMemberInfo(String uuid) {
             Utils.RankList rank = getRankOfMember(uuid);
             if (rank == null) return null;

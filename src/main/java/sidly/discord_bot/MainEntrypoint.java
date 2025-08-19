@@ -218,6 +218,9 @@ public class MainEntrypoint extends ListenerAdapter {
         AllSlashCommands.trackedguilds.setAction(GuildCommands::viewTrackedGuilds);
         PageBuilder.PaginationManager.register(PaginationIds.GUILD.name(), GuildCommands::buildGuildsPage);
 
+        //TODO
+        commands.addCommands(AllSlashCommands.tempremoveplayertable.getBaseCommandData());
+        AllSlashCommands.tempremoveplayertable.setAction(HelpCommands::removePlayerTable);
 
         commands.addCommands(AllSlashCommands.getsysteminfo.getBaseCommandData());
         AllSlashCommands.getsysteminfo.setAction(HelpCommands::getSystemInfo);
@@ -364,14 +367,14 @@ public class MainEntrypoint extends ListenerAdapter {
             VerificationCommands.verify(event);
         } else if (fullId.startsWith("verC:") || fullId.startsWith("verD:")) {
             String[] parts = fullId.split(":");
-            String userId = parts[1];
-            String username = parts[2];
-            int multiselecterIndex = Integer.parseInt(parts[3]);
+            String discordId = parts[1];
+            int index = Integer.parseInt(parts[2]);
+            VerificationCommands.uuidAndUsername ids = VerificationCommands.tempVerificationUuidMap.get(index);
 
-            event.getGuild().retrieveMemberById(userId).queue(
+            event.getGuild().retrieveMemberById(discordId).queue(
                     member -> {
                         if (member == null) {
-                            event.reply("User not found." + userId + username).setEphemeral(true).queue();
+                            event.reply("User not found." + discordId + ids.username()).setEphemeral(true).queue();
                             return;
                         }
 
@@ -380,7 +383,7 @@ public class MainEntrypoint extends ListenerAdapter {
 
                             // after the private channel opens run the verificationComplete and then when that completes send the user the results
                             member.getUser().openPrivateChannel().queue(privateChannel -> {
-                                CompletableFuture<String> verificationFuture = VerificationCommands.completeVerification(member, username, event.getGuild(), multiselecterIndex);
+                                CompletableFuture<String> verificationFuture = VerificationCommands.completeVerification(member, event.getGuild(), index);
                                 verificationFuture.thenAccept(result -> privateChannel.sendMessage(result).queue());
                             });
 
@@ -396,7 +399,7 @@ public class MainEntrypoint extends ListenerAdapter {
                     },
                     failure -> {
                         // member not found or error
-                        event.reply("User not found: " + userId + " " + username).setEphemeral(true).queue();
+                        event.reply("User not found: " + discordId + " " + ids.username()).setEphemeral(true).queue();
                     }
             );
             return;

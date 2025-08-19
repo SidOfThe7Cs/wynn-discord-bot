@@ -252,62 +252,37 @@ public class GuildCommands {
             return "";
         }
 
-        String text =
-                processRank(guildinfo.members.owner, Config.Roles.OwnerRole, guild) +
-                processRank(guildinfo.members.chief, Config.Roles.ChiefRole, guild) +
-                processRank(guildinfo.members.strategist, Config.Roles.StrategistRole, guild) +
-                processRank(guildinfo.members.captain, Config.Roles.CaptainRole, guild) +
-                processRank(guildinfo.members.recruiter, Config.Roles.RecruiterRole, guild) +
-                processRank(guildinfo.members.recruit, Config.Roles.RecruitRole, guild);
+        List<Member> members = guild.getMembers();
+        Map<String, GuildInfo.MemberInfo> allMembers = guildinfo.members.getAllMembers();
+
+
+        StringBuilder sbfinal = new StringBuilder();
+        for (Member member : members) { // for each user in the discord
+            StringBuilder sb = new StringBuilder();
+            String username = member.getEffectiveName().split("\\[")[0].trim().toLowerCase();
+            String uuid = UuidMap.getMinecraftIdByUsername(username);
+                Config.Roles rankOfMember = guildinfo.members.getRankOfMemberRole(uuid);
+                String rankId = ConfigManager.getConfigInstance().roles.get(rankOfMember);
+
+                // add there rank should return null and therefor remove all if not in guild
+                sb.append(VerificationCommands.removeRankRolesExcept(member, rankId));
+
+                //if they have roles or not log tothe string builder if there were any updates add there mention
+
+            if (allMembers.containsKey(uuid)) { // they are in the wynncraft guild
+                sb.append(Utils.addRole(member, Config.Roles.MemberRole));
+            } else sb.append(Utils.removeRole(member, Config.Roles.MemberRole));
+
+            if (!sb.toString().isEmpty()) {
+                sbfinal.append(member.getAsMention()).append("\n").append(sb);
+            }
+        }
+
+        String text = sbfinal.toString();
+        if (text.isEmpty()) return "";
 
         Utils.sendToModChannel("Updated Player Ranks", text, false);
         return text;
-    }
-
-    public static String processRank(Map<String, GuildInfo.MemberInfo> rankMap, Config.Roles role, Guild guild) {
-        if (rankMap == null || guild == null) return "";
-
-        StringBuilder sb = new StringBuilder();
-        // for each member in guild (wynncraft guild from api)
-        for (Map.Entry<String, GuildInfo.MemberInfo> entry : rankMap.entrySet()) {
-            GuildInfo.MemberInfo info = entry.getValue();
-            if (info == null) continue;
-
-            String username = info.username;
-            if (username == null || username.isEmpty()) continue;
-
-            // get discord member with matching username
-            List<Member> members = guild.getMembersByEffectiveName(username, true);
-            if (members.size() != 1) continue;
-
-
-            // if they are verified
-            Member member = members.getFirst();
-            if (Utils.hasRole(member, Config.Roles.VerifiedRole)) {
-
-                System.out.println("here5");
-
-                sb.append("**Updates Roles For **").append(member.getAsMention()).append("\n");
-
-                String roleId = ConfigManager.getConfigInstance().roles.get(role);
-                if (roleId == null || roleId.isEmpty()) {
-                    System.err.println(role.name() + " not set\n");
-                    continue;
-                }
-
-                System.out.println("here5");
-                // apply the member role
-                String s1 = Utils.addRole(member, Config.Roles.MemberRole);
-
-                // apply the right rank
-                String s2 = VerificationCommands.removeRankRolesExcept(member, roleId);
-
-                if (s1.isEmpty() && s2.isEmpty()) return "";
-                else sb.append(s1).append(s2);
-
-            }
-        }
-        return sb.toString();
     }
 
     public static void updatePlayerRanks(SlashCommandInteractionEvent event) {

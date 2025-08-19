@@ -41,6 +41,7 @@ public enum AllSlashCommands {
     getsysteminfo("get the info of the server running the bot"),
     averageplaytime("get the average playtime of a user"),
     updateplayerranks("update the ranks of all members in your guild"),
+    tempremoveplayertable("ahhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh"),
     addchannelrestriction("if any channels are whitelisted only whitelisted channels will allow commands"),
     adddemotionexeption("adds a player to be excluded from demotion checks, default length is forever"),
     addinactivityexeption("adds a custom inactivity threshold for a player, default length is forever"),

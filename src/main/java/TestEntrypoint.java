@@ -39,4 +39,10 @@ test guildrank updater
 
 guild playtime per hour averages need to be divided by the number of entries so the end average isnt skewed based on one hour having more entries than another
 
+/delete old versions
+
+make a way to copy database to me
+
+//remove playerdata
+
  */

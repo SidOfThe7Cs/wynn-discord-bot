@@ -101,4 +101,15 @@ public class UuidMap {
         return false; // Return false if no match or error
     }
 
+    public static void remove(String username) {
+        String sql = "DELETE FROM uuidMap WHERE username = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setString(1, username);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+
 }

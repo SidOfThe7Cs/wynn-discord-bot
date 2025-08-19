@@ -24,21 +24,19 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class VerificationCommands {
-    private static final Map<Integer, uuidAndUsername> uuidMap = new ConcurrentHashMap<>();
-    private record uuidAndUsername(String uuid, String username) {}
+    public static final Map<Integer, uuidAndUsername> tempVerificationUuidMap = new ConcurrentHashMap<>();
+    public record uuidAndUsername(String uuid, String username) {}
 
     public static void verify(IReplyCallback event) {
         uuidAndUsername ids;
-        int multiSelectorIndex;
+        int indexFromButton = -1;
         if (event instanceof SlashCommandInteractionEvent slashEvent) {
-            multiSelectorIndex = 0;
             String username = slashEvent.getOption("username").getAsString();
             ids = new uuidAndUsername(UuidMap.getMinecraftIdByUsername(username), username);
-        } else if (event instanceof ButtonInteractionEvent buttonEvent) {
+        } else if (event instanceof ButtonInteractionEvent buttonEvent) { // this is a user selecting an option from a multiselector
             String[] parts = buttonEvent.getComponentId().split(":");
-            ids = uuidMap.remove(Integer.parseInt(parts[1]));
-
-            multiSelectorIndex = Integer.parseInt(buttonEvent.getButton().getLabel());
+            indexFromButton = Integer.parseInt(parts[1]);
+            ids = tempVerificationUuidMap.get(indexFromButton);
         } else {
             return;
         }
@@ -50,12 +48,17 @@ public class VerificationCommands {
             event.reply("member was null").setEphemeral(true).queue();
             return;
         }
+
+        // remove previous verification if it is a re-verify
+        UuidMap.remove(member.getEffectiveName().split("\\[")[0].trim().toLowerCase());
+
         // only allow one discord account per mc account
         if (UuidMap.containsMinecraftId(uuid)) {
             event.reply("someone is already verified as that mc account").setEphemeral(true).queue();
             return;
         }
         PlayerProfile playerData = ApiUtils.getPlayerData(uuid);
+
         if (playerData == null){
             event.reply("playerData was null").setEphemeral(true).queue();
             return;
@@ -84,11 +87,12 @@ public class VerificationCommands {
                     }
                     sb.append("guild:\n").append(playerprofile.guild).append("\n\n");
 
-                    // add a button that runs /verify uuid on click
                     int index = 0;
-                    while (uuidMap.containsKey(index)) index++;
+                    while (tempVerificationUuidMap.containsKey(index)) index++;
+
+                    // add a button that runs /verify uuid on click
                     Button button = Button.primary("verification:" + index, String.valueOf(counter));
-                    uuidMap.put(index, new uuidAndUsername(playerprofile.uuid, ids.username));
+                    tempVerificationUuidMap.put(index, new uuidAndUsername(playerprofile.uuid, ids.username));
                     buttons.add(button);
                 }
             }
@@ -117,9 +121,16 @@ public class VerificationCommands {
         embed.setColor(Color.BLUE);
         embed.setTitle("Verification");
 
+        if (indexFromButton == -1) {
+            int index = 0;
+            while (tempVerificationUuidMap.containsKey(index)) index++;
+            tempVerificationUuidMap.put(index, new uuidAndUsername(ids.uuid(), ids.username()));
+            indexFromButton = index;
+        }
+        int finalIndex = indexFromButton;
         event.deferReply(true).queue(hook -> {
             if (!requireConfirmation) {
-                CompletableFuture<String> stringCompletableFuture = completeVerification(member, ids.username, member.getGuild(), multiSelectorIndex);
+                CompletableFuture<String> stringCompletableFuture = completeVerification(member, member.getGuild(), finalIndex);
                 stringCompletableFuture.thenAccept(result -> {
                     // result is the String returned from completeVerification
                     embed.setDescription("Verification complete: \n" + result);
@@ -141,7 +152,7 @@ public class VerificationCommands {
             );
 
             if (modChannel != null) {
-                String baseId = event.getUser().getId() + ":" + ids.username + ":" + multiSelectorIndex;
+                String baseId = event.getUser().getId() + ":" + indexFromButton;
 
                 Button confirmButton = Button.success("verC:" + baseId, "Confirm");
                 Button denyButton = Button.danger("verD:" + baseId, "Deny");
@@ -163,10 +174,14 @@ public class VerificationCommands {
 
     }
 
-    public static CompletableFuture<String> completeVerification(Member member, String username, Guild guild, int multiselecterIndex) {
+    public static CompletableFuture<String> completeVerification(Member member, Guild guild, Integer index) {
         CompletableFuture<String> future = new CompletableFuture<>();
         Role verifiedRole = Utils.getRoleFromGuild(guild, ConfigManager.getConfigInstance().roles.get(Config.Roles.VerifiedRole));
         String prefix = ConfigManager.getConfigInstance().other.get(Config.Settings.YourGuildPrefix);
+
+        uuidAndUsername ids = tempVerificationUuidMap.remove(index);
+        String username = ids.username();
+        if (ids.uuid() != null) UuidMap.addMinecraftId(username.toLowerCase(), ids.uuid());
 
         if (verifiedRole == null) {
             future.complete("verified role is null");
@@ -190,9 +205,7 @@ public class VerificationCommands {
             String newNick = prefix.equals(ConfigManager.getConfigInstance().other.get(Config.Settings.YourGuildPrefix))
                     ? username // if in your guild
                     : username + " [" + prefix + "]"; // if different guild
-            if (multiselecterIndex != 0){
-                newNick += " [" + multiselecterIndex + "]";
-            }
+
             guild.modifyNickname(member, newNick).queue(nickSuccess -> runUpdate.run());
         });
 
@@ -218,7 +231,6 @@ public class VerificationCommands {
         String nickname = fullEffectiveName.split("\\[")[0].trim();
 
         String uuid = UuidMap.getMinecraftIdByUsername(nickname.toLowerCase()) == null ? nickname : UuidMap.getMinecraftIdByUsername(nickname.toLowerCase());
-
 
         PlayerProfile playerData = ApiUtils.getPlayerData(uuid);
         if (playerData == null || playerData.playersMultiselectorMap != null) {

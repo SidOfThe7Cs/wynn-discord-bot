@@ -9,8 +9,13 @@ import sidly.discord_bot.page.PaginationIds;
 
 import java.awt.*;
 import java.io.File;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+
+import static sidly.discord_bot.database.SQLDB.connection;
 
 public class HelpCommands {
     public static void listCommands(SlashCommandInteractionEvent event) {
@@ -65,5 +70,15 @@ public class HelpCommands {
             entries.add(sb.toString());
         }
         return PageBuilder.buildEmbedPage(entries, paginationState, 20, "List of All Bot Commands");
+    }
+
+    //TODO
+    public static void removePlayerTable(SlashCommandInteractionEvent event) {
+        try (Statement stmt = connection.createStatement()) {
+            stmt.executeUpdate("DELETE FROM players");
+            stmt.executeUpdate("DELETE FROM uuidMap");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 }
