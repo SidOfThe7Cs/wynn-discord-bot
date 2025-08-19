@@ -34,7 +34,7 @@ public class Utils {
 
     public static boolean hasRole(Member member, Config.Roles role) {
         String s = ConfigManager.getConfigInstance().roles.get(role);
-        return  hasRole(member, s);
+        return hasRole(member, s);
     }
 
     public static boolean hasAtLeastRank(Member user, String roleId) {

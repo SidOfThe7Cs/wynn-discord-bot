@@ -265,8 +265,6 @@ public class GuildCommands {
     }
 
     public static String processRank(Map<String, GuildInfo.MemberInfo> rankMap, Config.Roles role, Guild guild) {
-        System.out.println(rankMap);
-        System.out.println(guild);
         if (rankMap == null || guild == null) return "";
 
         StringBuilder sb = new StringBuilder();
@@ -278,16 +276,16 @@ public class GuildCommands {
             String username = info.username;
             if (username == null || username.isEmpty()) continue;
 
-            System.out.println("here3");
             // get discord member with matching username
             List<Member> members = guild.getMembersByEffectiveName(username, true);
             if (members.size() != 1) continue;
 
 
-            System.out.println("here4");
             // if they are verified
             Member member = members.getFirst();
             if (Utils.hasRole(member, Config.Roles.VerifiedRole)) {
+
+                System.out.println("here5");
 
                 sb.append("**Updates Roles For **").append(member.getAsMention()).append("\n");
 
@@ -297,6 +295,7 @@ public class GuildCommands {
                     continue;
                 }
 
+                System.out.println("here5");
                 // apply the member role
                 String s1 = Utils.addRole(member, Config.Roles.MemberRole);
 
