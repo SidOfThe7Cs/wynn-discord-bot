@@ -236,8 +236,6 @@ public class GuildCommands {
 
     public static String updatePlayerRanks(){
         GuildInfo guildinfo = ApiUtils.getGuildInfo(ConfigManager.getConfigInstance().other.get(Config.Settings.YourGuildPrefix));
-        System.out.println(guildinfo);
-        System.out.println(guildinfo.members);
         if (guildinfo == null || guildinfo.members == null) return "";
 
         // Get the guild ID from config
@@ -267,6 +265,8 @@ public class GuildCommands {
     }
 
     public static String processRank(Map<String, GuildInfo.MemberInfo> rankMap, Config.Roles role, Guild guild) {
+        System.out.println(rankMap);
+        System.out.println(guild);
         if (rankMap == null || guild == null) return "";
 
         StringBuilder sb = new StringBuilder();
@@ -278,10 +278,13 @@ public class GuildCommands {
             String username = info.username;
             if (username == null || username.isEmpty()) continue;
 
+            System.out.println("here3");
             // get discord member with matching username
             List<Member> members = guild.getMembersByEffectiveName(username, true);
             if (members.size() != 1) continue;
 
+
+            System.out.println("here4");
             // if they are verified
             Member member = members.getFirst();
             if (Utils.hasRole(member, Config.Roles.VerifiedRole)) {
