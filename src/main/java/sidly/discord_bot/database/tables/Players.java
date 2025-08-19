@@ -14,8 +14,8 @@ public class Players {
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (PreparedStatement pstmt = SQLDB.connection.prepareStatement(sql)) {
-            pstmt.setString(2, player.uuid);
-            pstmt.setString(1, player.username);
+            pstmt.setString(1, player.uuid);
+            pstmt.setString(2, player.username);
             pstmt.setInt(3, player.level);
             pstmt.setInt(4, player.guildWars);
             pstmt.setDouble(5, player.latestPlaytime);
