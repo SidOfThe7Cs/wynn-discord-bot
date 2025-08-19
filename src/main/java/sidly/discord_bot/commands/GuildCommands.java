@@ -236,6 +236,8 @@ public class GuildCommands {
 
     public static String updatePlayerRanks(){
         GuildInfo guildinfo = ApiUtils.getGuildInfo(ConfigManager.getConfigInstance().other.get(Config.Settings.YourGuildPrefix));
+        System.out.println(guildinfo);
+        System.out.println(guildinfo.members);
         if (guildinfo == null || guildinfo.members == null) return "";
 
         // Get the guild ID from config
