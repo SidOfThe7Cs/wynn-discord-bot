@@ -48,7 +48,6 @@ public class PageBuilder {
         embed.setColor(Color.CYAN);
 
         int maxPages = (int) Math.ceil((double) sortedEntries.size() / (double) entriesPerPage);
-        System.out.println(sortedEntries.size() + " " + entriesPerPage + " " + maxPages);
 
         state.currentPage = (state.currentPage >= maxPages) ? 0 : state.currentPage;
         embed.setTitle(title + " (Page " + (state.currentPage + 1) + "/" + (maxPages) + ")");

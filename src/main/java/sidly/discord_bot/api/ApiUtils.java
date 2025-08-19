@@ -8,6 +8,7 @@ import sidly.discord_bot.Config;
 import sidly.discord_bot.ConfigManager;
 import sidly.discord_bot.database.PlayerDataShortened;
 import sidly.discord_bot.database.tables.GuildActivity;
+import sidly.discord_bot.database.tables.Players;
 import sidly.discord_bot.database.tables.PlaytimeHistory;
 import sidly.discord_bot.database.tables.UuidMap;
 
@@ -79,7 +80,9 @@ public class ApiUtils {
             if (apiData.username == null) return null;
             apiData.statusCode = response.statusCode();
 
-            PlaytimeHistory.addPlaytimeIfNeeded(new PlayerDataShortened(apiData));
+            PlayerDataShortened playerDataShortened = new PlayerDataShortened(apiData);
+            PlaytimeHistory.addPlaytimeIfNeeded(playerDataShortened);
+            Players.add(playerDataShortened);
 
             return apiData;
 
