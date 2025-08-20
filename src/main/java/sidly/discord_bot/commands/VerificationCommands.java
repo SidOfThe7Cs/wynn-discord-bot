@@ -512,10 +512,8 @@ public class VerificationCommands {
             if (!Utils.hasRole(member, idToKeep)) {
                 Role rankRole = Utils.getRoleFromGuild(guild, idToKeep);
                 if (rankRole != null) {
-                    if (!Utils.hasRole(member, idToKeep)){
-                        guild.addRoleToMember(member, rankRole).queue();
-                        sb.append("Added the role ").append(rankRole.getAsMention()).append('\n');
-                    }
+                    guild.addRoleToMember(member, rankRole).queue();
+                    sb.append("Added the role ").append(rankRole.getAsMention()).append('\n');
                 } else {
                     sb.append("Role not found in guild for ID: ").append(idToKeep).append('\n');
                 }

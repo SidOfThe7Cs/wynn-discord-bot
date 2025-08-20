@@ -20,6 +20,7 @@ import sidly.discord_bot.page.PageBuilder;
 import sidly.discord_bot.page.PaginationIds;
 
 import java.awt.*;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -232,7 +233,7 @@ public class PromotionCommands {
                 sb.append(" Level: ").append(playerLevel).append(" / ").append(requirementCount).append('\n');
                 break;
             case DaysInGuild:
-                long daysInGuild = Utils.daysSinceIso(guildMemberInfo.joined);
+                long daysInGuild = Utils.timeSinceIso(guildMemberInfo.joined, ChronoUnit.DAYS);
                 sb.append(getSymbol((int) daysInGuild, requirementCount));
                 sb.append(" DaysInGuild: ").append(daysInGuild).append(" / ").append(requirementCount).append('\n');
                 break;

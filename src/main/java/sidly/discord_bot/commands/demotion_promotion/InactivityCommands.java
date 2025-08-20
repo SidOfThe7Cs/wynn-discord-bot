@@ -15,6 +15,7 @@ import sidly.discord_bot.page.PageBuilder;
 import sidly.discord_bot.page.PaginationIds;
 
 import java.awt.*;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.List;
 
@@ -36,7 +37,7 @@ public class InactivityCommands {
             PlayerDataShortened playerDataShortened = Players.get(entry.getKey());
 
             if (playerDataShortened != null && playerDataShortened.lastJoined != null) {
-                long lastJoin = Utils.daysSinceIso(playerDataShortened.lastJoined);
+                long lastJoin = Utils.timeSinceIso(playerDataShortened.lastJoined, ChronoUnit.DAYS);
                 lastJoinMap.put(username, (int) lastJoin);
 
                 lastUpdatedMap.put(username, playerDataShortened.lastModified);

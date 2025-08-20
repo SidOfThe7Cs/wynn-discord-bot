@@ -132,15 +132,18 @@ public class Utils {
         Recruit
     }
 
-    public static long daysSinceIso(String isoTimestamp) {
+    public static long timeSinceIso(String isoTimestamp, ChronoUnit timeunit) {
         if (isoTimestamp == null || isoTimestamp.isEmpty()) return -1;
         try {
             // Parse the ISO-8601 timestamp string into an Instant
             Instant past = Instant.parse(isoTimestamp);
             Instant now = Instant.ofEpochMilli(System.currentTimeMillis());
 
+            if (timeunit == ChronoUnit.WEEKS) {
+                return ChronoUnit.DAYS.between(past, now) / 7;
+            }
             // Calculate days between past and now
-            return ChronoUnit.DAYS.between(past, now);
+            return timeunit.between(past, now);
         } catch (Exception e) {
             e.printStackTrace();
             return -1; // Return -1 if parsing failed

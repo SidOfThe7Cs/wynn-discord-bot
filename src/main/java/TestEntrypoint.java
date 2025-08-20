@@ -50,5 +50,6 @@ track if players are online or not
 /guildstats prefix
 figure out if last login is
 
+make embeds save there sorted list to pageination state
 
  */

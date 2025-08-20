@@ -3,6 +3,8 @@ package sidly.discord_bot.database;
 import sidly.discord_bot.Utils;
 import sidly.discord_bot.api.PlayerProfile;
 
+import java.time.temporal.ChronoUnit;
+
 public class PlayerDataShortened {
     public String username;
     public String uuid;
@@ -36,7 +38,7 @@ public class PlayerDataShortened {
 
 
     public double getAllTimeWeeklyAverage() {
-        long days = Utils.daysSinceIso(firstJoined);
+        long days = Utils.timeSinceIso(firstJoined, ChronoUnit.DAYS);
         double weeks = (double) (days / 7L);
         return latestPlaytime / weeks;
     }

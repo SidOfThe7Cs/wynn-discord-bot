@@ -4,9 +4,12 @@ import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 import sidly.discord_bot.Config;
 import sidly.discord_bot.ConfigManager;
+import sidly.discord_bot.database.PlayerDataShortened;
 import sidly.discord_bot.database.records.GuildName;
 import sidly.discord_bot.database.tables.AllGuilds;
 import sidly.discord_bot.database.tables.GuildActivity;
+import sidly.discord_bot.database.tables.Players;
+import sidly.discord_bot.database.tables.PlaytimeHistory;
 import sidly.discord_bot.timed_actions.DynamicTimer;
 
 import java.io.IOException;
@@ -16,8 +19,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 public class MassGuild {
     private static final List<String> apiTokens = new ArrayList<>();
@@ -166,9 +168,9 @@ public class MassGuild {
         CompletableFuture<HttpResponse<String>> httpResponseCompletableFuture = client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
                 .orTimeout(30, TimeUnit.SECONDS);
         httpResponseCompletableFuture.thenAccept(response -> handleApiResponse(prefix, response)).exceptionally(ex -> {
-            Throwable cause = ex instanceof java.util.concurrent.CompletionException ? ex.getCause() : ex;
+            Throwable cause = ex instanceof CompletionException ? ex.getCause() : ex;
 
-            if (cause instanceof java.util.concurrent.TimeoutException) {
+            if (cause instanceof TimeoutException) {
                 statusCodes.add("timeout");
                 tempHighPrioQueue.addFirst(prefix); // retry
             } else if (cause instanceof IOException && cause.getMessage().contains("GOAWAY")) {
@@ -278,9 +280,9 @@ public class MassGuild {
             CompletableFuture<HttpResponse<String>> httpResponseCompletableFuture = client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
                     .orTimeout(30, TimeUnit.SECONDS);
             httpResponseCompletableFuture.thenAccept(responseName -> handleApiResponse(prefix, responseName)).exceptionally(ex -> {
-                Throwable cause = ex instanceof java.util.concurrent.CompletionException ? ex.getCause() : ex;
+                Throwable cause = ex instanceof CompletionException ? ex.getCause() : ex;
 
-                if (cause instanceof java.util.concurrent.TimeoutException) {
+                if (cause instanceof TimeoutException) {
                     statusCodes.add("timeout");
                     tempHighPrioQueue.addFirst(prefix); // retry
                 } else if (cause instanceof IOException && cause.getMessage().contains("GOAWAY")) {
@@ -293,6 +295,58 @@ public class MassGuild {
                 return null;
             });
         }
+    }
+
+    public static Map<String, PlayerProfile> getPlayerData(Set<String> uuids) {
+        if (apiTokens.isEmpty()) throw new IllegalStateException("No API tokens available");
+
+        Gson gson = new GsonBuilder().create();
+        Type type = new TypeToken<PlayerProfile>(){}.getType();
+        Map<String, PlayerProfile> results = new ConcurrentHashMap<>();
+        int tokenIndex = 0;
+        for (String uuid : uuids) {
+            String apiToken = apiTokens.get(tokenIndex % apiTokens.size());
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("https://api.wynncraft.com/v3/player/" + uuid + "?fullResult"))
+                    .header("Authorization", "Bearer " + apiToken)
+                    .GET()
+                    .build();
+
+            System.out.println(request);//TODO
+            HttpResponse<String> response;
+            try {
+                response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            } catch (IOException | InterruptedException e) {
+                e.printStackTrace();
+                continue;
+            }
+
+
+            int status = response.statusCode();
+            if (status == 404) {
+                continue;
+            }
+
+            String body = response.body().trim();
+            if (!(body.startsWith("{") || body.startsWith("["))) {
+                System.out.println("status code: " + status);
+                System.err.println("Unexpected response: " + body);
+                results.put(uuid, new PlayerProfile(response.statusCode()));
+                continue;
+            }
+
+            PlayerProfile apiData = gson.fromJson(response.body(), type);
+            if (apiData.username == null) continue;
+            apiData.statusCode = response.statusCode();
+
+            results.put(uuid, apiData);
+
+            PlayerDataShortened playerDataShortened = new PlayerDataShortened(apiData);
+            Players.add(playerDataShortened);
+
+            tokenIndex++;
+        }
+        return results;
     }
 
 }

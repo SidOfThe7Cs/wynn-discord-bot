@@ -11,6 +11,8 @@ import sidly.discord_bot.MainEntrypoint;
 import sidly.discord_bot.Utils;
 import sidly.discord_bot.api.ApiUtils;
 import sidly.discord_bot.api.GuildInfo;
+import sidly.discord_bot.api.MassGuild;
+import sidly.discord_bot.api.PlayerProfile;
 import sidly.discord_bot.database.records.GuildAverages;
 import sidly.discord_bot.database.PlayerDataShortened;
 import sidly.discord_bot.database.tables.AllGuilds;
@@ -21,9 +23,9 @@ import sidly.discord_bot.page.PageBuilder;
 import sidly.discord_bot.page.PaginationIds;
 
 import java.awt.Color;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class GuildCommands {
@@ -184,6 +186,7 @@ public class GuildCommands {
     }
 
     public static int guildDays = -1;
+
     public static void viewTrackedGuilds(SlashCommandInteractionEvent event) {
         guildDays = Optional.ofNullable(event.getOption("days"))
                 .map(OptionMapping::getAsInt)
@@ -251,7 +254,7 @@ public class GuildCommands {
     }
 
 
-    public static String updatePlayerRanks(){
+    public static String updatePlayerRanks() {
         GuildInfo guildinfo = ApiUtils.getGuildInfo(ConfigManager.getConfigInstance().other.get(Config.Settings.YourGuildPrefix));
         if (guildinfo == null || guildinfo.members == null) return "";
 
@@ -309,7 +312,65 @@ public class GuildCommands {
     public static void showStats(SlashCommandInteractionEvent event) {
         String guildPrefix = event.getOption("guild_prefix").getAsString();
         GuildInfo guildInfo = ApiUtils.getGuildInfo(guildPrefix);
+        if (guildInfo == null || guildInfo.members == null) {
+            event.reply(guildPrefix + " not found").setEphemeral(true).queue();
+            return;
+        }
 
-        StringBuilder sb = new StringBuilder();
+        event.deferReply(false).addComponents(Utils.getPaginationActionRow(PaginationIds.GUILD_STATS)).queue(hook -> {
+
+            StringBuilder sb = new StringBuilder();
+
+            sb.append("Level: ").append(guildInfo.level).append(" (").append(guildInfo.xpPercent).append("%)\n");
+            sb.append("Held Territories: ").append(guildInfo.territories).append("\n");
+            int latestSeason = -1;
+            for (Map.Entry<String, GuildInfo.SeasonRank> entry : guildInfo.seasonRanks.entrySet()) {
+                int season = Integer.parseInt(entry.getKey());
+                if (season > latestSeason) latestSeason = season;
+            }
+            sb.append("Season Rating: ").append(guildInfo.seasonRanks.get(String.valueOf(latestSeason)).rating).append("\n");
+            sb.append("Previous Rating: ").append(guildInfo.seasonRanks.get(String.valueOf(latestSeason - 1)).rating).append("\n");
+            sb.append("Wars: ").append(guildInfo.wars).append("\n");
+
+            Map<String, PlayerProfile> allPlayerData = MassGuild.getPlayerData(guildInfo.members.getAllMembers().keySet());
+            Map<Integer, String> sortedPlayerEntries = new HashMap<>();
+            long totalXpPerDay = 0;
+            double totalWeeklyPlaytime = 0;
+            for (Map.Entry<String, PlayerProfile> entry : allPlayerData.entrySet()) {
+                PlayerProfile playerData = entry.getValue();
+                GuildInfo.MemberInfo guildMemberData = guildInfo.members.getMemberInfo(playerData.uuid);
+                long joinedDaysAgo = Utils.timeSinceIso(guildMemberData.joined, ChronoUnit.DAYS);
+                double hoursPerWeek = playerData.playtime / Utils.timeSinceIso(playerData.firstJoin, ChronoUnit.WEEKS);
+                totalWeeklyPlaytime += hoursPerWeek;
+                long xpPerDayMillions;
+                if (joinedDaysAgo > 0) {
+                    xpPerDayMillions = guildMemberData.contributed / joinedDaysAgo / 1000000;
+                } else xpPerDayMillions = guildMemberData.contributed / 1000000;
+                totalXpPerDay += xpPerDayMillions;
+                int rank = guildMemberData.contributionRank;
+
+                StringBuilder playerString = new StringBuilder();
+                playerString.append("**").append(rank).append(". ").append(Utils.escapeDiscordMarkdown(playerData.username)).append(" (").append(playerData.guild.rank).append(")**");
+                playerString.append(playerData.online ? "Online\n" : "Offline, last seen " + Utils.timeSinceIso(playerData.lastJoin, ChronoUnit.HOURS) + " hours ago\n");
+                playerString.append("joined ").append(joinedDaysAgo).append(" days ago\n");
+                playerString.append(guildMemberData.contributed).append(" XP (").append(xpPerDayMillions).append("M/day)\n");
+                if (playerData.globalData != null) {
+                    playerString.append(playerData.globalData.wars).append(" wars\n");
+                }
+                playerString.append(String.format("%.2f", hoursPerWeek)).append(" hours per week (all time)\n\n");
+
+                sortedPlayerEntries.put(rank, playerString.toString());
+            }
+
+            sb.append("XP/day: ").append(totalXpPerDay).append("M/day").append("\n");
+            sb.append("Total weekly playtime: ").append(String.format("%.2f", totalWeeklyPlaytime)).append(" hours").append("\n");
+            sb.append("\n");
+
+            for (int i = 1; i < sortedPlayerEntries.size(); i++) {
+                sb.append(sortedPlayerEntries.get(i));
+            }
+
+            hook.editOriginalEmbeds(Utils.getEmbed("[" + guildPrefix + "] " + guildInfo.name, sb.toString())).queue();
+        });
     }
 }

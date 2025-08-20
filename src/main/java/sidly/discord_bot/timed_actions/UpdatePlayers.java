@@ -31,7 +31,13 @@ public class UpdatePlayers {
         }
         Member next = updateQueue.poll();
         if (next != null) {
-            VerificationCommands.updatePlayer(next);
+            // Refresh member from API to ensure all roles are loaded
+            Guild guild = next.getGuild();
+            guild.retrieveMemberById(next.getId()).queue(freshMember -> {
+                VerificationCommands.updatePlayer(freshMember);
+            }, failure -> {
+                System.err.println("Failed to retrieve member " + next.getId());
+            });
         }
     }
 
@@ -51,7 +57,7 @@ public class UpdatePlayers {
             }).onError(e -> {
                 e.printStackTrace();
                 loadingMembers = false;
-            });;
+            });
         }else {
             System.out.println("failed to get guild UpdatePlayers.GetAllMembers()");
             loadingMembers = false;
