@@ -46,8 +46,6 @@ guild playtime per hour averages need to be divided by the number of entries so 
 
 cmd to check for ppl in guild not in discord (get list of all ppl in guild and the ppl they are verified too)
 
-max page buttons store the sorted list probably in pageination stata
-
 track if players are online or not
 /guildstats prefix
 figure out if last login is

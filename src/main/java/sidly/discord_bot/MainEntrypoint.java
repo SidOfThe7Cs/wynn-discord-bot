@@ -48,7 +48,6 @@ public class MainEntrypoint extends ListenerAdapter {
         shuttingDown = true;
 
         System.out.println("Shutting down");
-        UpdatePlayers.shutdown();
         ConfigManager.save();
         System.exit(0);
     }
