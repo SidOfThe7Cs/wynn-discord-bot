@@ -136,7 +136,7 @@ public class AllGuilds {
     }
 
     public static void addTracked(String prefix, boolean lowPrio) {
-        String sql = "INSERT OR IGNORE INTO guilds_40_plus (prefix, low_priority) VALUES (?, ?)";
+        String sql = "INSERT OR REPLACE INTO guilds_40_plus (prefix, low_priority) VALUES (?, ?)";
 
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setString(1, prefix);

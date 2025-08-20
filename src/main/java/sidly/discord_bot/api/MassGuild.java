@@ -18,7 +18,6 @@ import java.net.http.HttpResponse;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 public class MassGuild {
     private static final List<String> apiTokens = new ArrayList<>();
@@ -35,7 +34,8 @@ public class MassGuild {
     private static DynamicTimer lowPrioTimer;
     private static boolean timersRunning = false;
     private static List<String> handledMultis = new ArrayList<>();
-    private static List<String> moveQueue = new ArrayList<>();
+    private static List<String> lowToHighMoveQueue = new ArrayList<>();
+    private static List<String> highToLowMoveQueue = new ArrayList<>();
 
     private static int count = 0;
     private static int attempsCounter = 0;
@@ -56,6 +56,7 @@ public class MassGuild {
         multiselectorApiToken = (ConfigManager.getConfigInstance().other.get(Config.Settings.ApiToken8));
 
         queue.addAll(AllGuilds.getTracked(false));
+        System.out.println("tracked guilds: " + queue.size());
         lowPriorityQueue.addAll(AllGuilds.getTracked(true));
 
         next();
@@ -121,9 +122,13 @@ public class MassGuild {
             }
             if (mainIndex >= queue.size()) {
 
-                queue.removeAll(moveQueue);
-                lowPriorityQueue.addAll(moveQueue);
-                moveQueue.clear();
+                queue.removeAll(highToLowMoveQueue);
+                lowPriorityQueue.addAll(highToLowMoveQueue);
+                highToLowMoveQueue.clear();
+
+                queue.addAll(lowToHighMoveQueue);
+                lowPriorityQueue.removeAll(lowToHighMoveQueue);
+                lowToHighMoveQueue.clear();
 
                 /*
                 System.out.println("queue finished looping size is: " + queue.size());
@@ -231,13 +236,22 @@ public class MassGuild {
             onlinePlayerCount = members.getOnlineMembersCount();
             onlineCaptainPlusCount = members.getOnlineCaptainsPlusCount();
 
-            if (members.total < 20 && queue.contains(prefix) && !lowPriorityQueue.contains(prefix)) {
-                moveQueue.add(prefix);
-                System.out.println("tracking guild" + prefix);
-                AllGuilds.addTracked(prefix, true);
-            } else if (members.total >= 20) {
+            if (members.total > 20) {
+                // Track large guilds
+                if (!queue.contains(prefix)) {
+                    lowToHighMoveQueue.add(prefix);
+                    System.out.println("tracking guild " + prefix);
+                }
                 AllGuilds.addTracked(prefix, false);
+            } else {
+                // Untrack small guilds
+                if (!lowPriorityQueue.contains(prefix)) {
+                    highToLowMoveQueue.add(prefix);
+                    System.out.println("un-tracking guild " + prefix);
+                }
+                AllGuilds.addTracked(prefix, true);
             }
+
         } else System.err.println("members was null");
 
         GuildActivity.add(apiData.uuid, apiData.prefix, apiData.name, onlinePlayerCount, onlineCaptainPlusCount);
