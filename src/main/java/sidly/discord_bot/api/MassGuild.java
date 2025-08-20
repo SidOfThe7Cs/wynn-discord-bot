@@ -252,7 +252,7 @@ public class MassGuild {
                 AllGuilds.addTracked(prefix, true);
             }
 
-        } else System.err.println("members was null");
+        } else System.err.println("members was null " + prefix);
 
         GuildActivity.add(apiData.uuid, apiData.prefix, apiData.name, onlinePlayerCount, onlineCaptainPlusCount);
     }
