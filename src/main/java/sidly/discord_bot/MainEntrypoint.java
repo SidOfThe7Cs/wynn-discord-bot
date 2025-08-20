@@ -17,6 +17,7 @@ import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction;
 import net.dv8tion.jda.api.utils.MemberCachePolicy;
+import sidly.discord_bot.api.MassGuild;
 import sidly.discord_bot.commands.*;
 import sidly.discord_bot.commands.demotion_promotion.InactivityCommands;
 import sidly.discord_bot.commands.demotion_promotion.PromotionCommands;
@@ -24,7 +25,7 @@ import sidly.discord_bot.commands.demotion_promotion.RequirementType;
 import sidly.discord_bot.database.SQLDB;
 import sidly.discord_bot.page.PageBuilder;
 import sidly.discord_bot.page.PaginationIds;
-import sidly.discord_bot.timed_actions.TrackedGuilds;
+import sidly.discord_bot.timed_actions.GuildRankUpdater;
 import sidly.discord_bot.timed_actions.UpdatePlayers;
 
 import java.sql.SQLException;
@@ -337,8 +338,9 @@ public class MainEntrypoint extends ListenerAdapter {
         jda.awaitReady();
         MainEntrypoint.jda = jda;
 
-        //UpdatePlayers.init();
-        TrackedGuilds.init();
+        UpdatePlayers.init();
+        GuildRankUpdater.init();
+        MassGuild.init();
     }
 
 

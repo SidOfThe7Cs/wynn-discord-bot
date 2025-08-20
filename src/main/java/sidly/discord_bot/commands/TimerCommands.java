@@ -2,13 +2,14 @@ package sidly.discord_bot.commands;
 
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import sidly.discord_bot.Utils;
-import sidly.discord_bot.timed_actions.TrackedGuilds;
+import sidly.discord_bot.api.MassGuild;
+import sidly.discord_bot.timed_actions.GuildRankUpdater;
 import sidly.discord_bot.timed_actions.UpdatePlayers;
 
 public class TimerCommands {
     public static void getTimerStatus(SlashCommandInteractionEvent event) {
-        boolean allGuildTrackerTimerStatus = TrackedGuilds.getAllGuildTrackerTimerStatus();
-        boolean yourGuildTrackerTimerStatus = TrackedGuilds.getYourGuildTrackerTimerStatus();
+        boolean allGuildTrackerTimerStatus = MassGuild.getTimerStatus();
+        boolean yourGuildTrackerTimerStatus = GuildRankUpdater.getYourGuildTrackerTimerStatus();
         boolean playerUpdater = UpdatePlayers.isRunning();
 
         String description = "PlayerUpdater: " + (playerUpdater ? "active" : "inactive") + "\n" +
@@ -26,10 +27,10 @@ public class TimerCommands {
                 UpdatePlayers.init();
                 break;
             case "guildTracker":
-                TrackedGuilds.startTrackedGuildsTimer();
+                MassGuild.startTimer();
                 break;
             case "yourGuildRankUpdater":
-                TrackedGuilds.startYourGuildTracker();
+                GuildRankUpdater.startYourGuildTracker();
                 break;
         }
         event.reply("timer " + timerName + " started").queue();
@@ -42,10 +43,10 @@ public class TimerCommands {
                 UpdatePlayers.shutdown();
                 break;
             case "guildTracker":
-                TrackedGuilds.stopAllGuildTracker();
+                MassGuild.stopTimer();
                 break;
             case "yourGuildRankUpdater":
-                TrackedGuilds.stopYourGuildTracker();
+                GuildRankUpdater.stopYourGuildTracker();
                 break;
         }
         event.reply("timer " + timerName + " stopped").queue();

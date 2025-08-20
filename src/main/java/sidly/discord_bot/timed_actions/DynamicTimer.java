@@ -22,27 +22,37 @@ public class DynamicTimer {
     }
 
     public void start() {
-        reschedule();
+        scheduleNext();
     }
 
-    public void reschedule() {
-        if (currentTask != null && !currentTask.isCancelled()) {
-            currentTask.cancel(false);
+    int lastSize;
+    private long lastDelay;
+    private int runs = 0;
+    private void scheduleNext() {
+        long delay;
+        if (runs++ > lastSize / 4) {
+            runs = 0;
+            lastSize = targetSet.size();
+            delay = calculateDelay(lastSize);
+        } else {
+            delay = lastDelay; // reuse previous delay
         }
+        lastDelay = delay;
 
-        long delay = calculateDelay(targetSet.size());
-        currentTask = scheduler.scheduleAtFixedRate(() -> {
+        currentTask = scheduler.schedule(() -> {
             try {
                 task.run();
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }, 0, delay, TimeUnit.MILLISECONDS);
+            scheduleNext();
+        }, delay, TimeUnit.MILLISECONDS);
     }
+
 
     private long calculateDelay(int size) {
         if (size <= 0) {
-            return this.targetMillisPerItemInSet;
+            return this.minMillis * 4;
         }
         long delay = targetMillisPerItemInSet / size;
         return Math.max(minMillis, delay);
@@ -53,7 +63,6 @@ public class DynamicTimer {
             currentTask.cancel(false);
             currentTask = null;
         }
-        scheduler.shutdown();
     }
 }
 

@@ -13,9 +13,9 @@ import sidly.discord_bot.api.ApiUtils;
 import sidly.discord_bot.api.GuildInfo;
 import sidly.discord_bot.database.records.GuildAverages;
 import sidly.discord_bot.database.PlayerDataShortened;
+import sidly.discord_bot.database.tables.AllGuilds;
 import sidly.discord_bot.database.tables.GuildActivity;
 import sidly.discord_bot.database.tables.Players;
-import sidly.discord_bot.database.tables.TrackedGuilds;
 import sidly.discord_bot.database.tables.UuidMap;
 import sidly.discord_bot.page.PageBuilder;
 import sidly.discord_bot.page.PaginationIds;
@@ -23,6 +23,7 @@ import sidly.discord_bot.page.PaginationIds;
 import java.awt.Color;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class GuildCommands {
@@ -131,17 +132,13 @@ public class GuildCommands {
 
     public static void addTrackedGuild(SlashCommandInteractionEvent event) {
         String guildPrefix = event.getOption("guild_prefix").getAsString();
-        if (!TrackedGuilds.isTracked(guildPrefix)) {
-            TrackedGuilds.add(guildPrefix);
-        }
+        AllGuilds.addTracked(guildPrefix, false);
         event.reply("added " + guildPrefix + " to tracked guilds").queue();
     }
 
     public static void removeTrackedGuild(SlashCommandInteractionEvent event) {
         String guildPrefix = event.getOption("guild_prefix").getAsString();
-        if (TrackedGuilds.isTracked(guildPrefix)) {
-            TrackedGuilds.remove(guildPrefix);
-        }
+        AllGuilds.unTracked(guildPrefix);
         event.reply("removed " + guildPrefix + " from tracked guilds").queue();
     }
 
@@ -188,49 +185,60 @@ public class GuildCommands {
 
     public static int guildDays = -1;
     public static void viewTrackedGuilds(SlashCommandInteractionEvent event) {
-         guildDays = Optional.ofNullable(event.getOption("days"))
-            .map(OptionMapping::getAsInt)
-            .orElse(-1);
+        guildDays = Optional.ofNullable(event.getOption("days"))
+                .map(OptionMapping::getAsInt)
+                .orElse(-1);
 
+        event.deferReply(false).addComponents(Utils.getPaginationActionRow(PaginationIds.GUILD)).queue(hook -> {
 
+            EmbedBuilder embed = buildGuildsPage();
 
-        EmbedBuilder embed = buildGuildsPage();
+            if (embed == null) {
+                event.reply("no guilds").setEphemeral(true).queue();
+                return;
+            }
 
-        if (embed == null) {
-            event.reply("no guilds").setEphemeral(true).queue();
-            return;
-        }
-
-        event.replyEmbeds(embed.build())
-                .addComponents(Utils.getPaginationActionRow(PaginationIds.GUILD))
-                .queue();
+            hook.editOriginalEmbeds(embed.build()).queue();
+        });
     }
 
+    @SuppressWarnings("unchecked")
     public static EmbedBuilder buildGuildsPage() {
-        PageBuilder.PaginationState paginationState = PageBuilder.PaginationManager.get(PaginationIds.GUILD.name());
-
+        PageBuilder.PaginationState state = PageBuilder.PaginationManager.get(PaginationIds.GUILD.name());
         List<GuildAverages> sortedGuilds = GuildActivity.getGuildAverages(guildDays);
+        int entriesPerPage = 10;
+        if (sortedGuilds.isEmpty()) return null;
+        int maxPages = (int) Math.ceil((double) sortedGuilds.size() / (double) entriesPerPage);
+        state.currentPage = (state.currentPage >= maxPages) ? 0 : state.currentPage;
+        StringBuilder sb = new StringBuilder();
+        int start = state.currentPage * entriesPerPage;
+        int end = Math.min(start + entriesPerPage, sortedGuilds.size());
 
-        if (sortedGuilds.isEmpty()) {
-            return null;
-        }
-
-        List<String> entries = new ArrayList<>();
-        for (GuildAverages trackedGuild : sortedGuilds) {
-            StringBuilder sb = new StringBuilder();
+        for (int i = start; i < end; i++) {
+            GuildAverages trackedGuild = sortedGuilds.get(i);
 
             String averagePlayers = String.format("%.2f", trackedGuild.averageOnline());
             String averageCaptains = String.format("%.2f", trackedGuild.averageCaptains());
-            String guildName = GuildActivity.getGuildName(trackedGuild.uuid());
+            String prefix = AllGuilds.getPrefixByUuid((trackedGuild.uuid()));
+            String guildName = AllGuilds.getGuild(prefix).name();
 
-            sb.append("[**").append(UuidMap.getUsernameByMinecraftId(trackedGuild.uuid())).append("**] ").append(guildName).append("\n");
+            sb.append("[**").append(prefix).append("**] ").append(guildName).append("\n");
             sb.append("Avg. Online: ").append(averagePlayers).append("\n");
             sb.append("Avg. Captains+: ").append(averageCaptains).append("\n\n");
-
-            entries.add(sb.toString());
         }
 
-        return PageBuilder.buildEmbedPage(entries, paginationState, 10, "Average activity for tracked guilds");
+        String description = sb.toString();
+        String title = "Average activity for tracked guilds";
+        EmbedBuilder embed = new EmbedBuilder();
+        embed.setTitle(title + " (Page " + (state.currentPage + 1) + "/" + (maxPages) + ")");
+        embed.setColor(Color.CYAN);
+        if (description.length() > 4096) {
+            description = description.substring(0, 4095);
+            embed.setFooter("Character limit hit");
+        }
+        embed.setDescription(description);
+
+        return embed;
     }
 
 
@@ -268,7 +276,6 @@ public class GuildCommands {
             // add there rank should return null and therefor remove all if not in guild
             sb.append(VerificationCommands.removeRankRolesExcept(member, rankId));
 
-            System.out.println(uuid);
             if (allMembers.containsKey(uuid)) { // they are in the wynncraft guild
                 sb.append(Utils.addRole(member, Config.Roles.MemberRole));
             } else sb.append(Utils.removeRole(member, Config.Roles.MemberRole));

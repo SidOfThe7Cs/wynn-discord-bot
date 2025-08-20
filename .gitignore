@@ -43,3 +43,4 @@ bin/
 /config.json
 /.idea/uiDesigner.xml
 /database.json
+/.idea/discord.xml

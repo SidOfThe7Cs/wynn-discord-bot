@@ -63,7 +63,7 @@ public class ConfigCommands {
         // Other settings
         sb.append("**Other Settings:**\n");
         config.other.forEach((key, value) -> {
-            if (!key.equals(Config.Settings.Token) && !key.equals(Config.Settings.ApiToken)) {
+            if (!key.name().toLowerCase().contains("token")) {
                 sb.append(key).append(" : ").append(value).append("\n");
             }
         });
@@ -125,7 +125,7 @@ public class ConfigCommands {
             return;
         }
 
-        if (option == Config.Settings.ApiToken) {
+        if (option.name().startsWith("ApiToken")) {
             ephemeral = true;
         }
 

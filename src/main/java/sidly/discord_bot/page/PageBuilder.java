@@ -71,10 +71,12 @@ public class PageBuilder {
     public static class PaginationState {
         public Supplier<EmbedBuilder> function;
         public int currentPage;
+        public long lastUpdated;
 
         public PaginationState(Supplier<EmbedBuilder> function, int currentPage) {
             this.function = function;
             this.currentPage = currentPage;
+            this.lastUpdated = System.currentTimeMillis();
         }
     }
 

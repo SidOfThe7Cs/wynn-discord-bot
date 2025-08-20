@@ -98,7 +98,15 @@ public class Config {
         YourDiscordServerId,
         ApiToken,
         GuildLeaveMessage,
-        GuildJoinMessage
+        GuildJoinMessage,
+        ApiToken1,
+        ApiToken2,
+        ApiToken3,
+        ApiToken4,
+        ApiToken5,
+        ApiToken6,
+        ApiToken7,
+        ApiToken8,
     }
 
     public enum LvlRoles {

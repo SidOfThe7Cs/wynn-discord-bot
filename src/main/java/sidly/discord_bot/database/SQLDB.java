@@ -64,9 +64,18 @@ public class SQLDB {
         executeQuery("CREATE INDEX IF NOT EXISTS idx_activity_uuid ON guild_activity(uuid)");
         executeQuery("CREATE INDEX IF NOT EXISTS idx_activity_uuid_time ON guild_activity(uuid, hour)");
 
-        createTable("tracked_guilds", Map.of(
-                "uuid", "TEXT PRIMARY KEY"
+        createTable("all_guilds", Map.of(
+                "prefix", "TEXT",
+                "uuid", "TEXT PRIMARY KEY",
+                "name", "TEXT"
         ));
+        executeQuery("DROP TABLE if EXISTS tracked_guilds");
+
+        createTable("guilds_40_plus", Map.of(
+                "prefix", "TEXT PRIMARY KEY"
+        ));
+        addColumn("guilds_40_plus", "low_priority", "INTEGER");
+        executeQuery("CREATE INDEX IF NOT EXISTS idx_tracked_priority ON guilds_40_plus(low_priority)");
     }
 
     public static void createTable(String tableName, Map<String, String> columns) {

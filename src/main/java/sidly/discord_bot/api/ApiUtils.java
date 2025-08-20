@@ -7,6 +7,7 @@ import com.google.gson.reflect.TypeToken;
 import sidly.discord_bot.Config;
 import sidly.discord_bot.ConfigManager;
 import sidly.discord_bot.database.PlayerDataShortened;
+import sidly.discord_bot.database.records.GuildName;
 import sidly.discord_bot.database.tables.GuildActivity;
 import sidly.discord_bot.database.tables.Players;
 import sidly.discord_bot.database.tables.PlaytimeHistory;
@@ -126,7 +127,6 @@ public class ApiUtils {
             Type type = new TypeToken<GuildInfo>(){}.getType();
             GuildInfo apiData = gson.fromJson(response.body(), type);
 
-            UuidMap.addMinecraftId(prefix, apiData.uuid);
             int onlinePlayerCount = 0;
             int onlineCaptainPlusCount = 0;
             GuildInfo.Members members = apiData.members;
@@ -151,7 +151,7 @@ public class ApiUtils {
         try {
             HttpClient client = HttpClient.newHttpClient();
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create("https://api.wynncraft.com/v3/guild/list/guild"))
+                    .uri(URI.create("https://api.wynncraft.com/v3/guild/list/guild?identifier=uuid"))
                     .GET()
                     .build();
 
@@ -163,6 +163,15 @@ public class ApiUtils {
 
             Type type = new TypeToken<Map<String, GuildName>>(){}.getType();
             Map<String, GuildName> apiData = gson.fromJson(response.body(), type);
+
+            // Copy the key into the GuildName object
+            apiData.forEach((uuid, guild) -> {
+                if (guild != null) {
+                    guild = new GuildName(guild.prefix(), uuid, guild.name());
+                    // replace the value with a new GuildName that includes uuid
+                    apiData.put(uuid, guild);
+                }
+            });
 
             return apiData;
 
