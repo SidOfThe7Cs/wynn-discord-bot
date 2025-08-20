@@ -150,6 +150,10 @@ public class MainEntrypoint extends ListenerAdapter {
                 .addOption(STRING, "guild_prefix", "e", true));
         AllSlashCommands.leaderboardguildxp.setAction(GuildCommands::showGuildXpLeaderboard);
 
+        commands.addCommands(AllSlashCommands.guildstats.getBaseCommandData()
+                .addOption(STRING, "guild_prefix", "e", true));
+        AllSlashCommands.guildstats.setAction(GuildCommands::showStats);
+
         commands.addCommands(AllSlashCommands.online.getBaseCommandData()
                 .addOption(STRING, "guild_prefix", "e", true));
         AllSlashCommands.online.setAction(GuildCommands::showOnlineMembers);

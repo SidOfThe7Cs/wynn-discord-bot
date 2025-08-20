@@ -204,6 +204,8 @@ public class GuildCommands {
 
     @SuppressWarnings("unchecked")
     public static EmbedBuilder buildGuildsPage() {
+        long time1 = System.currentTimeMillis();
+
         PageBuilder.PaginationState state = PageBuilder.PaginationManager.get(PaginationIds.GUILD.name());
         List<GuildAverages> sortedGuilds = GuildActivity.getGuildAverages(guildDays);
         int entriesPerPage = 10;
@@ -213,6 +215,9 @@ public class GuildCommands {
         StringBuilder sb = new StringBuilder();
         int start = state.currentPage * entriesPerPage;
         int end = Math.min(start + entriesPerPage, sortedGuilds.size());
+
+        long time2 = System.currentTimeMillis();
+        System.out.println("loading from database took " + (time2 - time1) + " milliseconds loaded: " + sortedGuilds.size() + " guilds");
 
         for (int i = start; i < end; i++) {
             GuildAverages trackedGuild = sortedGuilds.get(i);
@@ -226,6 +231,10 @@ public class GuildCommands {
             sb.append("Avg. Online: ").append(averagePlayers).append("\n");
             sb.append("Avg. Captains+: ").append(averageCaptains).append("\n\n");
         }
+
+
+        long time3 = System.currentTimeMillis();
+        System.out.println("reformatting took " + (time3 - time2) + " milliseconds sorted " + (end - start) + " entries");
 
         String description = sb.toString();
         String title = "Average activity for tracked guilds";
@@ -295,5 +304,12 @@ public class GuildCommands {
     public static void updatePlayerRanks(SlashCommandInteractionEvent event) {
         String result = updatePlayerRanks();
         event.replyEmbeds(Utils.getEmbed("Updated Players", result)).setEphemeral(true).queue();
+    }
+
+    public static void showStats(SlashCommandInteractionEvent event) {
+        String guildPrefix = event.getOption("guild_prefix").getAsString();
+        GuildInfo guildInfo = ApiUtils.getGuildInfo(guildPrefix);
+
+        StringBuilder sb = new StringBuilder();
     }
 }

@@ -164,7 +164,7 @@ public class MassGuild {
                 .GET()
                 .build();
         CompletableFuture<HttpResponse<String>> httpResponseCompletableFuture = client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                .orTimeout(40, TimeUnit.SECONDS);
+                .orTimeout(30, TimeUnit.SECONDS);
         httpResponseCompletableFuture.thenAccept(response -> handleApiResponse(prefix, response)).exceptionally(ex -> {
             Throwable cause = ex instanceof java.util.concurrent.CompletionException ? ex.getCause() : ex;
 
@@ -238,14 +238,14 @@ public class MassGuild {
 
             if (members.total > 20) {
                 // Track large guilds
-                if (!queue.contains(prefix)) {
+                if (!queue.contains(prefix) && !lowToHighMoveQueue.contains(prefix)) {
                     lowToHighMoveQueue.add(prefix);
                     System.out.println("tracking guild " + prefix);
                 }
                 AllGuilds.addTracked(prefix, false);
             } else {
                 // Untrack small guilds
-                if (!lowPriorityQueue.contains(prefix)) {
+                if (!lowPriorityQueue.contains(prefix) && !highToLowMoveQueue.contains(prefix)) {
                     highToLowMoveQueue.add(prefix);
                     System.out.println("un-tracking guild " + prefix);
                 }
@@ -276,7 +276,7 @@ public class MassGuild {
                     .GET()
                     .build();
             CompletableFuture<HttpResponse<String>> httpResponseCompletableFuture = client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                    .orTimeout(40, TimeUnit.SECONDS);
+                    .orTimeout(30, TimeUnit.SECONDS);
             httpResponseCompletableFuture.thenAccept(responseName -> handleApiResponse(prefix, responseName)).exceptionally(ex -> {
                 Throwable cause = ex instanceof java.util.concurrent.CompletionException ? ex.getCause() : ex;
 
