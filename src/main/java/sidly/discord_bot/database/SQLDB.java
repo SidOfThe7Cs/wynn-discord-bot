@@ -63,6 +63,7 @@ public class SQLDB {
         ));
         executeQuery("CREATE INDEX IF NOT EXISTS idx_activity_uuid ON guild_activity(uuid)");
         executeQuery("CREATE INDEX IF NOT EXISTS idx_activity_uuid_time ON guild_activity(uuid, hour)");
+        executeQuery("CREATE INDEX IF NOT EXISTS idx_activity_hour_timestamp ON guild_activity(hour, timestamp)");
 
         createTable("all_guilds", Map.of(
                 "prefix", "TEXT",

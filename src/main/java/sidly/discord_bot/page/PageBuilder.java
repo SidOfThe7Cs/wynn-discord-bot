@@ -41,7 +41,6 @@ public class PageBuilder {
     }
 
     public static EmbedBuilder buildEmbedPage(PaginationState state) {
-        long time1 = System.currentTimeMillis();
         if (state.sortedEntries.isEmpty()) return null;
 
         EmbedBuilder embed = new EmbedBuilder();
@@ -72,9 +71,6 @@ public class PageBuilder {
         }
 
         embed.setDescription(sb.toString());
-
-        long time2 = System.currentTimeMillis();
-        System.out.println("building embed took " + (time2 - time1) + " milliseconds");
 
         return embed;
     }

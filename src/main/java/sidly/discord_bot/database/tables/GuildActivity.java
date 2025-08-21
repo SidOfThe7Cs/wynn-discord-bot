@@ -167,24 +167,20 @@ public class GuildActivity {
         }
 
         String sql = """
-                       SELECT g.uuid,
-                       AVG(a.online_count) AS avg_online,
-                       AVG(a.captains_online) AS avg_captains
-                FROM guild_activity g
-                JOIN guild_activity a ON g.uuid = a.uuid
-                WHERE a.timestamp >= ?
-                GROUP BY g.uuid
-                ORDER BY avg_online DESC
+                       SELECT uuid,
+                                               AVG(online_count) AS avg_online,
+                                               AVG(captains_online) AS avg_captains
+                                        FROM guild_activity
+                                        WHERE timestamp >= ?
+                                        GROUP BY uuid
+                                        ORDER BY avg_online DESC;
+                
                 """;
 
 
-        long time1 = System.currentTimeMillis();
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setLong(1, startTime);
             try (ResultSet rs = pstmt.executeQuery()) {
-
-                long time2 = System.currentTimeMillis();
-                System.out.println("query took " + (time2 - time1) + " milliseconds");
 
                 while (rs.next()) {
                     String uuid = rs.getString("uuid");
@@ -193,9 +189,6 @@ public class GuildActivity {
 
                     results.add(new GuildAverages(uuid, avgOnline, avgCaptains));
                 }
-
-                long time3 = System.currentTimeMillis();
-                System.out.println("looping through results took " + (time3 - time2) + " milliseconds");
             }
         } catch (SQLException e) {
             e.printStackTrace();
