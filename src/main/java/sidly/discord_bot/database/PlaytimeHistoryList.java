@@ -2,7 +2,6 @@ package sidly.discord_bot.database;
 
 import sidly.discord_bot.Utils;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 

@@ -94,7 +94,7 @@ public class PlaytimeHistory {
             PlayerDataShortened playerData = Players.get(uuid);
 
             reports.add(new PlayerReport(
-                    uuid,
+                    Players.get(uuid).username,
                     historyList.getLinear10WeekAverage(),
                     historyList.getAverage(1),
                     historyList.getAverage(5),

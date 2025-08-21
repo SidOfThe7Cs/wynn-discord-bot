@@ -4,13 +4,11 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
-import sidly.discord_bot.Utils;
 
 import java.awt.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 public class PageBuilder {
     public static void handlePagination(ButtonInteractionEvent event) {
@@ -28,7 +26,7 @@ public class PageBuilder {
         }
         state.currentPage = page;
 
-        EmbedBuilder embed = buildEmbedPage(state);
+        EmbedBuilder embed = state.buildEmbedPage();
 
         Button leftButton = Button.primary("pagination:" + key + ":left", "◀️");
         Button rightButton = Button.primary("pagination:" + key + ":right", "▶️");
@@ -40,41 +38,6 @@ public class PageBuilder {
                 .queue();
     }
 
-    public static EmbedBuilder buildEmbedPage(PaginationState state) {
-        if (state.sortedEntries.isEmpty()) return null;
-
-        EmbedBuilder embed = new EmbedBuilder();
-        embed.setColor(Color.CYAN);
-
-        int maxPages = (int) Math.ceil((double) state.sortedEntries.size() / (double) state.entriesPerPage);
-
-        state.currentPage = (state.currentPage >= maxPages) ? 0 : state.currentPage;
-        embed.setTitle(state.title + " (Page " + (state.currentPage + 1) + "/" + (maxPages) + ")");
-
-        StringBuilder sb = new StringBuilder();
-
-        if (state.equals(PaginationManager.get(PaginationIds.GUILD_STATS.name()))) {
-            sb.append(state.customData);
-        }
-
-
-        int start = state.currentPage * state.entriesPerPage;
-        int end = Math.min(start + state.entriesPerPage, state.sortedEntries.size());
-
-
-        for (int i = start; i < end; i++) {
-            String entry;
-            if (state.converter != null) {
-                entry = state.converter.convert(state.sortedEntries.get(i));
-            } else entry = (String) state.sortedEntries.get(i);
-            sb.append(entry);
-        }
-
-        embed.setDescription(sb.toString());
-
-        return embed;
-    }
-
     public static ActionRow getPaginationActionRow(PaginationIds id){
         Button leftButton = Button.primary("pagination:" + id.name() + ":left", "◀️");
         Button rightButton = Button.primary("pagination:" + id.name() + ":right", "▶️");
@@ -83,12 +46,10 @@ public class PageBuilder {
 
     public static class PaginationState {
         public int currentPage;
-        public long lastUpdated;
         public String title;
         public int entriesPerPage;
         public pageConverterFunction converter;
         public Object customData;
-
         public List<?> sortedEntries;
 
         public PaginationState(pageConverterFunction converter, int currentPage, String title, int entriesPerPage) {
@@ -96,13 +57,48 @@ public class PageBuilder {
             this.currentPage = currentPage;
             this.title = title;
             this.entriesPerPage = entriesPerPage;
-            this.lastUpdated = System.currentTimeMillis();
         }
 
         public void reset(List<?> sortedEntries) {
-            lastUpdated = System.currentTimeMillis();
             currentPage = 0;
             this.sortedEntries = sortedEntries;
+        }
+
+        public EmbedBuilder buildEmbedPage() {
+            if (this.sortedEntries.isEmpty()) return null;
+
+            EmbedBuilder embed = new EmbedBuilder();
+            embed.setColor(Color.CYAN);
+
+            int maxPages = (int) Math.ceil((double) this.sortedEntries.size() / (double) this.entriesPerPage);
+
+            this.currentPage = (this.currentPage >= maxPages) ? 0 : this.currentPage;
+            embed.setTitle(this.title + " (Page " + (this.currentPage + 1) + "/" + (maxPages) + ")");
+
+            StringBuilder sb = new StringBuilder();
+
+
+            //custom data handling
+            if (this.equals(PaginationManager.get(PaginationIds.GUILD_STATS.name()))) {
+                sb.append(this.customData);
+            }
+
+
+            int start = this.currentPage * this.entriesPerPage;
+            int end = Math.min(start + this.entriesPerPage, this.sortedEntries.size());
+
+
+            for (int i = start; i < end; i++) {
+                String entry;
+                if (this.converter != null) {
+                    entry = this.converter.convert(this.sortedEntries.get(i));
+                } else entry = (String) this.sortedEntries.get(i);
+                sb.append(entry);
+            }
+
+            embed.setDescription(sb.toString());
+
+            return embed;
         }
     }
 

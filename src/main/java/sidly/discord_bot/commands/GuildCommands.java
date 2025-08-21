@@ -201,7 +201,7 @@ public class GuildCommands {
         event.deferReply(false).addComponents(PageBuilder.getPaginationActionRow(PaginationIds.GUILD)).queue(hook -> {
             pageState.reset(GuildActivity.getGuildAverages(guildDays));
 
-            EmbedBuilder embed = PageBuilder.buildEmbedPage(pageState);
+            EmbedBuilder embed = pageState.buildEmbedPage();
 
             if (embed == null) {
                 event.reply("no guilds").setEphemeral(true).queue();
@@ -346,7 +346,7 @@ public class GuildCommands {
             pageState.customData = sb.toString();
             pageState.title = "[" + guildPrefix + "] " + guildInfo.name;
 
-            EmbedBuilder embed = PageBuilder.buildEmbedPage(pageState);
+            EmbedBuilder embed = pageState.buildEmbedPage();
             if (embed == null) {
                 hook.editOriginalEmbeds(Utils.getEmbed("well this is awkward", "something went wrong")).queue();
                 return;

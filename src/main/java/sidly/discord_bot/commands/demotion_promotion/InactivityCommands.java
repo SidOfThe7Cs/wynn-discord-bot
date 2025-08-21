@@ -87,7 +87,7 @@ public class InactivityCommands {
         event.deferReply(false).addComponents(PageBuilder.getPaginationActionRow(PaginationIds.AVERAGE_PLAYTIME)).queue(hook -> {
             PageBuilder.PaginationState pageState = PageBuilder.PaginationManager.get(PaginationIds.AVERAGE_PLAYTIME.name());
             pageState.reset(PlaytimeHistory.getSortedPlaytimeReport());
-            EmbedBuilder embed = PageBuilder.buildEmbedPage(pageState);
+            EmbedBuilder embed = pageState.buildEmbedPage();
 
             if (embed == null) {
                 event.reply("no ppl").setEphemeral(true).queue();

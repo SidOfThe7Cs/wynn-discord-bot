@@ -305,16 +305,21 @@ public class PromotionCommands {
             GuildInfo guildInfo = ApiUtils.getGuildInfo(ConfigManager.getConfigInstance().other.get(Config.Settings.YourGuildPrefix));
             if (guildInfo == null) return;
             List<PromotionEntry> entries = guildInfo.members.getAllMembers().entrySet().stream()
-                    .map(entry -> new PromotionEntry(entry.getKey(), entry.getValue().username, guildInfo))
+                    .map(entry -> {
+                        String progress = checkPromotionProgress(entry.getValue().username, guildInfo);
+                        return new AbstractMap.SimpleEntry<>(entry, progress);
+                    })
+                    .filter(e -> !e.getValue().split("-#")[0].contains("❌"))
+                    .map(e -> new PromotionEntry(e.getKey().getKey(), e.getKey().getValue().username, guildInfo, e.getValue()))
                     .toList();
 
             pageState.reset(entries);
 
 
-            EmbedBuilder embed = PageBuilder.buildEmbedPage(pageState);
+            EmbedBuilder embed = pageState.buildEmbedPage();
 
             if (embed == null) {
-                event.reply("no promotions").setEphemeral(true).queue();
+                hook.editOriginalEmbeds(Utils.getEmbed("No Promotions", "there is no-one good enough for the next rank")).queue();
                 return;
             }
 
@@ -324,16 +329,13 @@ public class PromotionCommands {
 
     public static String promotionConverter(PromotionEntry info) {
         StringBuilder sb = new StringBuilder();
-        String progress = checkPromotionProgress(info.username, info.guildInfo);
-        if (!progress.split("-#")[0].contains("❌")) {
-            Utils.RankList rank = info.guildInfo.members.getRankOfMember(info.uuid);
-            Object promoteTo = Utils.RankList.values()[rank.ordinal() - 1];
-            sb.append("**");
-            sb.append(info.username).append("** is eligible for **").append(promoteTo).append("** rank\n");
-            sb.append(progress).append("\n");
-        }
+        Utils.RankList rank = info.guildInfo.members.getRankOfMember(info.uuid);
+        Utils.RankList promoteTo = Utils.RankList.values()[rank.ordinal() - 1];
+        sb.append("**");
+        sb.append(info.username).append("** is eligible for **").append(promoteTo).append("** rank\n");
+        sb.append(info.progress).append("\n");
         return sb.toString();
     }
 
-    public record PromotionEntry (String uuid, String username, GuildInfo guildInfo){}
+    public record PromotionEntry (String uuid, String username, GuildInfo guildInfo, String progress){}
 }

@@ -60,21 +60,23 @@ TODO
 
 allow playtime command to specify interval and max
 
-inactivity
-
 Add exception cmds
 
 Server owner can always run commands
 
 guild playtime per hour averages need to be divided by the number of entries so the end average isnt skewed based on one hour having more entries than another
+fix /average playtime
 
 /delete old versions
 
 cmd to check for ppl in guild not in discord (get list of all ppl in guild and the ppl they are verified too)
 
-asynch MassGuilds player things
-
 figure out why promotion page has worng max
 add a possition for your guild to tracked guilds
+add more data to guild stats
+add a cooldown to /guild stats
+/average players fix
+inactivity
+why is it still shwoing chamiopn additions
 
  */
