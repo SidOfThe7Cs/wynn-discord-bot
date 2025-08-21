@@ -83,7 +83,9 @@ public class InactivityCommands {
     }
 
     public static void getAveragePlaytime(SlashCommandInteractionEvent event) {
-        EmbedBuilder embed = buildAveragePlaytimePage();
+        PageBuilder.PaginationState pageState = PageBuilder.PaginationManager.get(PaginationIds.AVERAGE_PLAYTIME.name());
+        pageState.reset(PlaytimeHistory.getSortedPlaytimeReport());
+        EmbedBuilder embed = PageBuilder.buildEmbedPage(pageState);
 
         if (embed == null) {
             event.reply("no ppl").setEphemeral(true).queue();
@@ -91,16 +93,9 @@ public class InactivityCommands {
         }
 
         event.replyEmbeds(embed.build())
-                .addComponents(Utils.getPaginationActionRow(PaginationIds.AVERAGE_PLAYTIME))
+                .addComponents(PageBuilder.getPaginationActionRow(PaginationIds.AVERAGE_PLAYTIME))
                 .queue();
 
     }
 
-    public static EmbedBuilder buildAveragePlaytimePage() {
-        PageBuilder.PaginationState paginationState = PageBuilder.PaginationManager.get(PaginationIds.AVERAGE_PLAYTIME.name());
-
-        List<String> entries = PlaytimeHistory.getSortedPlaytimeReport();
-
-        return PageBuilder.buildEmbedPage(entries, paginationState, 30, "Player, 10weeklinearavg, 1weekavg, 5weekavg, 20weekavg, alltimeavg");
-    }
 }

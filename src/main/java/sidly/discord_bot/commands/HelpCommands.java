@@ -3,23 +3,19 @@ package sidly.discord_bot.commands;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import sidly.discord_bot.ConfigManager;
-import sidly.discord_bot.Utils;
 import sidly.discord_bot.page.PageBuilder;
 import sidly.discord_bot.page.PaginationIds;
 
 import java.awt.*;
 import java.io.File;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.ArrayList;
 import java.util.List;
-
-import static sidly.discord_bot.database.SQLDB.connection;
 
 public class HelpCommands {
     public static void listCommands(SlashCommandInteractionEvent event) {
-        EmbedBuilder embed = buildCommandListPage();
+        PageBuilder.PaginationState pageState = PageBuilder.PaginationManager.get(PaginationIds.COMMAND_LIST.name());
+        pageState.reset(List.of(AllSlashCommands.values()));
+
+        EmbedBuilder embed = PageBuilder.buildEmbedPage(pageState);
 
         if (embed == null) {
             event.reply("no guilds").setEphemeral(true).queue();
@@ -27,9 +23,10 @@ public class HelpCommands {
         }
 
         event.replyEmbeds(embed.build())
-                .addComponents(Utils.getPaginationActionRow(PaginationIds.COMMAND_LIST))
+                .addComponents(PageBuilder.getPaginationActionRow(PaginationIds.COMMAND_LIST))
                 .queue();
     }
+
 
     public static void getSystemInfo(SlashCommandInteractionEvent event){
         File root = new File("/");
@@ -54,21 +51,15 @@ public class HelpCommands {
 
     }
 
-    public static EmbedBuilder buildCommandListPage() {
-        List<String> entries = new ArrayList<>();
-        PageBuilder.PaginationState paginationState = PageBuilder.PaginationManager.get(PaginationIds.COMMAND_LIST.name());
+    public static String commandListConverter(AllSlashCommands command) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("**").append(command.name()).append("**").append(" ");
+        if (command.getRequiredRole() != null) {
+            sb.append("requires <@&").append(ConfigManager.getConfigInstance().roles.get(command.getRequiredRole())).append(">\n");
+        } else sb.append("\n");
+        sb.append(command.getDescription()).append("\n");
 
-        for (AllSlashCommands command : AllSlashCommands.values()){
-            StringBuilder sb = new StringBuilder();
-            sb.append("**").append(command.name()).append("**").append(" ");
-            if (command.getRequiredRole() != null) {
-                sb.append("requires <@&").append(ConfigManager.getConfigInstance().roles.get(command.getRequiredRole())).append(">\n");
-            } else sb.append("\n");
-            sb.append(command.getDescription()).append("\n");
-
-            if (command.getAction() == null) sb.append("this command currently does nothing\n");
-            entries.add(sb.toString());
-        }
-        return PageBuilder.buildEmbedPage(entries, paginationState, 20, "List of All Bot Commands");
+        if (command.getAction() == null) sb.append("this command currently does nothing\n");
+        return sb.toString();
     }
 }

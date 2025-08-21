@@ -11,7 +11,6 @@ import sidly.discord_bot.database.records.GuildName;
 import sidly.discord_bot.database.tables.GuildActivity;
 import sidly.discord_bot.database.tables.Players;
 import sidly.discord_bot.database.tables.PlaytimeHistory;
-import sidly.discord_bot.database.tables.UuidMap;
 
 import java.io.IOException;
 import java.lang.reflect.Type;

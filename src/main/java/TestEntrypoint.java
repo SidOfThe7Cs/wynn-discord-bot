@@ -46,10 +46,9 @@ guild playtime per hour averages need to be divided by the number of entries so 
 
 cmd to check for ppl in guild not in discord (get list of all ppl in guild and the ppl they are verified too)
 
-track if players are online or not
-/guildstats prefix
-figure out if last login is
+asynch MassGuilds player things
 
-make embeds save there sorted list to pageination state
+figure out why promotion page has worng max
+add a possition for your guild to tracked guilds
 
  */

@@ -9,7 +9,6 @@ import sidly.discord_bot.database.records.GuildName;
 import sidly.discord_bot.database.tables.AllGuilds;
 import sidly.discord_bot.database.tables.GuildActivity;
 import sidly.discord_bot.database.tables.Players;
-import sidly.discord_bot.database.tables.PlaytimeHistory;
 import sidly.discord_bot.timed_actions.DynamicTimer;
 
 import java.io.IOException;
@@ -20,6 +19,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class MassGuild {
     private static final List<String> apiTokens = new ArrayList<>();
@@ -31,6 +31,7 @@ public class MassGuild {
     private static boolean isUpdating = false;
     private static boolean updateNext = true;
     private static HttpClient client;
+    private static HttpClient client2;
     private static String multiselectorApiToken;
     private static DynamicTimer mainTimer;
     private static DynamicTimer lowPrioTimer;
@@ -46,6 +47,7 @@ public class MassGuild {
 
     public static void init() {
         client = HttpClient.newHttpClient();
+        client2 = HttpClient.newHttpClient();
 
         apiTokens.add(ConfigManager.getConfigInstance().other.get(Config.Settings.ApiToken1));
         apiTokens.add(ConfigManager.getConfigInstance().other.get(Config.Settings.ApiToken2));
@@ -303,50 +305,56 @@ public class MassGuild {
         Gson gson = new GsonBuilder().create();
         Type type = new TypeToken<PlayerProfile>(){}.getType();
         Map<String, PlayerProfile> results = new ConcurrentHashMap<>();
-        int tokenIndex = 0;
+
+        List<CompletableFuture<Void>> futures = new ArrayList<>();
+        AtomicInteger tokenIndex = new AtomicInteger(0);
+
         for (String uuid : uuids) {
-            String apiToken = apiTokens.get(tokenIndex % apiTokens.size());
+            String apiToken = apiTokens.get(tokenIndex.getAndIncrement() % apiTokens.size());
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create("https://api.wynncraft.com/v3/player/" + uuid + "?fullResult"))
                     .header("Authorization", "Bearer " + apiToken)
                     .GET()
                     .build();
 
-            System.out.println(request);//TODO
-            HttpResponse<String> response;
-            try {
-                response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            } catch (IOException | InterruptedException e) {
-                e.printStackTrace();
-                continue;
-            }
+            CompletableFuture<Void> future = client2.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                    .thenAccept(response -> {
+                        int status = response.statusCode();
 
+                        if (status == 404) {
+                            return; // no player found
+                        }
 
-            int status = response.statusCode();
-            if (status == 404) {
-                continue;
-            }
+                        String body = response.body().trim();
+                        if (!(body.startsWith("{") || body.startsWith("["))) {
+                            System.out.println("status code: " + status);
+                            System.err.println("Unexpected response: " + body);
+                            results.put(uuid, new PlayerProfile(response.statusCode()));
+                            return;
+                        }
 
-            String body = response.body().trim();
-            if (!(body.startsWith("{") || body.startsWith("["))) {
-                System.out.println("status code: " + status);
-                System.err.println("Unexpected response: " + body);
-                results.put(uuid, new PlayerProfile(response.statusCode()));
-                continue;
-            }
+                        PlayerProfile apiData = gson.fromJson(body, type);
+                        if (apiData.username == null) return;
 
-            PlayerProfile apiData = gson.fromJson(response.body(), type);
-            if (apiData.username == null) continue;
-            apiData.statusCode = response.statusCode();
+                        apiData.statusCode = status;
+                        results.put(uuid, apiData);
 
-            results.put(uuid, apiData);
+                        PlayerDataShortened playerDataShortened = new PlayerDataShortened(apiData);
+                        Players.add(playerDataShortened);
+                    })
+                    .exceptionally(ex -> {
+                        ex.printStackTrace();
+                        return null;
+                    });
 
-            PlayerDataShortened playerDataShortened = new PlayerDataShortened(apiData);
-            Players.add(playerDataShortened);
-
-            tokenIndex++;
+            futures.add(future);
         }
+
+        // Wait for all to finish
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+
         return results;
     }
+
 
 }

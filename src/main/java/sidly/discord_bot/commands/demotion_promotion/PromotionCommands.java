@@ -299,8 +299,17 @@ public class PromotionCommands {
     }
 
     public static void checkForPromotions(SlashCommandInteractionEvent event) {
+        PageBuilder.PaginationState pageState = PageBuilder.PaginationManager.get(PaginationIds.PROMOTIONS.name());
+        GuildInfo guildInfo = ApiUtils.getGuildInfo(ConfigManager.getConfigInstance().other.get(Config.Settings.YourGuildPrefix));
+        if (guildInfo == null) return;
+        List<PromotionEntry> entries = guildInfo.members.getAllMembers().entrySet().stream()
+                .map(entry -> new PromotionEntry(entry.getKey(), entry.getValue().username, guildInfo))
+                .toList();
 
-        EmbedBuilder embed = buildPromotionsPage();
+        pageState.reset(entries);
+
+
+        EmbedBuilder embed = PageBuilder.buildEmbedPage(pageState);
 
         if (embed == null) {
             event.reply("no promotions").setEphemeral(true).queue();
@@ -308,31 +317,22 @@ public class PromotionCommands {
         }
 
         event.replyEmbeds(embed.build())
-                .addComponents(Utils.getPaginationActionRow(PaginationIds.PROMOTIONS))
+                .addComponents(PageBuilder.getPaginationActionRow(PaginationIds.PROMOTIONS))
                 .queue();
     }
 
-    public static EmbedBuilder buildPromotionsPage() {
-        GuildInfo guildInfo = ApiUtils.getGuildInfo(ConfigManager.getConfigInstance().other.get(Config.Settings.YourGuildPrefix));
-        PageBuilder.PaginationState paginationState = PageBuilder.PaginationManager.get(PaginationIds.PROMOTIONS.name());
-
-        if (guildInfo == null || guildInfo.members == null) {
-            return null;
+    public static String promotionConverter(PromotionEntry info) {
+        StringBuilder sb = new StringBuilder();
+        String progress = checkPromotionProgress(info.username, info.guildInfo);
+        if (!progress.split("-#")[0].contains("❌")) {
+            Utils.RankList rank = info.guildInfo.members.getRankOfMember(info.uuid);
+            Object promoteTo = Utils.RankList.values()[rank.ordinal() - 1];
+            sb.append("**");
+            sb.append(info.username).append("** is eligible for **").append(promoteTo).append("** rank\n");
+            sb.append(progress).append("\n");
         }
-
-        List<String> entries = new ArrayList<>();
-        for (Map.Entry<String, GuildInfo.MemberInfo> entry : guildInfo.members.getAllMembers().entrySet()) {
-            StringBuilder sb = new StringBuilder();
-            String progress = checkPromotionProgress(entry.getValue().username, guildInfo);
-            if (!progress.split("-#")[0].contains("❌")) {
-                Utils.RankList rank = guildInfo.members.getRankOfMember(entry.getKey());
-                Object promoteTo = Utils.RankList.values()[rank.ordinal() - 1];
-                sb.append("**");
-                sb.append(entry.getValue().username).append("** is eligible for **").append(promoteTo).append("** rank\n");
-                sb.append(progress).append("\n");
-                entries.add(sb.toString());
-            }
-        }
-        return PageBuilder.buildEmbedPage(entries, paginationState, 10, "Promotions");
+        return sb.toString();
     }
+
+    public record PromotionEntry (String uuid, String username, GuildInfo guildInfo){}
 }

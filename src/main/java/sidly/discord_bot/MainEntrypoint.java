@@ -18,11 +18,13 @@ import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction;
 import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import sidly.discord_bot.api.MassGuild;
+import sidly.discord_bot.api.PlayerProfile;
 import sidly.discord_bot.commands.*;
 import sidly.discord_bot.commands.demotion_promotion.InactivityCommands;
 import sidly.discord_bot.commands.demotion_promotion.PromotionCommands;
 import sidly.discord_bot.commands.demotion_promotion.RequirementType;
 import sidly.discord_bot.database.SQLDB;
+import sidly.discord_bot.database.records.GuildAverages;
 import sidly.discord_bot.page.PageBuilder;
 import sidly.discord_bot.page.PaginationIds;
 import sidly.discord_bot.timed_actions.GuildRankUpdater;
@@ -153,6 +155,8 @@ public class MainEntrypoint extends ListenerAdapter {
         commands.addCommands(AllSlashCommands.guildstats.getBaseCommandData()
                 .addOption(STRING, "guild_prefix", "e", true));
         AllSlashCommands.guildstats.setAction(GuildCommands::showStats);
+        PageBuilder.PaginationManager.register(PaginationIds.GUILD_STATS.name(), stats -> GuildCommands.guilsStatConverter((GuildCommands.GuildStatEntry) stats), "?", 10);
+
 
         commands.addCommands(AllSlashCommands.online.getBaseCommandData()
                 .addOption(STRING, "guild_prefix", "e", true));
@@ -164,7 +168,7 @@ public class MainEntrypoint extends ListenerAdapter {
 
         commands.addCommands(AllSlashCommands.listcommands.getBaseCommandData());
         AllSlashCommands.listcommands.setAction(HelpCommands::listCommands);
-        PageBuilder.PaginationManager.register(PaginationIds.COMMAND_LIST.name(), HelpCommands::buildCommandListPage);
+        PageBuilder.PaginationManager.register(PaginationIds.COMMAND_LIST.name(), cmd -> HelpCommands.commandListConverter((AllSlashCommands) cmd), "List of All Bot Commands", 20);
 
         commands.addCommands(AllSlashCommands.setrolerequirement.getBaseCommandData().addOptions(
                 new OptionData(OptionType.STRING, "command", "Command to add requirement to", true).setAutoComplete(true),
@@ -187,7 +191,7 @@ public class MainEntrypoint extends ListenerAdapter {
 
         commands.addCommands(AllSlashCommands.averageplaytime.getBaseCommandData());
         AllSlashCommands.averageplaytime.setAction(InactivityCommands::getAveragePlaytime);
-        PageBuilder.PaginationManager.register(PaginationIds.AVERAGE_PLAYTIME.name(), InactivityCommands::buildAveragePlaytimePage);
+        PageBuilder.PaginationManager.register(PaginationIds.AVERAGE_PLAYTIME.name(), "Player, 10weeklinearavg, 1weekavg, 5weekavg, 20weekavg, alltimeavg", 30);
 
         commands.addCommands(AllSlashCommands.getratelimitinfo.getBaseCommandData());
         AllSlashCommands.getratelimitinfo.setAction(RateLimitCommands::getRateLimitInfo);
@@ -220,7 +224,7 @@ public class MainEntrypoint extends ListenerAdapter {
         commands.addCommands(AllSlashCommands.trackedguilds.getBaseCommandData()
                 .addOption(INTEGER, "days", "average over the last number of days", false));
         AllSlashCommands.trackedguilds.setAction(GuildCommands::viewTrackedGuilds);
-        PageBuilder.PaginationManager.register(PaginationIds.GUILD.name(), GuildCommands::buildGuildsPage);
+        PageBuilder.PaginationManager.register(PaginationIds.GUILD.name(), trackedGuild -> GuildCommands.guildConverter((GuildAverages) trackedGuild), "Average activity for tracked guilds",10);
 
         commands.addCommands(AllSlashCommands.getsysteminfo.getBaseCommandData());
         AllSlashCommands.getsysteminfo.setAction(HelpCommands::getSystemInfo);
@@ -278,7 +282,7 @@ public class MainEntrypoint extends ListenerAdapter {
 
         commands.addCommands(AllSlashCommands.checkforpromotions.getBaseCommandData());
         AllSlashCommands.checkforpromotions.setAction(PromotionCommands::checkForPromotions);
-        PageBuilder.PaginationManager.register(PaginationIds.PROMOTIONS.name(), PromotionCommands::buildPromotionsPage);
+        PageBuilder.PaginationManager.register(PaginationIds.PROMOTIONS.name(), entry -> PromotionCommands.promotionConverter((PromotionCommands.PromotionEntry) entry), "Promotions", 10);
 
 
         commands.addCommands(AllSlashCommands.addpromotionrequirement.getBaseCommandData().addOptions(

@@ -7,9 +7,6 @@ import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
-import net.dv8tion.jda.api.interactions.components.ActionRow;
-import net.dv8tion.jda.api.interactions.components.buttons.Button;
-import sidly.discord_bot.page.PaginationIds;
 
 import java.awt.*;
 import java.time.Instant;
@@ -238,9 +235,4 @@ public class Utils {
         }
     }
 
-    public static ActionRow getPaginationActionRow(PaginationIds id){
-        Button leftButton = Button.primary("pagination:" + id.name() + ":left", "◀️");
-        Button rightButton = Button.primary("pagination:" + id.name() + ":right", "▶️");
-        return ActionRow.of(leftButton, rightButton);
-    }
 }

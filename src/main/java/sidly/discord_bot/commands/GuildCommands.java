@@ -3,6 +3,7 @@ package sidly.discord_bot.commands;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import sidly.discord_bot.Config;
@@ -13,8 +14,8 @@ import sidly.discord_bot.api.ApiUtils;
 import sidly.discord_bot.api.GuildInfo;
 import sidly.discord_bot.api.MassGuild;
 import sidly.discord_bot.api.PlayerProfile;
-import sidly.discord_bot.database.records.GuildAverages;
 import sidly.discord_bot.database.PlayerDataShortened;
+import sidly.discord_bot.database.records.GuildAverages;
 import sidly.discord_bot.database.tables.AllGuilds;
 import sidly.discord_bot.database.tables.GuildActivity;
 import sidly.discord_bot.database.tables.Players;
@@ -26,6 +27,8 @@ import java.awt.Color;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 public class GuildCommands {
@@ -192,9 +195,13 @@ public class GuildCommands {
                 .map(OptionMapping::getAsInt)
                 .orElse(-1);
 
-        event.deferReply(false).addComponents(Utils.getPaginationActionRow(PaginationIds.GUILD)).queue(hook -> {
 
-            EmbedBuilder embed = buildGuildsPage();
+        PageBuilder.PaginationState pageState = PageBuilder.PaginationManager.get(PaginationIds.GUILD.name());
+        pageState.reset(GuildActivity.getGuildAverages(guildDays));
+
+        event.deferReply(false).addComponents(PageBuilder.getPaginationActionRow(PaginationIds.GUILD)).queue(hook -> {
+
+            EmbedBuilder embed = PageBuilder.buildEmbedPage(pageState);
 
             if (embed == null) {
                 event.reply("no guilds").setEphemeral(true).queue();
@@ -205,52 +212,19 @@ public class GuildCommands {
         });
     }
 
-    @SuppressWarnings("unchecked")
-    public static EmbedBuilder buildGuildsPage() {
-        long time1 = System.currentTimeMillis();
+    public static String guildConverter(GuildAverages trackedGuild) {
+        String averagePlayers = String.format("%.2f", trackedGuild.averageOnline());
+        String averageCaptains = String.format("%.2f", trackedGuild.averageCaptains());
+        String prefix = AllGuilds.getPrefixByUuid((trackedGuild.uuid()));
+        String guildName = AllGuilds.getGuild(prefix).name();
 
-        PageBuilder.PaginationState state = PageBuilder.PaginationManager.get(PaginationIds.GUILD.name());
-        List<GuildAverages> sortedGuilds = GuildActivity.getGuildAverages(guildDays);
-        int entriesPerPage = 10;
-        if (sortedGuilds.isEmpty()) return null;
-        int maxPages = (int) Math.ceil((double) sortedGuilds.size() / (double) entriesPerPage);
-        state.currentPage = (state.currentPage >= maxPages) ? 0 : state.currentPage;
         StringBuilder sb = new StringBuilder();
-        int start = state.currentPage * entriesPerPage;
-        int end = Math.min(start + entriesPerPage, sortedGuilds.size());
 
-        long time2 = System.currentTimeMillis();
-        System.out.println("loading from database took " + (time2 - time1) + " milliseconds loaded: " + sortedGuilds.size() + " guilds");
+        sb.append("[**").append(prefix).append("**] ").append(guildName).append("\n");
+        sb.append("Avg. Online: ").append(averagePlayers).append("\n");
+        sb.append("Avg. Captains+: ").append(averageCaptains).append("\n\n");
 
-        for (int i = start; i < end; i++) {
-            GuildAverages trackedGuild = sortedGuilds.get(i);
-
-            String averagePlayers = String.format("%.2f", trackedGuild.averageOnline());
-            String averageCaptains = String.format("%.2f", trackedGuild.averageCaptains());
-            String prefix = AllGuilds.getPrefixByUuid((trackedGuild.uuid()));
-            String guildName = AllGuilds.getGuild(prefix).name();
-
-            sb.append("[**").append(prefix).append("**] ").append(guildName).append("\n");
-            sb.append("Avg. Online: ").append(averagePlayers).append("\n");
-            sb.append("Avg. Captains+: ").append(averageCaptains).append("\n\n");
-        }
-
-
-        long time3 = System.currentTimeMillis();
-        System.out.println("reformatting took " + (time3 - time2) + " milliseconds sorted " + (end - start) + " entries");
-
-        String description = sb.toString();
-        String title = "Average activity for tracked guilds";
-        EmbedBuilder embed = new EmbedBuilder();
-        embed.setTitle(title + " (Page " + (state.currentPage + 1) + "/" + (maxPages) + ")");
-        embed.setColor(Color.CYAN);
-        if (description.length() > 4096) {
-            description = description.substring(0, 4095);
-            embed.setFooter("Character limit hit");
-        }
-        embed.setDescription(description);
-
-        return embed;
+        return sb.toString();
     }
 
 
@@ -317,7 +291,9 @@ public class GuildCommands {
             return;
         }
 
-        event.deferReply(false).addComponents(Utils.getPaginationActionRow(PaginationIds.GUILD_STATS)).queue(hook -> {
+        event.deferReply(false).addComponents(PageBuilder.getPaginationActionRow(PaginationIds.GUILD_STATS)).queue(hook -> {
+
+            hook.editOriginalEmbeds(Utils.getEmbed("Patience Woman", "waiting on api requests")).queue();
 
             StringBuilder sb = new StringBuilder();
 
@@ -333,44 +309,72 @@ public class GuildCommands {
             sb.append("Wars: ").append(guildInfo.wars).append("\n");
 
             Map<String, PlayerProfile> allPlayerData = MassGuild.getPlayerData(guildInfo.members.getAllMembers().keySet());
-            Map<Integer, String> sortedPlayerEntries = new HashMap<>();
-            long totalXpPerDay = 0;
-            double totalWeeklyPlaytime = 0;
-            for (Map.Entry<String, PlayerProfile> entry : allPlayerData.entrySet()) {
-                PlayerProfile playerData = entry.getValue();
-                GuildInfo.MemberInfo guildMemberData = guildInfo.members.getMemberInfo(playerData.uuid);
-                long joinedDaysAgo = Utils.timeSinceIso(guildMemberData.joined, ChronoUnit.DAYS);
-                double hoursPerWeek = playerData.playtime / Utils.timeSinceIso(playerData.firstJoin, ChronoUnit.WEEKS);
-                totalWeeklyPlaytime += hoursPerWeek;
-                long xpPerDayMillions;
-                if (joinedDaysAgo > 0) {
-                    xpPerDayMillions = guildMemberData.contributed / joinedDaysAgo / 1000000;
-                } else xpPerDayMillions = guildMemberData.contributed / 1000000;
-                totalXpPerDay += xpPerDayMillions;
-                int rank = guildMemberData.contributionRank;
+            AtomicLong totalXpPerDay = new AtomicLong();
+            AtomicReference<Double> totalWeeklyPlaytime = new AtomicReference<>((double) 0);
+            List<GuildStatEntry> sortedPlayerEntries = allPlayerData.values().stream()
+                    .map(playerData -> {
+                        GuildInfo.MemberInfo guildMemberData = guildInfo.members.getMemberInfo(playerData.uuid);
 
-                StringBuilder playerString = new StringBuilder();
-                playerString.append("**").append(rank).append(". ").append(Utils.escapeDiscordMarkdown(playerData.username)).append(" (").append(playerData.guild.rank).append(")**");
-                playerString.append(playerData.online ? "Online\n" : "Offline, last seen " + Utils.timeSinceIso(playerData.lastJoin, ChronoUnit.HOURS) + " hours ago\n");
-                playerString.append("joined ").append(joinedDaysAgo).append(" days ago\n");
-                playerString.append(guildMemberData.contributed).append(" XP (").append(xpPerDayMillions).append("M/day)\n");
-                if (playerData.globalData != null) {
-                    playerString.append(playerData.globalData.wars).append(" wars\n");
-                }
-                playerString.append(String.format("%.2f", hoursPerWeek)).append(" hours per week (all time)\n\n");
+                        long joinedDaysAgo = Utils.timeSinceIso(guildMemberData.joined, ChronoUnit.DAYS);
+                        double weeksSinceJoin = Utils.timeSinceIso(playerData.firstJoin, ChronoUnit.WEEKS);
+                        double hoursPerWeek = weeksSinceJoin > 0 ? playerData.playtime / weeksSinceJoin : 0;
 
-                sortedPlayerEntries.put(rank, playerString.toString());
-            }
+                        long xpPerDayMillions;
+                        if (joinedDaysAgo > 0) {
+                            xpPerDayMillions = guildMemberData.contributed / joinedDaysAgo / 1_000_000;
+                        } else {
+                            xpPerDayMillions = guildMemberData.contributed / 1_000_000;
+                        }
 
-            sb.append("XP/day: ").append(totalXpPerDay).append("M/day").append("\n");
-            sb.append("Total weekly playtime: ").append(String.format("%.2f", totalWeeklyPlaytime)).append(" hours").append("\n");
+                        // accumulate totals
+                        totalXpPerDay.addAndGet(xpPerDayMillions);
+                        totalWeeklyPlaytime.updateAndGet(v -> v + hoursPerWeek);
+
+                        return new GuildStatEntry(playerData, guildMemberData, joinedDaysAgo, hoursPerWeek);
+                    })
+                    .sorted(Comparator.comparing(entry -> entry.guildMemberData.contributionRank))
+                    .toList();
+
+            sb.append("XP/day: ").append(totalXpPerDay.get()).append("M/day").append("\n");
+            sb.append("Total weekly playtime: ").append(String.format("%.2f", totalWeeklyPlaytime.get())).append(" hours").append("\n");
             sb.append("\n");
 
-            for (int i = 1; i < sortedPlayerEntries.size(); i++) {
-                sb.append(sortedPlayerEntries.get(i));
-            }
 
-            hook.editOriginalEmbeds(Utils.getEmbed("[" + guildPrefix + "] " + guildInfo.name, sb.toString())).queue();
+            PageBuilder.PaginationState pageState = PageBuilder.PaginationManager.get(PaginationIds.GUILD_STATS.name());
+            pageState.reset(sortedPlayerEntries);
+            pageState.customData = sb.toString();
+            pageState.title = "[" + guildPrefix + "] " + guildInfo.name;
+
+            EmbedBuilder embed = PageBuilder.buildEmbedPage(pageState);
+            if (embed == null) {
+                hook.editOriginalEmbeds(Utils.getEmbed("well this is awkward", "something went wrong")).queue();
+                return;
+            }
+            hook.editOriginalEmbeds(embed.build()).queue();
         });
     }
+
+    public static String guilsStatConverter(GuildStatEntry statEntry) {
+        PlayerProfile playerData = statEntry.playerProfile();
+        GuildInfo.MemberInfo guildMemberData = statEntry.guildMemberData();
+        long xpPerDayMillions;
+        if (statEntry.joinedDaysAgo > 0) {
+            xpPerDayMillions = guildMemberData.contributed / statEntry.joinedDaysAgo / 1000000;
+        } else xpPerDayMillions = guildMemberData.contributed / 1000000;
+        int rank = guildMemberData.contributionRank;
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("**").append(rank).append(". ").append(Utils.escapeDiscordMarkdown(playerData.username)).append(" (").append(playerData.guild.rank).append(")**");
+        sb.append(playerData.online ? "Online\n" : "Offline, last seen " + Utils.timeSinceIso(playerData.lastJoin, ChronoUnit.HOURS) + " hours ago\n");
+        sb.append("joined ").append(statEntry.joinedDaysAgo).append(" days ago\n");
+        sb.append(guildMemberData.contributed).append(" XP (").append(xpPerDayMillions).append("M/day)\n");
+        if (playerData.globalData != null) {
+            sb.append(playerData.globalData.wars).append(" wars\n");
+        }
+        sb.append(String.format("%.2f", statEntry.hoursPerWeek)).append(" hours per week (all time)\n\n");
+
+        return sb.toString();
+    }
+
+    public record GuildStatEntry(PlayerProfile playerProfile,GuildInfo.MemberInfo guildMemberData, long joinedDaysAgo, double hoursPerWeek){}
 }
