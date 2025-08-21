@@ -1,5 +1,4 @@
 import sidly.discord_bot.database.SQLDB;
-import sidly.discord_bot.timed_actions.DynamicTimer;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -65,17 +64,13 @@ Add exception cmds
 Server owner can always run commands
 
 guild playtime per hour averages need to be divided by the number of entries so the end average isnt skewed based on one hour having more entries than another
-fix /average playtime
 
 /delete old versions
 
+add time checks to /guildstats
 cmd to check for ppl in guild not in discord (get list of all ppl in guild and the ppl they are verified too)
-
-figure out why promotion page has worng max
-add a possition for your guild to tracked guilds
-add more data to guild stats
-add a cooldown to /guild stats
-/average players fix
+tracked guilds use average over time
+/playerdata cmd
 inactivity
 why is it still shwoing chamiopn additions
 

@@ -79,7 +79,7 @@ public class PageBuilder {
 
 
             //custom data handling
-            if (this.equals(PaginationManager.get(PaginationIds.GUILD_STATS.name()))) {
+            if (this.equals(PaginationManager.get(PaginationIds.GUILD_STATS.name())) || this.equals(PaginationManager.get(PaginationIds.GUILD.name()))) {
                 sb.append(this.customData);
             }
 

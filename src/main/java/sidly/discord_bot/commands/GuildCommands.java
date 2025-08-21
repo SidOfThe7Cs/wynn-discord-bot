@@ -3,7 +3,6 @@ package sidly.discord_bot.commands;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import sidly.discord_bot.Config;
@@ -15,11 +14,9 @@ import sidly.discord_bot.api.GuildInfo;
 import sidly.discord_bot.api.MassGuild;
 import sidly.discord_bot.api.PlayerProfile;
 import sidly.discord_bot.database.PlayerDataShortened;
+import sidly.discord_bot.database.PlaytimeHistoryList;
 import sidly.discord_bot.database.records.GuildAverages;
-import sidly.discord_bot.database.tables.AllGuilds;
-import sidly.discord_bot.database.tables.GuildActivity;
-import sidly.discord_bot.database.tables.Players;
-import sidly.discord_bot.database.tables.UuidMap;
+import sidly.discord_bot.database.tables.*;
 import sidly.discord_bot.page.PageBuilder;
 import sidly.discord_bot.page.PaginationIds;
 
@@ -199,7 +196,20 @@ public class GuildCommands {
         PageBuilder.PaginationState pageState = PageBuilder.PaginationManager.get(PaginationIds.GUILD.name());
 
         event.deferReply(false).addComponents(PageBuilder.getPaginationActionRow(PaginationIds.GUILD)).queue(hook -> {
-            pageState.reset(GuildActivity.getGuildAverages(guildDays));
+            List<GuildAverages> guildAverages = GuildActivity.getGuildAverages(guildDays);
+            String prefix = ConfigManager.getConfigInstance().other.get(Config.Settings.YourGuildPrefix);
+            String uuid = AllGuilds.getGuild(prefix).uuid();
+            int index = -1;
+            for (int i = 0; i < guildAverages.size(); i++) {
+                if (guildAverages.get(i).uuid().equals(uuid)) {
+                    index = i;
+                    break;
+                }
+            }
+
+            pageState.customData = "[" + prefix +"] is in position " + (index + 1) + "\n\n";
+
+            pageState.reset(guildAverages);
 
             EmbedBuilder embed = pageState.buildEmbedPage();
 
@@ -220,7 +230,7 @@ public class GuildCommands {
 
         StringBuilder sb = new StringBuilder();
 
-        sb.append("[**").append(prefix).append("**] ").append(guildName).append("\n");
+        sb.append("**[").append(prefix).append("] ").append(guildName).append("**\n");
         sb.append("Avg. Online: ").append(averagePlayers).append("\n");
         sb.append("Avg. Captains+: ").append(averageCaptains).append("\n\n");
 
@@ -308,6 +318,8 @@ public class GuildCommands {
             sb.append("Season Rating: ").append(guildInfo.seasonRanks.get(String.valueOf(latestSeason)).rating).append("\n");
             sb.append("Previous Rating: ").append(guildInfo.seasonRanks.get(String.valueOf(latestSeason - 1)).rating).append("\n");
             sb.append("Wars: ").append(guildInfo.wars).append("\n");
+            double averageOnline = GuildActivity.getAverageOnline(AllGuilds.getGuild(guildPrefix).uuid(), 28, false);
+            sb.append("Online Members: ").append(guildInfo.online).append(" / ").append(guildInfo.members.total).append(" avg: ").append(String.format("%.2f", averageOnline)).append("\n");
 
             Map<String, PlayerProfile> allPlayerData = MassGuild.getPlayerData(guildInfo.members.getAllMembers().keySet());
             AtomicLong totalXpPerDay = new AtomicLong();
@@ -355,7 +367,7 @@ public class GuildCommands {
         });
     }
 
-    public static String guilsStatConverter(GuildStatEntry statEntry) {
+    public static String guildStatsConverter(GuildStatEntry statEntry) {
         PlayerProfile playerData = statEntry.playerProfile();
         GuildInfo.MemberInfo guildMemberData = statEntry.guildMemberData();
         long xpPerDayMillions;
@@ -363,16 +375,32 @@ public class GuildCommands {
             xpPerDayMillions = guildMemberData.contributed / statEntry.joinedDaysAgo / 1000000;
         } else xpPerDayMillions = guildMemberData.contributed / 1000000;
         int rank = guildMemberData.contributionRank;
+        long joinedWynn = Utils.timeSinceIso(playerData.firstJoin, ChronoUnit.DAYS);
 
         StringBuilder sb = new StringBuilder();
         sb.append("**").append(rank).append(". ").append(Utils.escapeDiscordMarkdown(playerData.username)).append(" (").append(playerData.guild.rank).append(")**");
-        sb.append(playerData.online ? "Online\n" : "Offline, last seen " + Utils.timeSinceIso(playerData.lastJoin, ChronoUnit.HOURS) + " hours ago\n");
-        sb.append("joined ").append(statEntry.joinedDaysAgo).append(" days ago\n");
-        sb.append(guildMemberData.contributed).append(" XP (").append(xpPerDayMillions).append("M/day)\n");
+        sb.append(playerData.online ? "Online " + playerData.server + "\n" : "Offline, last seen " + Utils.timeSinceIso(playerData.lastJoin, ChronoUnit.HOURS) + " hours ago\n");
+        sb.append("joined guild ").append(statEntry.joinedDaysAgo).append(" days ago\n");
+        sb.append("joined wynn ").append(joinedWynn).append(" days ago\n");
+        sb.append(Utils.addNumberFormattingCommas(String.valueOf(guildMemberData.contributed))).append(" XP (").append(xpPerDayMillions).append("M/day)\n");
         if (playerData.globalData != null) {
-            sb.append(playerData.globalData.wars).append(" wars\n");
+            sb.append(Utils.addNumberFormattingCommas(String.valueOf(playerData.globalData.wars))).append(" wars\n");
+            Map<String, Integer> raids = playerData.globalData.raids.list;
+            raids.entrySet().stream()
+                    .sorted(Map.Entry.comparingByKey())
+                    .forEach(entry -> sb.append(Utils.abbreviate(entry.getKey()))
+                            .append(": ")
+                            .append(entry.getValue())
+                            .append(" "));
+
+            sb.append("\n");
         }
-        sb.append(String.format("%.2f", statEntry.hoursPerWeek)).append(" hours per week (all time)\n\n");
+
+        sb.append(Utils.addNumberFormattingCommas(String.valueOf(playerData.playtime))).append(" hours played\n");
+        sb.append(String.format("%.2f", statEntry.hoursPerWeek)).append(" hours per week (all time)\n");
+        PlaytimeHistoryList playtimeHistory = PlaytimeHistory.getPlaytimeHistory(playerData.uuid);
+        sb.append(String.format("%.2f", playtimeHistory.getAverage(4))).append(" hours per week (last 4 weeks)\n");
+        sb.append("\n");
 
         return sb.toString();
     }

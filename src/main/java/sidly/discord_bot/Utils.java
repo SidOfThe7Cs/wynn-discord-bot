@@ -9,13 +9,17 @@ import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 
 import java.awt.*;
+import java.text.NumberFormat;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Utils {
 
@@ -233,6 +237,40 @@ public class Utils {
 
             modChannel.sendMessageEmbeds(modEmbed.build()).queue();
         }
+    }
+
+    public static String addNumberFormattingCommas(String input) {
+        // Regex: match 5+ consecutive digits
+        Pattern pattern = Pattern.compile("\\d{5,}");
+        Matcher matcher = pattern.matcher(input);
+
+        StringBuffer sb = new StringBuffer();
+        while (matcher.find()) {
+            String numberStr = matcher.group();
+
+            // Parse number and format with commas
+            String formatted = NumberFormat.getNumberInstance(Locale.US).format(Long.parseLong(numberStr));
+
+            matcher.appendReplacement(sb, formatted);
+        }
+        matcher.appendTail(sb);
+
+        return sb.toString();
+    }
+
+    public static String abbreviate(String input) {
+        if (input == null || input.isEmpty()) return "";
+
+        StringBuilder sb = new StringBuilder();
+        String[] parts = input.split("\\s+"); // split by any whitespace
+
+        for (String part : parts) {
+            if (!part.isEmpty()) {
+                sb.append(part.charAt(0)); // take the first character
+            }
+        }
+
+        return sb.toString();
     }
 
 }

@@ -15,7 +15,7 @@ public class GuildInfo {
     public int wars;
     public String created;
     public Members members;
-    public int online;
+    public int online; // this is online member count that i add not from api
     public Banner banner;
     public Map<String, SeasonRank> seasonRanks;
 

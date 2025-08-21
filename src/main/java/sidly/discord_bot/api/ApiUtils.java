@@ -133,6 +133,7 @@ public class ApiUtils {
                 onlinePlayerCount = members.getOnlineMembersCount();
                 onlineCaptainPlusCount = members.getOnlineCaptainsPlusCount();
             }
+            apiData.online = onlinePlayerCount;
             GuildActivity.add(apiData.uuid, prefix, apiData.name, onlinePlayerCount, onlineCaptainPlusCount);
 
             return apiData;

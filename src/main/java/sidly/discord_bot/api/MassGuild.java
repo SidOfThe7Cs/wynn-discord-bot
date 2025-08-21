@@ -9,6 +9,7 @@ import sidly.discord_bot.database.records.GuildName;
 import sidly.discord_bot.database.tables.AllGuilds;
 import sidly.discord_bot.database.tables.GuildActivity;
 import sidly.discord_bot.database.tables.Players;
+import sidly.discord_bot.database.tables.PlaytimeHistory;
 import sidly.discord_bot.timed_actions.DynamicTimer;
 
 import java.io.IOException;
@@ -341,6 +342,7 @@ public class MassGuild {
 
                         PlayerDataShortened playerDataShortened = new PlayerDataShortened(apiData);
                         Players.add(playerDataShortened);
+                        PlaytimeHistory.addPlaytimeIfNeeded(playerDataShortened);
                     })
                     .exceptionally(ex -> {
                         ex.printStackTrace();

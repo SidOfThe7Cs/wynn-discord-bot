@@ -1,6 +1,5 @@
 package sidly.discord_bot.timed_actions;
 
-import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import sidly.discord_bot.Config;
@@ -33,11 +32,7 @@ public class UpdatePlayers {
         if (next != null) {
             // Refresh member from API to ensure all roles are loaded
             Guild guild = next.getGuild();
-            guild.retrieveMemberById(next.getId()).queue(freshMember -> {
-                VerificationCommands.updatePlayer(freshMember);
-            }, failure -> {
-                System.err.println("Failed to retrieve member " + next.getId());
-            });
+            guild.retrieveMemberById(next.getId()).queue(VerificationCommands::updatePlayer, failure -> System.err.println("Failed to retrieve member " + next.getId()));
         }
     }
 

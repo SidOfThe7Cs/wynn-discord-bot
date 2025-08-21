@@ -84,6 +84,10 @@ public class PlaytimeHistoryList {
         public double playtime;
         public long timeLogged;
 
+        public long getTimeLogged() {
+            return timeLogged;
+        }
+
         public PlaytimeHistoryEntry(double playtime, long timeLogged) {
             this.playtime = playtime;
             this.timeLogged = timeLogged;

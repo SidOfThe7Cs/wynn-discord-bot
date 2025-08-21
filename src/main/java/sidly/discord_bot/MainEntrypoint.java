@@ -18,7 +18,6 @@ import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction;
 import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import sidly.discord_bot.api.MassGuild;
-import sidly.discord_bot.api.PlayerProfile;
 import sidly.discord_bot.commands.*;
 import sidly.discord_bot.commands.demotion_promotion.InactivityCommands;
 import sidly.discord_bot.commands.demotion_promotion.PromotionCommands;
@@ -155,7 +154,7 @@ public class MainEntrypoint extends ListenerAdapter {
         commands.addCommands(AllSlashCommands.guildstats.getBaseCommandData()
                 .addOption(STRING, "guild_prefix", "e", true));
         AllSlashCommands.guildstats.setAction(GuildCommands::showStats);
-        PageBuilder.PaginationManager.register(PaginationIds.GUILD_STATS.name(), stats -> GuildCommands.guilsStatConverter((GuildCommands.GuildStatEntry) stats), "?", 6);
+        PageBuilder.PaginationManager.register(PaginationIds.GUILD_STATS.name(), stats -> GuildCommands.guildStatsConverter((GuildCommands.GuildStatEntry) stats), "?", 4);
 
 
         commands.addCommands(AllSlashCommands.online.getBaseCommandData()
@@ -224,7 +223,7 @@ public class MainEntrypoint extends ListenerAdapter {
         commands.addCommands(AllSlashCommands.trackedguilds.getBaseCommandData()
                 .addOption(INTEGER, "days", "average over the last number of days", false));
         AllSlashCommands.trackedguilds.setAction(GuildCommands::viewTrackedGuilds);
-        PageBuilder.PaginationManager.register(PaginationIds.GUILD.name(), trackedGuild -> GuildCommands.guildConverter((GuildAverages) trackedGuild), "Average activity for tracked guilds",8);
+        PageBuilder.PaginationManager.register(PaginationIds.GUILD.name(), trackedGuild -> GuildCommands.guildConverter((GuildAverages) trackedGuild), "Average activity for tracked guilds",9);
 
         commands.addCommands(AllSlashCommands.getsysteminfo.getBaseCommandData());
         AllSlashCommands.getsysteminfo.setAction(HelpCommands::getSystemInfo);
@@ -282,7 +281,7 @@ public class MainEntrypoint extends ListenerAdapter {
 
         commands.addCommands(AllSlashCommands.checkforpromotions.getBaseCommandData());
         AllSlashCommands.checkforpromotions.setAction(PromotionCommands::checkForPromotions);
-        PageBuilder.PaginationManager.register(PaginationIds.PROMOTIONS.name(), entry -> PromotionCommands.promotionConverter((PromotionCommands.PromotionEntry) entry), "Promotions", 10);
+        PageBuilder.PaginationManager.register(PaginationIds.PROMOTIONS.name(), entry -> PromotionCommands.promotionConverter((PromotionCommands.PromotionEntry) entry), "Promotions", 8);
 
 
         commands.addCommands(AllSlashCommands.addpromotionrequirement.getBaseCommandData().addOptions(

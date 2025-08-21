@@ -41,7 +41,7 @@ public enum AllSlashCommands {
     getsysteminfo("get the info of the server running the bot"),
     averageplaytime("get the average playtime of a user"),
     updateplayerranks("update the ranks of all members in your guild"),
-    guildstats("view the stats of a guild"),
+    guildstats("view the stats of a guild", 25),
     addchannelrestriction("if any channels are whitelisted only whitelisted channels will allow commands"),
     adddemotionexeption("adds a player to be excluded from demotion checks, default length is forever"),
     addinactivityexeption("adds a custom inactivity threshold for a player, default length is forever"),
@@ -60,10 +60,18 @@ public enum AllSlashCommands {
     }
 
     private final String description;
+    private final int cooldown;
+    private long lastRan;
     private Consumer<SlashCommandInteractionEvent> action = null;
 
     AllSlashCommands(String description) {
         this.description = description;
+        this.cooldown = 0;
+    }
+
+    AllSlashCommands(String description, int cooldownSeconds) {
+        this.description = description;
+        this.cooldown = cooldownSeconds;
     }
 
     public String getDescription() {
@@ -81,7 +89,17 @@ public enum AllSlashCommands {
     }
 
     public void run(SlashCommandInteractionEvent event) {
-        
+
+        if (cooldown > 0) {
+            long cooldownRemaining = lastRan + (cooldown * 1000L) - System.currentTimeMillis();
+            if (cooldownRemaining > 0) {
+                event.reply("this command is on cooldown for " + (cooldownRemaining / 1000) + " seconds").setEphemeral(true).queue();
+                return;
+            }
+        }
+
+        lastRan = System.currentTimeMillis();
+
         Map<String, Boolean> allowedChannels = ConfigManager.getConfigInstance().allowedChannels;
         boolean hasTrue = false;
         for (Boolean value : allowedChannels.values()) {

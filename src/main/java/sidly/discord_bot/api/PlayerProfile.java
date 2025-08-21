@@ -16,7 +16,7 @@ public class PlayerProfile {
         this.statusCode = statusCode;
     }
 
-    public int statusCode;
+    public int statusCode; // added by me
     public String username;
     public boolean online;
     public String server;

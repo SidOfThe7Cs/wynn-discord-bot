@@ -7,6 +7,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -18,21 +19,57 @@ public class PlaytimeHistory {
     public static void addPlaytimeIfNeeded(PlayerDataShortened playerData) {
         String uuid = playerData.uuid;
         List<PlaytimeHistoryList.PlaytimeHistoryEntry> playtimeHistory = getPlaytimeHistory(uuid).getPlaytimeHistory();
-        if (!playtimeHistory.isEmpty() && playtimeHistory.getLast().timeLogged + SIX_AND_A_HALF_DAYS_IN_MILLIS >= playerData.lastModified){
-            return;
-        }
 
-        String sql = "INSERT INTO playtime_history (uuid, playtime, timeLogged) VALUES (?, ?, ?)";
+        // Sort entries by timeLogged descending (latest first)
+        playtimeHistory.sort(Comparator.comparingLong(PlaytimeHistoryList.PlaytimeHistoryEntry::getTimeLogged).reversed());
 
-        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setString(1, uuid);
-            pstmt.setDouble(2, playerData.latestPlaytime);
-            pstmt.setLong(3, playerData.lastModified);
-            pstmt.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
+        PlaytimeHistoryList.PlaytimeHistoryEntry latestEntry = !playtimeHistory.isEmpty() ? playtimeHistory.get(0) : null;
+        boolean shouldInsert = isShouldInsert(playtimeHistory, latestEntry);
+
+        if (shouldInsert) {
+            // Insert new entry
+            String sql = "INSERT INTO playtime_history (uuid, playtime, timeLogged) VALUES (?, ?, ?)";
+            try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+                pstmt.setString(1, uuid);
+                pstmt.setDouble(2, playerData.latestPlaytime);
+                pstmt.setLong(3, playerData.lastModified);
+                pstmt.executeUpdate();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        } else {
+            // Update the latest entry
+            String sql = "UPDATE playtime_history SET playtime = ?, timeLogged = ? WHERE uuid = ? AND timeLogged = ?";
+            try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+                pstmt.setDouble(1, playerData.latestPlaytime);
+                pstmt.setLong(2, playerData.lastModified);
+                pstmt.setString(3, uuid);
+                pstmt.setLong(4, latestEntry.timeLogged);
+                pstmt.executeUpdate();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
     }
+
+    private static boolean isShouldInsert(List<PlaytimeHistoryList.PlaytimeHistoryEntry> playtimeHistory, PlaytimeHistoryList.PlaytimeHistoryEntry latestEntry) {
+        PlaytimeHistoryList.PlaytimeHistoryEntry secondLatestEntry = playtimeHistory.size() > 1 ? playtimeHistory.get(1) : null;
+
+        boolean shouldInsert = false;
+
+        if (latestEntry == null) {
+            // No entries exist, always insert
+            shouldInsert = true;
+        } else if (secondLatestEntry == null) {
+            // Only one entry exists, insert new
+            shouldInsert = true;
+        } else if (latestEntry.timeLogged - secondLatestEntry.timeLogged >= SIX_AND_A_HALF_DAYS_IN_MILLIS) {
+            // Latest is at least 6.5 days after the second-latest → insert new
+            shouldInsert = true;
+        }
+        return shouldInsert;
+    }
+
 
     public static PlaytimeHistoryList getPlaytimeHistory(String uuid) {
         String sql = "SELECT playtime, timeLogged FROM playtime_history WHERE uuid = ? ORDER BY timeLogged ASC";
@@ -108,7 +145,7 @@ public class PlaytimeHistory {
 
         // Step 4: build output strings
         for (PlayerReport report : reports) {
-            results.add(String.format("**%s**, %.2f, %.2f, %.2f, %.2f, %.2f",
+            results.add(String.format("**%s**, %.2f, %.2f, %.2f, %.2f, %.2f\n",
                     report.uuid,
                     report.linear10WeekAverage,
                     report.avg1Week,
