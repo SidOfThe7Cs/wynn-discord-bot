@@ -1,14 +1,18 @@
 import sidly.discord_bot.database.SQLDB;
 import sidly.discord_bot.timed_actions.DynamicTimer;
 
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static sidly.discord_bot.database.SQLDB.connection;
+
 public class TestEntrypoint {
     private static List<String> list = new ArrayList<>();
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws SQLException {
         //Map<String, GuildName> testApiResponce = ApiUtils.getAllGuildsList();
 
         //Gson gson = new GsonBuilder().setPrettyPrinting().create();
@@ -18,6 +22,12 @@ public class TestEntrypoint {
 
         //UuidMap.put("testUser", "123456789");
         //System.out.println(UuidMap.get("testUser"));
+
+        SQLDB.init();
+        for (int i = 0; i < 24; i++) {
+            String firstUuidForHour = getFirstUuidForHour(i);
+            System.out.println(i + " " + firstUuidForHour);
+        }
     }
 
     public static void testPriont() {
@@ -28,6 +38,22 @@ public class TestEntrypoint {
         list.add("e");
         System.out.println("function run");
     }
+
+    public static String getFirstUuidForHour(int hour) {
+        String sql = "SELECT uuid FROM guild_activity WHERE hour = ? ORDER BY id ASC LIMIT 1";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, hour);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("uuid");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
 }
 /*
 TODO

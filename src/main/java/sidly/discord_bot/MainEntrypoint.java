@@ -155,7 +155,7 @@ public class MainEntrypoint extends ListenerAdapter {
         commands.addCommands(AllSlashCommands.guildstats.getBaseCommandData()
                 .addOption(STRING, "guild_prefix", "e", true));
         AllSlashCommands.guildstats.setAction(GuildCommands::showStats);
-        PageBuilder.PaginationManager.register(PaginationIds.GUILD_STATS.name(), stats -> GuildCommands.guilsStatConverter((GuildCommands.GuildStatEntry) stats), "?", 10);
+        PageBuilder.PaginationManager.register(PaginationIds.GUILD_STATS.name(), stats -> GuildCommands.guilsStatConverter((GuildCommands.GuildStatEntry) stats), "?", 6);
 
 
         commands.addCommands(AllSlashCommands.online.getBaseCommandData()
@@ -168,7 +168,7 @@ public class MainEntrypoint extends ListenerAdapter {
 
         commands.addCommands(AllSlashCommands.listcommands.getBaseCommandData());
         AllSlashCommands.listcommands.setAction(HelpCommands::listCommands);
-        PageBuilder.PaginationManager.register(PaginationIds.COMMAND_LIST.name(), cmd -> HelpCommands.commandListConverter((AllSlashCommands) cmd), "List of All Bot Commands", 20);
+        PageBuilder.PaginationManager.register(PaginationIds.COMMAND_LIST.name(), cmd -> HelpCommands.commandListConverter((AllSlashCommands) cmd), "List of All Bot Commands", 12);
 
         commands.addCommands(AllSlashCommands.setrolerequirement.getBaseCommandData().addOptions(
                 new OptionData(OptionType.STRING, "command", "Command to add requirement to", true).setAutoComplete(true),
@@ -191,7 +191,7 @@ public class MainEntrypoint extends ListenerAdapter {
 
         commands.addCommands(AllSlashCommands.averageplaytime.getBaseCommandData());
         AllSlashCommands.averageplaytime.setAction(InactivityCommands::getAveragePlaytime);
-        PageBuilder.PaginationManager.register(PaginationIds.AVERAGE_PLAYTIME.name(), "Player, 10weeklinearavg, 1weekavg, 5weekavg, 20weekavg, alltimeavg", 30);
+        PageBuilder.PaginationManager.register(PaginationIds.AVERAGE_PLAYTIME.name(), "Player, 10weeklinearavg, 1weekavg, 5weekavg, 20weekavg, alltimeavg", 20);
 
         commands.addCommands(AllSlashCommands.getratelimitinfo.getBaseCommandData());
         AllSlashCommands.getratelimitinfo.setAction(RateLimitCommands::getRateLimitInfo);
@@ -224,7 +224,7 @@ public class MainEntrypoint extends ListenerAdapter {
         commands.addCommands(AllSlashCommands.trackedguilds.getBaseCommandData()
                 .addOption(INTEGER, "days", "average over the last number of days", false));
         AllSlashCommands.trackedguilds.setAction(GuildCommands::viewTrackedGuilds);
-        PageBuilder.PaginationManager.register(PaginationIds.GUILD.name(), trackedGuild -> GuildCommands.guildConverter((GuildAverages) trackedGuild), "Average activity for tracked guilds",10);
+        PageBuilder.PaginationManager.register(PaginationIds.GUILD.name(), trackedGuild -> GuildCommands.guildConverter((GuildAverages) trackedGuild), "Average activity for tracked guilds",8);
 
         commands.addCommands(AllSlashCommands.getsysteminfo.getBaseCommandData());
         AllSlashCommands.getsysteminfo.setAction(HelpCommands::getSystemInfo);

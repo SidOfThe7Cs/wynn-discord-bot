@@ -149,7 +149,7 @@ public class GuildCommands {
 
     public static void viewActiveHours(SlashCommandInteractionEvent event) {
         String guildPrefix = event.getOption("guild_prefix").getAsString();
-        String uuid = UuidMap.getMinecraftIdByUsername(guildPrefix);
+        String uuid = AllGuilds.getGuild(guildPrefix).uuid();
         int days = Optional.ofNullable(event.getOption("days"))
                 .map(OptionMapping::getAsInt)
                 .orElse(-1);

@@ -137,7 +137,7 @@ public class GuildActivity {
 
         long startTime = 0;
         if (daysInPast > 0) {
-            startTime = System.currentTimeMillis() - ((long) daysInPast * 24 * 60 * 60 * 1000);
+            startTime = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(daysInPast);
         }
         List<TimestampedDouble> list = getActivityEntries(uuid, captainPlus);
         return getAverage(list, startTime);
@@ -178,9 +178,14 @@ public class GuildActivity {
                 """;
 
 
+        long time1 = System.currentTimeMillis();
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setLong(1, startTime);
             try (ResultSet rs = pstmt.executeQuery()) {
+
+                long time2 = System.currentTimeMillis();
+                System.out.println("query took " + (time2 - time1) + " milliseconds");
+
                 while (rs.next()) {
                     String uuid = rs.getString("uuid");
                     double avgOnline = rs.getDouble("avg_online");
@@ -188,6 +193,9 @@ public class GuildActivity {
 
                     results.add(new GuildAverages(uuid, avgOnline, avgCaptains));
                 }
+
+                long time3 = System.currentTimeMillis();
+                System.out.println("looping through results took " + (time3 - time2) + " milliseconds");
             }
         } catch (SQLException e) {
             e.printStackTrace();
