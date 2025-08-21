@@ -300,25 +300,26 @@ public class PromotionCommands {
 
     public static void checkForPromotions(SlashCommandInteractionEvent event) {
         PageBuilder.PaginationState pageState = PageBuilder.PaginationManager.get(PaginationIds.PROMOTIONS.name());
-        GuildInfo guildInfo = ApiUtils.getGuildInfo(ConfigManager.getConfigInstance().other.get(Config.Settings.YourGuildPrefix));
-        if (guildInfo == null) return;
-        List<PromotionEntry> entries = guildInfo.members.getAllMembers().entrySet().stream()
-                .map(entry -> new PromotionEntry(entry.getKey(), entry.getValue().username, guildInfo))
-                .toList();
 
-        pageState.reset(entries);
+        event.deferReply(false).addComponents(PageBuilder.getPaginationActionRow(PaginationIds.PROMOTIONS)).queue(hook -> {
+            GuildInfo guildInfo = ApiUtils.getGuildInfo(ConfigManager.getConfigInstance().other.get(Config.Settings.YourGuildPrefix));
+            if (guildInfo == null) return;
+            List<PromotionEntry> entries = guildInfo.members.getAllMembers().entrySet().stream()
+                    .map(entry -> new PromotionEntry(entry.getKey(), entry.getValue().username, guildInfo))
+                    .toList();
+
+            pageState.reset(entries);
 
 
-        EmbedBuilder embed = PageBuilder.buildEmbedPage(pageState);
+            EmbedBuilder embed = PageBuilder.buildEmbedPage(pageState);
 
-        if (embed == null) {
-            event.reply("no promotions").setEphemeral(true).queue();
-            return;
-        }
+            if (embed == null) {
+                event.reply("no promotions").setEphemeral(true).queue();
+                return;
+            }
 
-        event.replyEmbeds(embed.build())
-                .addComponents(PageBuilder.getPaginationActionRow(PaginationIds.PROMOTIONS))
-                .queue();
+            hook.editOriginalEmbeds(embed.build()).queue();
+        });
     }
 
     public static String promotionConverter(PromotionEntry info) {

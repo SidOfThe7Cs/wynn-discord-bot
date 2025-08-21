@@ -12,19 +12,20 @@ import java.util.List;
 
 public class HelpCommands {
     public static void listCommands(SlashCommandInteractionEvent event) {
-        PageBuilder.PaginationState pageState = PageBuilder.PaginationManager.get(PaginationIds.COMMAND_LIST.name());
-        pageState.reset(List.of(AllSlashCommands.values()));
 
-        EmbedBuilder embed = PageBuilder.buildEmbedPage(pageState);
+        event.deferReply(false).addComponents(PageBuilder.getPaginationActionRow(PaginationIds.COMMAND_LIST)).queue(hook -> {
+            PageBuilder.PaginationState pageState = PageBuilder.PaginationManager.get(PaginationIds.COMMAND_LIST.name());
+            pageState.reset(List.of(AllSlashCommands.values()));
 
-        if (embed == null) {
-            event.reply("no guilds").setEphemeral(true).queue();
-            return;
-        }
+            EmbedBuilder embed = PageBuilder.buildEmbedPage(pageState);
 
-        event.replyEmbeds(embed.build())
-                .addComponents(PageBuilder.getPaginationActionRow(PaginationIds.COMMAND_LIST))
-                .queue();
+            if (embed == null) {
+                event.reply("no guilds").setEphemeral(true).queue();
+                return;
+            }
+
+            hook.editOriginalEmbeds(embed.build()).queue();
+        });
     }
 
 

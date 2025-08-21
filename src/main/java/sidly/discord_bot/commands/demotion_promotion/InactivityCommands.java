@@ -83,19 +83,19 @@ public class InactivityCommands {
     }
 
     public static void getAveragePlaytime(SlashCommandInteractionEvent event) {
-        PageBuilder.PaginationState pageState = PageBuilder.PaginationManager.get(PaginationIds.AVERAGE_PLAYTIME.name());
-        pageState.reset(PlaytimeHistory.getSortedPlaytimeReport());
-        EmbedBuilder embed = PageBuilder.buildEmbedPage(pageState);
 
-        if (embed == null) {
-            event.reply("no ppl").setEphemeral(true).queue();
-            return;
-        }
+        event.deferReply(false).addComponents(PageBuilder.getPaginationActionRow(PaginationIds.AVERAGE_PLAYTIME)).queue(hook -> {
+            PageBuilder.PaginationState pageState = PageBuilder.PaginationManager.get(PaginationIds.AVERAGE_PLAYTIME.name());
+            pageState.reset(PlaytimeHistory.getSortedPlaytimeReport());
+            EmbedBuilder embed = PageBuilder.buildEmbedPage(pageState);
 
-        event.replyEmbeds(embed.build())
-                .addComponents(PageBuilder.getPaginationActionRow(PaginationIds.AVERAGE_PLAYTIME))
-                .queue();
+            if (embed == null) {
+                event.reply("no ppl").setEphemeral(true).queue();
+                return;
+            }
 
+            hook.editOriginalEmbeds(embed.build()).queue();
+        });
     }
 
 }

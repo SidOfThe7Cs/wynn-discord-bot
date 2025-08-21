@@ -197,9 +197,9 @@ public class GuildCommands {
 
 
         PageBuilder.PaginationState pageState = PageBuilder.PaginationManager.get(PaginationIds.GUILD.name());
-        pageState.reset(GuildActivity.getGuildAverages(guildDays));
 
         event.deferReply(false).addComponents(PageBuilder.getPaginationActionRow(PaginationIds.GUILD)).queue(hook -> {
+            pageState.reset(GuildActivity.getGuildAverages(guildDays));
 
             EmbedBuilder embed = PageBuilder.buildEmbedPage(pageState);
 
@@ -285,15 +285,16 @@ public class GuildCommands {
 
     public static void showStats(SlashCommandInteractionEvent event) {
         String guildPrefix = event.getOption("guild_prefix").getAsString();
-        GuildInfo guildInfo = ApiUtils.getGuildInfo(guildPrefix);
-        if (guildInfo == null || guildInfo.members == null) {
-            event.reply(guildPrefix + " not found").setEphemeral(true).queue();
-            return;
-        }
 
         event.deferReply(false).addComponents(PageBuilder.getPaginationActionRow(PaginationIds.GUILD_STATS)).queue(hook -> {
 
             hook.editOriginalEmbeds(Utils.getEmbed("Patience Woman", "waiting on api requests")).queue();
+
+            GuildInfo guildInfo = ApiUtils.getGuildInfo(guildPrefix);
+            if (guildInfo == null || guildInfo.members == null) {
+                hook.editOriginalEmbeds(Utils.getEmbed(guildPrefix, " not found")).queue();
+                return;
+            }
 
             StringBuilder sb = new StringBuilder();
 
