@@ -154,7 +154,8 @@ public class MainEntrypoint extends ListenerAdapter {
         commands.addCommands(AllSlashCommands.guildstats.getBaseCommandData()
                 .addOption(STRING, "guild_prefix", "e", true));
         AllSlashCommands.guildstats.setAction(GuildCommands::showStats);
-        PageBuilder.PaginationManager.register(PaginationIds.GUILD_STATS.name(), stats -> GuildCommands.guildStatsConverter((GuildCommands.GuildStatEntry) stats), "?", 4);
+        PageBuilder.PaginationManager.register(PaginationIds.GUILD_STATS.name(),
+                stats -> GuildCommands.guildStatsConverter((GuildCommands.GuildStatEntry) stats), "?", 6);
 
 
         commands.addCommands(AllSlashCommands.online.getBaseCommandData()
@@ -167,7 +168,8 @@ public class MainEntrypoint extends ListenerAdapter {
 
         commands.addCommands(AllSlashCommands.listcommands.getBaseCommandData());
         AllSlashCommands.listcommands.setAction(HelpCommands::listCommands);
-        PageBuilder.PaginationManager.register(PaginationIds.COMMAND_LIST.name(), cmd -> HelpCommands.commandListConverter((AllSlashCommands) cmd), "List of All Bot Commands", 12);
+        PageBuilder.PaginationManager.register(PaginationIds.COMMAND_LIST.name(),
+                cmd -> HelpCommands.commandListConverter((AllSlashCommands) cmd), "List of All Bot Commands", 12);
 
         commands.addCommands(AllSlashCommands.setrolerequirement.getBaseCommandData().addOptions(
                 new OptionData(OptionType.STRING, "command", "Command to add requirement to", true).setAutoComplete(true),

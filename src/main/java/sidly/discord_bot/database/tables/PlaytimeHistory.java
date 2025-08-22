@@ -130,14 +130,17 @@ public class PlaytimeHistory {
             // Retrieve player info if needed
             PlayerDataShortened playerData = Players.get(uuid);
 
-            reports.add(new PlayerReport(
-                    Players.get(uuid).username,
-                    historyList.getLinear10WeekAverage(),
-                    historyList.getAverage(1),
-                    historyList.getAverage(5),
-                    historyList.getAverage(20),
-                    playerData != null ? playerData.getAllTimeWeeklyAverage() : 0
-            ));
+            PlayerDataShortened player = Players.get(uuid);
+            if (player != null) {
+                reports.add(new PlayerReport(
+                        player.username,
+                        historyList.getLinear10WeekAverage(),
+                        historyList.getAverage(1),
+                        historyList.getAverage(5),
+                        historyList.getAverage(20),
+                        playerData != null ? playerData.getAllTimeWeeklyAverage() : 0
+                ));
+            }
         }
 
         // Step 3: sort descending by linear10WeekAverage

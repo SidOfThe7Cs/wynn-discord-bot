@@ -1,3 +1,4 @@
+import sidly.discord_bot.Utils;
 import sidly.discord_bot.database.SQLDB;
 
 import java.sql.PreparedStatement;
@@ -22,11 +23,7 @@ public class TestEntrypoint {
         //UuidMap.put("testUser", "123456789");
         //System.out.println(UuidMap.get("testUser"));
 
-        SQLDB.init();
-        for (int i = 0; i < 24; i++) {
-            String firstUuidForHour = getFirstUuidForHour(i);
-            System.out.println(i + " " + firstUuidForHour);
-        }
+        System.out.println(Utils.getTotalGuildExperience(93, 1));
     }
 
     public static void testPriont() {
@@ -66,8 +63,8 @@ Server owner can always run commands
 guild playtime per hour averages need to be divided by the number of entries so the end average isnt skewed based on one hour having more entries than another
 
 /delete old versions
+reaction roles
 
-add time checks to /guildstats
 cmd to check for ppl in guild not in discord (get list of all ppl in guild and the ppl they are verified too)
 tracked guilds use average over time
 /playerdata cmd

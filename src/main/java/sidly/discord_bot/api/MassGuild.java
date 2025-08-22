@@ -300,6 +300,7 @@ public class MassGuild {
         }
     }
 
+    private static final AtomicInteger tokenIndex = new AtomicInteger(0);
     public static Map<String, PlayerProfile> getPlayerData(Set<String> uuids) {
         if (apiTokens.isEmpty()) throw new IllegalStateException("No API tokens available");
 
@@ -308,7 +309,6 @@ public class MassGuild {
         Map<String, PlayerProfile> results = new ConcurrentHashMap<>();
 
         List<CompletableFuture<Void>> futures = new ArrayList<>();
-        AtomicInteger tokenIndex = new AtomicInteger(0);
 
         for (String uuid : uuids) {
             String apiToken = apiTokens.get(tokenIndex.getAndIncrement() % apiTokens.size());
@@ -318,7 +318,7 @@ public class MassGuild {
                     .GET()
                     .build();
 
-            CompletableFuture<Void> future = client2.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+            CompletableFuture<Void> future = client2.sendAsync(request, HttpResponse.BodyHandlers.ofString()).orTimeout(30, TimeUnit.SECONDS)
                     .thenAccept(response -> {
                         int status = response.statusCode();
 
@@ -345,7 +345,16 @@ public class MassGuild {
                         PlaytimeHistory.addPlaytimeIfNeeded(playerDataShortened);
                     })
                     .exceptionally(ex -> {
-                        ex.printStackTrace();
+                        Throwable cause = ex instanceof CompletionException ? ex.getCause() : ex;
+
+                        if (cause instanceof TimeoutException) {
+                            System.out.println("timeout " + Players.get(uuid));
+                        } else if (cause instanceof IOException && cause.getMessage().contains("GOAWAY")) {
+
+                        } else {
+                            statusCodes.add("network/connection error");
+                            cause.printStackTrace();
+                        }
                         return null;
                     });
 

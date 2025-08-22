@@ -239,25 +239,6 @@ public class Utils {
         }
     }
 
-    public static String addNumberFormattingCommas(String input) {
-        // Regex: match 5+ consecutive digits
-        Pattern pattern = Pattern.compile("\\d{5,}");
-        Matcher matcher = pattern.matcher(input);
-
-        StringBuffer sb = new StringBuffer();
-        while (matcher.find()) {
-            String numberStr = matcher.group();
-
-            // Parse number and format with commas
-            String formatted = NumberFormat.getNumberInstance(Locale.US).format(Long.parseLong(numberStr));
-
-            matcher.appendReplacement(sb, formatted);
-        }
-        matcher.appendTail(sb);
-
-        return sb.toString();
-    }
-
     public static String abbreviate(String input) {
         if (input == null || input.isEmpty()) return "";
 
@@ -272,5 +253,81 @@ public class Utils {
 
         return sb.toString();
     }
+
+    public static String formatNumbersInString(String input) {
+        if (input == null || input.isEmpty()) return "";
+
+        Pattern pattern = Pattern.compile("\\d+(?:,?\\d+)*(?:\\.\\d+)?"); // matches integers and decimals
+        Matcher matcher = pattern.matcher(input);
+        StringBuffer sb = new StringBuffer();
+
+        while (matcher.find()) {
+            String numStr = matcher.group().replaceAll(",", ""); // remove commas
+            double number;
+            try {
+                number = Double.parseDouble(numStr);
+            } catch (NumberFormatException e) {
+                matcher.appendReplacement(sb, matcher.group()); // keep original if parse fails
+                continue;
+            }
+
+            // Format the number with suffixes
+            String formatted = formatNumber(number);
+            matcher.appendReplacement(sb, formatted);
+        }
+        matcher.appendTail(sb);
+        return sb.toString();
+    }
+
+    // Reuse the formatNumber(double) function from before
+    public static String formatNumber(double number) {
+        String[] suffixes = {"", "K", "M", "B", "T"};
+        int suffixIndex = 0;
+
+        while (Math.abs(number) >= 1000 && suffixIndex < suffixes.length - 1) {
+            number /= 1000.0;
+            suffixIndex++;
+        }
+
+        if (number == Math.floor(number)) {
+            return String.format("%,d%s", (long) number, suffixes[suffixIndex]);
+        } else {
+            return String.format("%,.2f%s", number, suffixes[suffixIndex]);
+        }
+    }
+
+    public static double getTotalGuildExperience(int level, int percentToNextLevel) {
+        System.out.println(level);
+        System.out.println(percentToNextLevel);
+        if (level < 1) return 0;
+
+        int base = 20000;
+        double totalExp = 0;
+
+        // Sum scaled XP up to level 130
+        int cappedLevel = Math.min(level, 130);
+        for (int n = 1; n <= cappedLevel; n++) {
+            totalExp += base * Math.pow(1.15, n - 1);
+        }
+
+        // If level is beyond 130, add flat XP for the extra levels
+        if (level > 130) {
+            double cappedXp = base * Math.pow(1.15, 129); // XP at level 130
+            totalExp += (level - 130) * cappedXp;
+        }
+
+        // Add fractional progress to next level
+        double nextXp;
+        if (level < 130) {
+            nextXp = base * Math.pow(1.15, level);
+        } else {
+            nextXp = base * Math.pow(1.15, 129); // flat XP after 130
+        }
+
+        totalExp += nextXp * (percentToNextLevel / 100.0);
+
+        return totalExp;
+    }
+
 
 }
