@@ -1,5 +1,6 @@
 package sidly.discord_bot.timed_actions;
 
+import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import sidly.discord_bot.Config;
@@ -21,18 +22,17 @@ public class UpdatePlayers {
 
     private static boolean isRunning = false;
 
-    public static void updateNext(){
-        if (updateQueue.size() < serverMemberCount / 4 || updateQueue.isEmpty()){
+    public static void updateNext() {
+        if (updateQueue.size() < serverMemberCount / 4 || updateQueue.isEmpty()) {
             if (!loadingMembers) {
                 loadingMembers = true;
                 getAllMembers();
             }
         }
         Member next = updateQueue.poll();
+
         if (next != null) {
-            // Refresh member from API to ensure all roles are loaded
-            Guild guild = next.getGuild();
-            guild.retrieveMemberById(next.getId()).queue(VerificationCommands::updatePlayer, failure -> System.err.println("Failed to retrieve member " + next.getId()));
+            next.getGuild().retrieveMemberById(next.getId()).queue(VerificationCommands::updatePlayer, failure -> System.out.println("failed to get member in guild " + next.getEffectiveName()));
         }
     }
 

@@ -7,6 +7,8 @@ import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent;
+import net.dv8tion.jda.api.events.guild.member.GuildMemberRoleAddEvent;
+import net.dv8tion.jda.api.events.guild.member.GuildMemberRoleRemoveEvent;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
@@ -512,5 +514,30 @@ public class MainEntrypoint extends ListenerAdapter {
         }
     }
 
+    public void onGuildMemberRoleAdd(GuildMemberRoleAddEvent event) {
+        Member member = event.getMember();
+        List<Role> roles = event.getRoles();
+        StringBuilder sb = new StringBuilder();
+
+        sb.append(member.getAsMention()).append("\n");
+        for (Role role : roles) {
+            sb.append("added ").append(role.getAsMention()).append("\n");
+        }
+
+        Utils.sendToModChannel("Roles changed",sb.toString() ,false);
+    }
+
+    public void onGuildMemberRoleRemove(GuildMemberRoleRemoveEvent event) {
+        Member member = event.getMember();
+        List<Role> roles = event.getRoles();
+        StringBuilder sb = new StringBuilder();
+
+        sb.append(member.getAsMention()).append("\n");
+        for (Role role : roles) {
+            sb.append("removed ").append(role.getAsMention()).append("\n");
+        }
+
+        Utils.sendToModChannel("Roles changed",sb.toString() ,false);
+    }
 
 }

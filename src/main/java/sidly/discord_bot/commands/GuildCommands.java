@@ -317,9 +317,9 @@ public class GuildCommands {
                 int season = Integer.parseInt(entry.getKey());
                 if (season > latestSeason) latestSeason = season;
             }
-            sb.append("Season Rating: ").append(guildInfo.seasonRanks.get(String.valueOf(latestSeason)).rating).append("\n");
-            sb.append("Previous Rating: ").append(guildInfo.seasonRanks.get(String.valueOf(latestSeason - 1)).rating).append("\n");
-            sb.append("Wars: ").append(guildInfo.wars).append("\n");
+            sb.append("Season Rating: ").append(Utils.formatNumber(guildInfo.seasonRanks.get(String.valueOf(latestSeason)).rating)).append("\n");
+            sb.append("Previous Rating: ").append(Utils.formatNumber(guildInfo.seasonRanks.get(String.valueOf(latestSeason - 1)).rating)).append("\n");
+            sb.append("Wars: ").append(Utils.formatNumber(guildInfo.wars)).append("\n");
             double averageOnline = GuildActivity.getAverageOnline(AllGuilds.getGuild(guildPrefix).uuid(), 28, false);
             sb.append("Online Members: ").append(guildInfo.online).append(" / ").append(guildInfo.members.total).append(" avg: ").append(String.format("%.2f", averageOnline)).append("\n");
 
@@ -378,14 +378,12 @@ public class GuildCommands {
             xpPerDayMillions = guildMemberData.contributed / joinedDaysAgo / 1000000;
         } else xpPerDayMillions = guildMemberData.contributed / 1000000;
         int rank = guildMemberData.contributionRank;
-        long joinedWynn = Utils.timeSinceIso(playerData.firstJoin, ChronoUnit.DAYS);
 
         StringBuilder sb = new StringBuilder();
         sb.append("**").append(rank).append(". ").append(Utils.escapeDiscordMarkdown(playerData.username)).append(" (").append(playerData.guild.rank).append(")**");
         sb.append(playerData.online ? "Online " + playerData.server + "\n" : "Offline, last seen " + Utils.timeSinceIso(playerData.lastJoin, ChronoUnit.HOURS) + " hours ago\n");
         sb.append(Utils.formatNumbersInString(String.valueOf(guildMemberData.contributed))).append(" XP (").append(xpPerDayMillions).append("M/day)\n");
-        sb.append("joined: guild ").append(joinedDaysAgo).append(" d ago, ");
-        sb.append("wynn ").append(joinedWynn).append(" d ago\n");
+        sb.append("Joined ").append(joinedDaysAgo).append(" days ago\n");
         if (playerData.globalData != null) {
             sb.append("Wars: ").append(Utils.formatNumber(playerData.globalData.wars)).append(", ");
             Map<String, Integer> raids = playerData.globalData.raids.list;
@@ -399,12 +397,9 @@ public class GuildCommands {
             sb.append("\n");
         }
 
-        sb.append("Playtime hours: ");
-        sb.append("Total ").append(Utils.formatNumber(playerData.playtime)).append(", ");
-        //sb.append(String.format("%.2f", statEntry.hoursPerWeek)).append(" hours per week (all time)\n");
         PlaytimeHistoryList playtimeHistory = PlaytimeHistory.getPlaytimeHistory(playerData.uuid);
-        sb.append("4Wavg ").append(String.format("%.2f", playtimeHistory.getAverage(4))).append(" ");
-        sb.append("(").append(String.format("%.2f", playtimeHistory.getAverage(1))).append(")");
+        sb.append(String.format("%.2f", playtimeHistory.getAverage(4))).append(" ");
+        sb.append("hours per week (").append(String.format("%.2f", playtimeHistory.getAverage(1))).append(")");
         sb.append("\n\n");
 
         return sb.toString();
