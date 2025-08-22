@@ -149,6 +149,9 @@ public class MainEntrypoint extends ListenerAdapter {
         commands.addCommands(AllSlashCommands.getbotversion.getBaseCommandData());
         AllSlashCommands.getbotversion.setAction(UpdaterCommands::getBotVersion);
 
+        commands.addCommands(AllSlashCommands.notindiscord.getBaseCommandData());
+        AllSlashCommands.notindiscord.setAction(GuildCommands::notInDiscord);
+
         commands.addCommands(AllSlashCommands.leaderboardguildxp.getBaseCommandData()
                 .addOption(STRING, "guild_prefix", "e", true));
         AllSlashCommands.leaderboardguildxp.setAction(GuildCommands::showGuildXpLeaderboard);
@@ -279,8 +282,7 @@ public class MainEntrypoint extends ListenerAdapter {
 
         commands.addCommands(AllSlashCommands.checkfordemotions.getBaseCommandData());
 
-        commands.addCommands(AllSlashCommands.checkforinactivity.getBaseCommandData()
-                .addOption(INTEGER, "inactive_threshold", "last login in days ago"));
+        commands.addCommands(AllSlashCommands.checkforinactivity.getBaseCommandData());
         AllSlashCommands.checkforinactivity.setAction(InactivityCommands::checkForInactivity);
 
         commands.addCommands(AllSlashCommands.checkforpromotions.getBaseCommandData());
@@ -513,31 +515,4 @@ public class MainEntrypoint extends ListenerAdapter {
             }
         }
     }
-
-    public void onGuildMemberRoleAdd(GuildMemberRoleAddEvent event) {
-        Member member = event.getMember();
-        List<Role> roles = event.getRoles();
-        StringBuilder sb = new StringBuilder();
-
-        sb.append(member.getAsMention()).append("\n");
-        for (Role role : roles) {
-            sb.append("added ").append(role.getAsMention()).append("\n");
-        }
-
-        Utils.sendToModChannel("Roles changed",sb.toString() ,false);
-    }
-
-    public void onGuildMemberRoleRemove(GuildMemberRoleRemoveEvent event) {
-        Member member = event.getMember();
-        List<Role> roles = event.getRoles();
-        StringBuilder sb = new StringBuilder();
-
-        sb.append(member.getAsMention()).append("\n");
-        for (Role role : roles) {
-            sb.append("removed ").append(role.getAsMention()).append("\n");
-        }
-
-        Utils.sendToModChannel("Roles changed",sb.toString() ,false);
-    }
-
 }

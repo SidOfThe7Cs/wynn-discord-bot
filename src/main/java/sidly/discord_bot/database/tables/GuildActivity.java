@@ -167,21 +167,25 @@ public class GuildActivity {
         }
 
         String sql = """
-                       SELECT uuid,
-                                               AVG(online_count) AS avg_online,
-                                               AVG(captains_online) AS avg_captains
-                                        FROM guild_activity
-                                        WHERE timestamp >= ?
-                                        GROUP BY uuid
-                                        ORDER BY avg_online DESC;
-                
-                """;
-
+        SELECT uuid,
+               AVG(hourly_avg_online) AS avg_online,
+               AVG(hourly_avg_captains) AS avg_captains
+        FROM (
+            SELECT uuid,
+                   hour,
+                   AVG(online_count) AS hourly_avg_online,
+                   AVG(captains_online) AS hourly_avg_captains
+            FROM guild_activity
+            WHERE timestamp >= ?
+            GROUP BY uuid, hour
+        ) sub
+        GROUP BY uuid
+        ORDER BY avg_online DESC;
+        """;
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setLong(1, startTime);
             try (ResultSet rs = pstmt.executeQuery()) {
-
                 while (rs.next()) {
                     String uuid = rs.getString("uuid");
                     double avgOnline = rs.getDouble("avg_online");
@@ -196,5 +200,6 @@ public class GuildActivity {
 
         return results;
     }
+
 
 }

@@ -42,6 +42,7 @@ public enum AllSlashCommands {
     averageplaytime("get the average playtime of a user"),
     updateplayerranks("update the ranks of all members in your guild"),
     guildstats("view the stats of a guild", 2),
+    notindiscord("view players who are in your guild but not in your discord"),
     addchannelrestriction("if any channels are whitelisted only whitelisted channels will allow commands"),
     adddemotionexeption("adds a player to be excluded from demotion checks, default length is forever"),
     addinactivityexeption("adds a custom inactivity threshold for a player, default length is forever"),

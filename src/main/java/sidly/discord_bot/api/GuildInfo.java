@@ -4,6 +4,7 @@ import sidly.discord_bot.Config;
 import sidly.discord_bot.Utils;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 public class GuildInfo {
     public String uuid;
@@ -73,6 +74,29 @@ public class GuildInfo {
 
             return combined;
         }
+
+        public Map<String, MemberInfo> getAllMembersByUsername() {
+            Map<String, MemberInfo> combined = new HashMap<>();
+
+            // Helper to remap by username
+            Consumer<Map<String, MemberInfo>> putByUsername = roleMap -> {
+                for (MemberInfo member : roleMap.values()) {
+                    if (member.username != null) {
+                        combined.put(member.username, member);
+                    }
+                }
+            };
+
+            putByUsername.accept(owner);
+            putByUsername.accept(chief);
+            putByUsername.accept(strategist);
+            putByUsername.accept(captain);
+            putByUsername.accept(recruiter);
+            putByUsername.accept(recruit);
+
+            return combined;
+        }
+
 
         public int getOnlineMembersCount() {
             Set<String> uniqueOnline = new HashSet<>();

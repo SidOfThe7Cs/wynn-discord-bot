@@ -60,16 +60,7 @@ Add exception cmds
 
 Server owner can always run commands
 
-guild playtime per hour averages need to be divided by the number of entries so the end average isnt skewed based on one hour having more entries than another
-
 /delete old versions
 reaction roles
-
-cmd to check for ppl in guild not in discord (get list of all ppl in guild and the ppl they are verified too)
-tracked guilds use average over time
-/playerdata cmd
-inactivity
-why is it still shwoing chamiopn additions
-format check for promotions
 
  */

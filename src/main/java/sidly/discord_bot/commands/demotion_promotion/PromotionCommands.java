@@ -149,7 +149,7 @@ public class PromotionCommands {
 
         if (guildMemberInfo == null) return "guild member info is null error ❌";
 
-        // And get promotion requirements map
+        // get promotion requirements map
         Map<Utils.RankList, RequirementList> promotionRequirements = ConfigManager.getConfigInstance().promotionRequirements;
         RequirementList requirementList = null;
         int currentIndex = playerRank.ordinal();
@@ -220,7 +220,7 @@ public class PromotionCommands {
             case XPContributed:
                 long playerXPContribution = guildMemberInfo.contributed;
                 sb.append(getSymbol(playerXPContribution, requirementCount));
-                sb.append(" XPContributed: ").append(playerXPContribution).append(" / ").append(requirementCount).append('\n');
+                sb.append(" XPContributed: ").append(Utils.formatNumber(playerXPContribution)).append(" / ").append(requirementCount).append('\n');
                 break;
             case TopXpContributor:
                 int playerXPContributionRank = guildMemberInfo.contributionRank;
@@ -240,7 +240,7 @@ public class PromotionCommands {
             case GuildWars:
                 int guildWars = playerDataShortened.wars;
                 sb.append(getSymbol(guildWars, requirementCount));
-                sb.append(" GuildWars: ").append(guildWars).append(" / ").append(requirementCount).append('\n');
+                sb.append(" GuildWars: ").append(Utils.formatNumber(guildWars)).append(" / ").append(requirementCount).append('\n');
                 break;
             case WarBuild:
                 boolean dps = Utils.hasRole(member, ConfigManager.getConfigInstance().roles.get(Config.Roles.TrialDpsRole));
@@ -266,7 +266,7 @@ public class PromotionCommands {
                 } else if (req.isRequired()){
                     sb.append("❌");
                 } else sb.append(":no_entry_sign:");
-                sb.append(" WeeklyPlaytime: ").append(average).append(" / ").append(requirementCount).append('\n');
+                sb.append(" WeeklyPlaytime: ").append(Utils.formatNumber(average)).append(" / ").append(requirementCount).append('\n');
                 break;
             case Eco:
                 boolean eco = Utils.hasRole(member, ConfigManager.getConfigInstance().roles.get(Config.Roles.TrialEcoRole));

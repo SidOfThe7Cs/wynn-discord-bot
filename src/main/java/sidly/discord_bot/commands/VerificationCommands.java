@@ -237,7 +237,7 @@ public class VerificationCommands {
             System.out.println("unverifying " + nickname);
 
             String text = removeRolesUnverify(member);
-            Utils.sendToModChannel("**Updates Roles For **" + member.getAsMention(), text, true);
+            //Utils.sendToModChannel("**Updates Roles For **" + member.getAsMention(), text, true);
             return text;
         } else if (playerData.statusCode == 520) {
             return "failed to connect to api";
@@ -382,7 +382,7 @@ public class VerificationCommands {
 
         // Send to mod channel
         String text = sb.toString();
-        Utils.sendToModChannel("**Updates Roles For** " + member.getAsMention(), text, true);
+        //Utils.sendToModChannel("**Updates Roles For** " + member.getAsMention(), text, true);
         return text;
     }
 

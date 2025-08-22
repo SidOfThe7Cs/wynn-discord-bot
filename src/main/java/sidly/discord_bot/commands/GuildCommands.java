@@ -190,13 +190,15 @@ public class GuildCommands {
     public static void viewTrackedGuilds(SlashCommandInteractionEvent event) {
         guildDays = Optional.ofNullable(event.getOption("days"))
                 .map(OptionMapping::getAsInt)
-                .orElse(-1);
+                .orElse(28);
 
 
         PageBuilder.PaginationState pageState = PageBuilder.PaginationManager.get(PaginationIds.GUILD.name());
 
         event.deferReply(false).addComponents(PageBuilder.getPaginationActionRow(PaginationIds.GUILD)).queue(hook -> {
             List<GuildAverages> guildAverages = GuildActivity.getGuildAverages(guildDays);
+
+            // check the position of your guild
             String prefix = ConfigManager.getConfigInstance().other.get(Config.Settings.YourGuildPrefix);
             String uuid = AllGuilds.getGuild(prefix).uuid();
             int index = -1;
@@ -284,7 +286,7 @@ public class GuildCommands {
         String text = sbfinal.toString();
         if (text.isEmpty()) return "";
 
-        Utils.sendToModChannel("Updated Player Ranks", text, false);
+        //Utils.sendToModChannel("Updated Player Ranks", text, false);
         return text;
     }
 
@@ -403,6 +405,37 @@ public class GuildCommands {
         sb.append("\n\n");
 
         return sb.toString();
+    }
+
+    // this could be optimized so much
+    public static void notInDiscord(SlashCommandInteractionEvent event) {
+        List<Member> discordMembers = event.getGuild().getMembers();
+        GuildInfo guildInfo = ApiUtils.getGuildInfo(ConfigManager.getConfigInstance().other.get(Config.Settings.YourGuildPrefix));
+        Map<String, GuildInfo.MemberInfo> wynnMembers = guildInfo.members.getAllMembersByUsername();
+
+        StringBuilder sb = new StringBuilder();
+
+        for (String username : wynnMembers.keySet()) {
+            boolean inDisct = false;
+            boolean verified = false;
+            for (Member member : discordMembers) {
+                String discordName = member.getEffectiveName().toLowerCase();
+                if (username.toLowerCase().equals(discordName)) {
+                    inDisct = true;
+                    if (Utils.hasRole(member, Config.Roles.VerifiedRole)) {
+                        verified = true;
+                    }
+                }
+            }
+
+            if (!inDisct) {
+                sb.append(username).append(" is not in the discord\n");
+            }else if (!verified) {
+                sb.append(username).append(" is in the discord but not verified\n");
+            }
+        }
+
+        event.replyEmbeds(Utils.getEmbed("Not-Verified", sb.toString())).queue();
     }
 
     public record GuildStatEntry(String uuid, GuildInfo.MemberInfo guildMemberData){}
