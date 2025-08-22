@@ -70,5 +70,6 @@ tracked guilds use average over time
 /playerdata cmd
 inactivity
 why is it still shwoing chamiopn additions
+format check for promotions
 
  */

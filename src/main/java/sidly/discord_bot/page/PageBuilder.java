@@ -12,6 +12,8 @@ import java.util.Map;
 
 public class PageBuilder {
     public static void handlePagination(ButtonInteractionEvent event) {
+        event.deferEdit().queue();
+
         String[] parts = event.getComponentId().split(":");
         String key = parts[1];
         String direction = parts[2];
@@ -33,7 +35,7 @@ public class PageBuilder {
 
         if (embed == null) embed = new EmbedBuilder().setTitle("nothing");
 
-        event.editMessageEmbeds(embed.build())
+        event.getHook().editOriginalEmbeds(embed.build())
                 .setComponents(ActionRow.of(leftButton, rightButton))
                 .queue();
     }

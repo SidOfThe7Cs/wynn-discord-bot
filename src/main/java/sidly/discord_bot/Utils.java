@@ -297,8 +297,6 @@ public class Utils {
     }
 
     public static double getTotalGuildExperience(int level, int percentToNextLevel) {
-        System.out.println(level);
-        System.out.println(percentToNextLevel);
         if (level < 1) return 0;
 
         int base = 20000;

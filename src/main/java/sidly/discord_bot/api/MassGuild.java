@@ -302,6 +302,8 @@ public class MassGuild {
 
     private static final AtomicInteger tokenIndex = new AtomicInteger(0);
     public static Map<String, PlayerProfile> getPlayerData(Set<String> uuids) {
+        System.out.println(uuids);
+
         if (apiTokens.isEmpty()) throw new IllegalStateException("No API tokens available");
 
         Gson gson = new GsonBuilder().create();
