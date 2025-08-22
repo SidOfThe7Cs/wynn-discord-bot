@@ -87,7 +87,10 @@ public class InactivityCommands {
                     averagePlaytimeReq *= multiplier;
                     inactiveThreashhold /= multiplier;
 
-                    if (Utils.timeSinceIso(entry.getValue().joined, ChronoUnit.DAYS) < 8) inactiveThreashhold = 5;
+                    if (Utils.timeSinceIso(entry.getValue().joined, ChronoUnit.DAYS) < 8) {
+                        inactiveThreashhold = 5;
+                        averagePlaytimeReq = 0;
+                    }
 
                     double lastOnline = Utils.timeSinceIso(playerDataShortened.lastJoined, ChronoUnit.DAYS);
 
