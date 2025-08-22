@@ -353,12 +353,12 @@ public class VerificationCommands {
             if (highestLvl >= 106) {
                 matchedRole = Config.LvlRoles.Lvl106Role;
             } else {
-                int roundedLvl = (highestLvl <= 1) ? 1 : ((highestLvl + 4) / 5) * 5;
+                int roundedLvl = (highestLvl <= 1) ? 1 : ((highestLvl) / 5) * 5;
                 String enumName = "Lvl" + roundedLvl + "Role";
                 matchedRole = Config.LvlRoles.valueOf(enumName);
             }
             String lvlRoleId = ConfigManager.getConfigInstance().lvlRoles.get(matchedRole);
-            if (lvlRoleId != null && lvlRoleId.isEmpty()) {
+            if (lvlRoleId == null || lvlRoleId.isEmpty()) {
                 sb.append("Failed to get role ID for lvl role ").append(matchedRole).append("\n"); // unset in config
             }
             sb.append(removeLvlRolesExcept(member, lvlRoleId));

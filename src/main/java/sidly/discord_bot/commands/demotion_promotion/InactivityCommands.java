@@ -40,7 +40,6 @@ public class InactivityCommands {
                 Utils.RankList rankOfMember = guildinfo.members.getRankOfMember(entry.getKey());
 
                 if (playerDataShortened != null && playerDataShortened.lastJoined != null) {
-                    long lastJoin = Utils.timeSinceIso(playerDataShortened.lastJoined, ChronoUnit.DAYS);
 
                     double inactiveThreashhold;
                     double averagePlaytimeReq = 4;
