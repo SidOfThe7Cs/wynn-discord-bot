@@ -74,7 +74,7 @@ public class MainEntrypoint extends ListenerAdapter {
         }
 
         JDA jda = JDABuilder.createLight(token, EnumSet.noneOf(GatewayIntent.class))
-                .addEventListeners(new MainEntrypoint())
+                .addEventListeners(new MainEntrypoint(), new RoleChangeListener())
                 .enableIntents(GatewayIntent.GUILD_MEMBERS)
                 .setMemberCachePolicy(MemberCachePolicy.ALL)
                 .build();

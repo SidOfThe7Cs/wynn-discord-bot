@@ -353,7 +353,7 @@ public class VerificationCommands {
             if (highestLvl >= 106) {
                 matchedRole = Config.LvlRoles.Lvl106Role;
             } else {
-                int roundedLvl = (highestLvl <= 1) ? 1 : ((highestLvl) / 5) * 5;
+                int roundedLvl = (highestLvl < 5) ? 1 : ((highestLvl) / 5) * 5;
                 String enumName = "Lvl" + roundedLvl + "Role";
                 matchedRole = Config.LvlRoles.valueOf(enumName);
             }

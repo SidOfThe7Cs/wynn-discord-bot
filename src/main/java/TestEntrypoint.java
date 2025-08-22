@@ -63,4 +63,6 @@ Server owner can always run commands
 /delete old versions
 reaction roles
 
+guild stats show minutes for online
+
  */

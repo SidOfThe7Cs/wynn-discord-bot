@@ -18,6 +18,7 @@ public class RoleChangeListener extends ListenerAdapter {
 
     @Override
     public void onGuildMemberRoleAdd(GuildMemberRoleAddEvent event) {
+        System.out.println("saofgiauhb");
         handleChange(event.getMember(), event.getRoles(), true);
     }
 
@@ -42,7 +43,7 @@ public class RoleChangeListener extends ListenerAdapter {
             }
         }
 
-        // Reset timer for this member
+        // Reset (debounce) the timer
         if (future != null && !future.isDone()) {
             future.cancel(false);
         }
@@ -50,23 +51,31 @@ public class RoleChangeListener extends ListenerAdapter {
     }
 
     private void flushChanges() {
+        if (pendingChanges.isEmpty()) return;
+
         StringBuilder sb = new StringBuilder();
+
         for (PendingChange entry : pendingChanges.values()) {
-            if (entry == null) return;
+            if (entry == null) continue;
 
             sb.append(entry.member.getAsMention()).append("\n");
 
             for (Role role : entry.added) {
-                sb.append("added ").append(role.getAsMention()).append("\n");
+                sb.append("\uD83D\uDFE2 added ").append(role.getAsMention()).append("\n");
             }
             for (Role role : entry.removed) {
-                sb.append("removed ").append(role.getAsMention()).append("\n");
+                sb.append("\uD83D\uDD34 removed ").append(role.getAsMention()).append("\n");
             }
 
             sb.append("\n");
         }
+
+        // Important: clear after flushing
+        pendingChanges.clear();
+
         Utils.sendToModChannel("Roles changed", sb.toString(), false);
     }
+
 
     private static class PendingChange {
         final Member member;

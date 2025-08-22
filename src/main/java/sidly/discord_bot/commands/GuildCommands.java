@@ -298,8 +298,6 @@ public class GuildCommands {
     public static void showStats(SlashCommandInteractionEvent event) {
         String guildPrefix = event.getOption("guild_prefix").getAsString();
 
-        long time1 = System.currentTimeMillis();
-
         event.deferReply(false).addComponents(PageBuilder.getPaginationActionRow(PaginationIds.GUILD_STATS)).queue(hook -> {
 
             hook.editOriginalEmbeds(Utils.getEmbed("Patience Woman", "waiting on api requests")).queue();
@@ -325,9 +323,6 @@ public class GuildCommands {
             double averageOnline = GuildActivity.getAverageOnline(AllGuilds.getGuild(guildPrefix).uuid(), 28, false);
             sb.append("Online Members: ").append(guildInfo.online).append(" / ").append(guildInfo.members.total).append(" avg: ").append(String.format("%.2f", averageOnline)).append("\n");
 
-            long time2 = System.currentTimeMillis();
-            System.out.println("init took " + (time2 - time1) + " milliseconds");
-
             double totalGuildExperience = Utils.getTotalGuildExperience(guildInfo.level, guildInfo.xpPercent);
             double totalXpPerDay = totalGuildExperience / Utils.timeSinceIso(guildInfo.created, ChronoUnit.DAYS);
             double totalWeeklyPlaytime = 0;
@@ -348,18 +343,12 @@ public class GuildCommands {
             sb.append("Total weekly playtime: ").append(Utils.formatNumber(totalWeeklyPlaytime)).append(" hours").append("\n");
             sb.append("\n");
 
-            long time3 = System.currentTimeMillis();
-            System.out.println("getting entries took " + (time3 - time2) + " milliseconds");
-
             PageBuilder.PaginationState pageState = PageBuilder.PaginationManager.get(PaginationIds.GUILD_STATS.name());
             pageState.reset(sortedEntries);
             pageState.customData = sb.toString();
             pageState.title = "[" + guildPrefix + "] " + guildInfo.name;
 
             EmbedBuilder embed = pageState.buildEmbedPage();
-
-            long time4 = System.currentTimeMillis();
-            System.out.println("formatting embed took " + (time4 - time3) + " milliseconds");
 
             if (embed == null) {
                 hook.editOriginalEmbeds(Utils.getEmbed("well this is awkward", "something went wrong")).queue();
