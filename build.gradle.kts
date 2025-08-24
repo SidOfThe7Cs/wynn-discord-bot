@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "sidly.discord_bot"
-version = "1.5.19"
+version = "1.6.0"
 
 repositories {
     mavenCentral()

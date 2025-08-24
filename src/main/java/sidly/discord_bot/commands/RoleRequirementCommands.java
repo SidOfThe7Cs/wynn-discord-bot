@@ -3,7 +3,7 @@ package sidly.discord_bot.commands;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import sidly.discord_bot.ConfigManager;
-import sidly.discord_bot.Utils;
+import sidly.discord_bot.RoleUtils;
 
 public class RoleRequirementCommands {
     public static void setRoleRequirement(SlashCommandInteractionEvent event) {
@@ -11,7 +11,7 @@ public class RoleRequirementCommands {
         Role mention  = event.getOption("role").getAsRole();
         String id = mention.getId();
 
-        ConfigManager.getConfigInstance().roleRequirements.put(command, Utils.getRoleEnumFromId(id));
+        ConfigManager.getConfigInstance().roleRequirements.put(command, RoleUtils.getRoleEnumFromId(id));
 
         event.reply("success").setEphemeral(true).queue();
     }

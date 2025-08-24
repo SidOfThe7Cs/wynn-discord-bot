@@ -18,7 +18,6 @@ public class RoleChangeListener extends ListenerAdapter {
 
     @Override
     public void onGuildMemberRoleAdd(GuildMemberRoleAddEvent event) {
-        System.out.println("saofgiauhb");
         handleChange(event.getMember(), event.getRoles(), true);
     }
 

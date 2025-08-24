@@ -5,10 +5,7 @@ import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
-import sidly.discord_bot.Config;
-import sidly.discord_bot.ConfigManager;
-import sidly.discord_bot.MainEntrypoint;
-import sidly.discord_bot.Utils;
+import sidly.discord_bot.*;
 import sidly.discord_bot.api.ApiUtils;
 import sidly.discord_bot.api.GuildInfo;
 import sidly.discord_bot.database.PlayerDataShortened;
@@ -243,10 +240,10 @@ public class PromotionCommands {
                 sb.append(" GuildWars: ").append(Utils.formatNumber(guildWars)).append(" / ").append(requirementCount).append('\n');
                 break;
             case WarBuild:
-                boolean dps = Utils.hasRole(member, ConfigManager.getConfigInstance().roles.get(Config.Roles.TrialDpsRole));
-                boolean tank = Utils.hasRole(member, ConfigManager.getConfigInstance().roles.get(Config.Roles.TrialTankRole));
-                boolean healer = Utils.hasRole(member, ConfigManager.getConfigInstance().roles.get(Config.Roles.TrialHealerRole));
-                boolean solo = Utils.hasRole(member, ConfigManager.getConfigInstance().roles.get(Config.Roles.TrialSoloRole));
+                boolean dps = RoleUtils.hasRole(member, ConfigManager.getConfigInstance().roles.get(Config.Roles.TrialDpsRole));
+                boolean tank = RoleUtils.hasRole(member, ConfigManager.getConfigInstance().roles.get(Config.Roles.TrialTankRole));
+                boolean healer = RoleUtils.hasRole(member, ConfigManager.getConfigInstance().roles.get(Config.Roles.TrialHealerRole));
+                boolean solo = RoleUtils.hasRole(member, ConfigManager.getConfigInstance().roles.get(Config.Roles.TrialSoloRole));
 
                 int buildCount = 0;
                 if (dps) buildCount++;
@@ -269,13 +266,13 @@ public class PromotionCommands {
                 sb.append(" WeeklyPlaytime: ").append(Utils.formatNumber(average)).append(" / ").append(requirementCount).append('\n');
                 break;
             case Eco:
-                boolean eco = Utils.hasRole(member, ConfigManager.getConfigInstance().roles.get(Config.Roles.TrialEcoRole));
+                boolean eco = RoleUtils.hasRole(member, ConfigManager.getConfigInstance().roles.get(Config.Roles.TrialEcoRole));
                 int ecoInt = eco ? 1 : 0;
                 sb.append(getSymbol(ecoInt, requirementCount));
                 sb.append(" Eco: ").append(ecoInt).append(" / ").append(requirementCount).append('\n');
                 break;
             case Verified:
-                boolean verified = Utils.hasRole(member, ConfigManager.getConfigInstance().roles.get(Config.Roles.VerifiedRole));
+                boolean verified = RoleUtils.hasRole(member, ConfigManager.getConfigInstance().roles.get(Config.Roles.VerifiedRole));
                 int verifiedInt = verified ? 1 : 0;
                 sb.append(getSymbol(verifiedInt, requirementCount));
                 sb.append(" Verified: ").append(verifiedInt).append(" / ").append(requirementCount).append('\n');

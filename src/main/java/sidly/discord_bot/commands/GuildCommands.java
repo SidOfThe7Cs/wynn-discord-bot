@@ -5,10 +5,7 @@ import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
-import sidly.discord_bot.Config;
-import sidly.discord_bot.ConfigManager;
-import sidly.discord_bot.MainEntrypoint;
-import sidly.discord_bot.Utils;
+import sidly.discord_bot.*;
 import sidly.discord_bot.api.ApiUtils;
 import sidly.discord_bot.api.GuildInfo;
 import sidly.discord_bot.api.MassGuild;
@@ -24,8 +21,6 @@ import java.awt.Color;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 public class GuildCommands {
@@ -272,11 +267,11 @@ public class GuildCommands {
             String rankId = ConfigManager.getConfigInstance().roles.get(rankOfMember);
 
             // add there rank should return null and therefor remove all if not in guild
-            sb.append(VerificationCommands.removeRankRolesExcept(member, rankId));
+            sb.append(RoleUtils.removeRankRolesExcept(member, rankId));
 
             if (allMembers.containsKey(uuid)) { // they are in the wynncraft guild
-                sb.append(Utils.addRole(member, Config.Roles.MemberRole));
-            } else sb.append(Utils.removeRole(member, Config.Roles.MemberRole));
+                sb.append(RoleUtils.addRole(member, Config.Roles.MemberRole));
+            } else sb.append(RoleUtils.removeRole(member, Config.Roles.MemberRole));
 
             if (!sb.toString().isEmpty()) {
                 sbfinal.append(member.getAsMention()).append("\n").append(sb);
@@ -411,7 +406,7 @@ public class GuildCommands {
                 String discordName = member.getEffectiveName().toLowerCase();
                 if (username.toLowerCase().equals(discordName)) {
                     inDisct = true;
-                    if (Utils.hasRole(member, Config.Roles.VerifiedRole)) {
+                    if (RoleUtils.hasRole(member, Config.Roles.VerifiedRole)) {
                         verified = true;
                     }
                 }

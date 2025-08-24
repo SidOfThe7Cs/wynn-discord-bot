@@ -7,11 +7,10 @@ import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent;
-import net.dv8tion.jda.api.events.guild.member.GuildMemberRoleAddEvent;
-import net.dv8tion.jda.api.events.guild.member.GuildMemberRoleRemoveEvent;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.Command;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
@@ -140,8 +139,22 @@ public class MainEntrypoint extends ListenerAdapter {
         );
         AllSlashCommands.editconfiglvlrole.setAction(ConfigCommands::editConfigLvlRoleOption);
 
+        commands.addCommands(AllSlashCommands.editconfigclassrole.getBaseCommandData()
+                .addOptions(
+                        new OptionData(OptionType.STRING, "role_name", "Choose a role", true)
+                                .addChoices(
+                                        Arrays.stream(Config.ClassRoles.values())
+                                                .map(e -> new Command.Choice(e.name(), e.name()))
+                                                .toArray(Command.Choice[]::new)
+                                ),
+                        new OptionData(ROLE, "role", "The id for the role", true)
+                )
+        );
+        AllSlashCommands.editconfigclassrole.setAction(ConfigCommands::editConfigClassRoleOption);
+
         commands.addCommands(AllSlashCommands.getconfigoptions.getBaseCommandData());
         AllSlashCommands.getconfigoptions.setAction(ConfigCommands::showConfigOptions);
+        PageBuilder.PaginationManager.register(PaginationIds.CONFIG_LIST.name(), "All Config Options", 1);
 
         commands.addCommands(AllSlashCommands.checkforupdates.getBaseCommandData());
         AllSlashCommands.checkforupdates.setAction(UpdaterCommands::checkForUpdate);
@@ -201,6 +214,10 @@ public class MainEntrypoint extends ListenerAdapter {
 
         commands.addCommands(AllSlashCommands.getratelimitinfo.getBaseCommandData());
         AllSlashCommands.getratelimitinfo.setAction(RateLimitCommands::getRateLimitInfo);
+
+        commands.addCommands(AllSlashCommands.sendselfassignedrolemessage.getBaseCommandData()
+                .addOption(CHANNEL, "channel", "channel", true));
+        AllSlashCommands.sendselfassignedrolemessage.setAction(SelfAssignedRoles::sendMessage);
 
         commands.addCommands(AllSlashCommands.addchannelrestriction.getBaseCommandData()
                 .addOption(CHANNEL, "channel", "channel", true)
@@ -368,6 +385,16 @@ public class MainEntrypoint extends ListenerAdapter {
     public void onButtonInteraction(ButtonInteractionEvent event) {
         String fullId = event.getComponentId();
 
+        if (fullId.equals("configure_roles")) {
+            SelfAssignedRoles.sendEphemeralMessage(event);
+            return;
+        }
+
+        if (fullId.equals("apply-role-selection")) {
+            SelfAssignedRoles.applySelections(event);
+            return;
+        }
+
         if (fullId.startsWith("pagination")){
             PageBuilder.handlePagination(event);
             return;
@@ -433,6 +460,11 @@ public class MainEntrypoint extends ListenerAdapter {
     }
 
     @Override
+    public void onStringSelectInteraction(StringSelectInteractionEvent event) {
+        SelfAssignedRoles.onStringSelectInteraction(event);
+    }
+
+    @Override
     public void onCommandAutoCompleteInteraction(CommandAutoCompleteInteractionEvent event) {
         if (event.getFocusedOption().getName().equals("command")) {
             String userInput = event.getFocusedOption().getValue();
@@ -480,7 +512,7 @@ public class MainEntrypoint extends ListenerAdapter {
         Guild guild = event.getGuild();
         String unverifiedRoleId = ConfigManager.getConfigInstance().roles.get(Config.Roles.UnVerifiedRole);
 
-        Role role = Utils.getRoleFromGuild(guild, unverifiedRoleId);
+        Role role = RoleUtils.getRoleFromGuild(guild, unverifiedRoleId);
         if (role != null) {
             guild.addRoleToMember(member, role).queue();
         }

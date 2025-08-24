@@ -8,82 +8,114 @@ import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import sidly.discord_bot.Config;
 import sidly.discord_bot.ConfigManager;
+import sidly.discord_bot.RoleUtils;
 import sidly.discord_bot.Utils;
+import sidly.discord_bot.page.PageBuilder;
+import sidly.discord_bot.page.PaginationIds;
 
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ConfigCommands {
 
     public static void showConfigOptions(SlashCommandInteractionEvent event) {
-        Config config = ConfigManager.getConfigInstance();
-        StringBuilder sb = new StringBuilder();
+        event.deferReply(false).addComponents(PageBuilder.getPaginationActionRow(PaginationIds.CONFIG_LIST)).queue(hook -> {
 
-        // Roles
-        sb.append("**Roles:**\n");
-        config.roles.forEach((key, value) -> {
-            String mention = mentionRole(event.getGuild(), value);
-            sb.append(key).append(" : ").append(mention).append("\n");
-        });
-        sb.append("\n");
+            Config config = ConfigManager.getConfigInstance();
+            StringBuilder sb = new StringBuilder();
+            List<String> pages = new ArrayList<>();
 
-        // Level Roles
-        sb.append("**Level Roles:**\n");
-        config.lvlRoles.forEach((key, value) -> {
-            String mention = mentionRole(event.getGuild(), value);
-            sb.append(key).append(" : ").append(mention).append("\n");
-        });
-        sb.append("\n");
+            // Roles
+            sb.append("**Roles:**\n");
+            config.roles.forEach((key, value) -> {
+                String mention = mentionRole(event.getGuild(), value);
+                sb.append(key).append(" : ").append(mention).append("\n");
+            });
+            sb.append("\n");
+            pages.add(sb.toString());
+            sb.setLength(0);
 
-        // Role Requirements
-        sb.append("**Role Requirements:**\n");
-        config.roleRequirements.forEach((cmd, role) -> {
-            String roleId = config.roles.get(role);
-            String mention = mentionRole(event.getGuild(), roleId);
-            sb.append(cmd).append(" : ").append(mention).append("\n");
-        });
-        sb.append("\n");
+            // Class Roles
+            sb.append("**Class Roles:**\n");
+            config.classRoles.forEach((key, value) -> {
+                String mention = mentionRole(event.getGuild(), value);
+                sb.append(key).append(" : ").append(mention).append("\n");
+            });
+            sb.append("\n");
+            pages.add(sb.toString());
+            sb.setLength(0);
 
-        // Allowed Channels
-        sb.append("**Allowed Channels:**\n");
-        config.allowedChannels.forEach((channelId, allowed) -> {
-            String mention = mentionChannel(event.getGuild(), channelId);
-            sb.append(mention != null ? mention : channelId)
-                    .append(" : ").append(allowed).append("\n");
-        });
-        sb.append("\n");
+            // Level Roles
+            sb.append("**Level Roles:**\n");
+            config.lvlRoles.forEach((key, value) -> {
+                String mention = mentionRole(event.getGuild(), value);
+                sb.append(key).append(" : ").append(mention).append("\n");
+            });
+            sb.append("\n");
+            pages.add(sb.toString());
+            sb.setLength(0);
 
-        // Channels
-        sb.append("**Channels:**\n");
-        config.channels.forEach((key, value) -> {
-            String mention = mentionChannel(event.getGuild(), value);
-            sb.append(key).append(" : ").append(mention).append("\n");
-        });
-        sb.append("\n");
+            // Role Requirements
+            sb.append("**Role Requirements:**\n");
+            config.roleRequirements.forEach((cmd, role) -> {
+                String roleId = config.roles.get(role);
+                String mention = mentionRole(event.getGuild(), roleId);
+                sb.append(cmd).append(" : ").append(mention).append("\n");
+            });
+            sb.append("\n");
+            pages.add(sb.toString());
+            sb.setLength(0);
 
-        // Other settings
-        sb.append("**Other Settings:**\n");
-        config.other.forEach((key, value) -> {
-            if (!key.name().toLowerCase().contains("token")) {
-                sb.append(key).append(" : ").append(value).append("\n");
+            // Allowed Channels
+            sb.append("**Allowed Channels:**\n");
+            config.allowedChannels.forEach((channelId, allowed) -> {
+                String mention = mentionChannel(event.getGuild(), channelId);
+                sb.append(mention != null ? mention : channelId)
+                        .append(" : ").append(allowed).append("\n");
+            });
+            sb.append("\n");
+            pages.add(sb.toString());
+            sb.setLength(0);
+
+            // Channels
+            sb.append("**Channels:**\n");
+            config.channels.forEach((key, value) -> {
+                String mention = mentionChannel(event.getGuild(), value);
+                sb.append(key).append(" : ").append(mention).append("\n");
+            });
+            sb.append("\n");
+            pages.add(sb.toString());
+            sb.setLength(0);
+
+            // Other settings
+            sb.append("**Other Settings:**\n");
+            config.other.forEach((key, value) -> {
+                if (!key.name().toLowerCase().contains("token")) {
+                    sb.append(key).append(" : ").append(value).append("\n");
+                }
+            });
+            pages.add(sb.toString());
+            sb.setLength(0);
+
+            PageBuilder.PaginationState pageState = PageBuilder.PaginationManager.get(PaginationIds.CONFIG_LIST.name());
+            pageState.reset(pages);
+
+            EmbedBuilder embed = pageState.buildEmbedPage();
+
+            if (embed == null) {
+                event.reply("no config").setEphemeral(true).queue();
+                return;
             }
+
+            hook.editOriginalEmbeds(embed.build()).queue();
         });
-
-
-        // Send embed
-        EmbedBuilder embed = new EmbedBuilder()
-                .setTitle("Current Config:")
-                .setDescription(sb.toString())
-                .setColor(Color.CYAN)
-                .setFooter("Requested by " + event.getUser().getName(), event.getUser().getEffectiveAvatarUrl())
-                .setTimestamp(java.time.Instant.now());
-
-        event.replyEmbeds(embed.build()).setEphemeral(true).queue();
     }
 
     // Helper for roles
     private static String mentionRole(Guild guild, String roleId) {
         if (roleId == null || roleId.isEmpty()) return "None";
-        Role role = Utils.getRoleFromGuild(guild, roleId);
+        Role role = RoleUtils.getRoleFromGuild(guild, roleId);
         return role != null ? role.getAsMention() : roleId;
     }
 
@@ -102,6 +134,19 @@ public class ConfigCommands {
         Config.LvlRoles option = Config.LvlRoles.valueOf(setting);
 
         ConfigManager.getConfigInstance().lvlRoles.put(option, id);
+        ConfigManager.save();
+
+        event.reply(event.getUser().getName() + " has changed the " + setting + " to " + id).setEphemeral(false).queue();
+    }
+
+
+    public static void editConfigClassRoleOption(SlashCommandInteractionEvent event) {
+        String setting = event.getOption("role_name").getAsString();
+        Role mention = event.getOption("role").getAsRole();
+        String id = mention.getId();
+        Config.ClassRoles option = Config.ClassRoles.valueOf(setting);
+
+        ConfigManager.getConfigInstance().classRoles.put(option, id);
         ConfigManager.save();
 
         event.reply(event.getUser().getName() + " has changed the " + setting + " to " + id).setEphemeral(false).queue();

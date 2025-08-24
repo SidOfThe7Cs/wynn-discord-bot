@@ -8,6 +8,7 @@ import java.util.Map;
 
 public class Config {
     public Map<Roles, String> roles = new HashMap<>();
+    public Map<ClassRoles, String> classRoles = new HashMap<>();
     public Map<LvlRoles, String> lvlRoles = new HashMap<>();
     public Map<AllSlashCommands, Roles> roleRequirements = new HashMap<>();
     public Map<String, Boolean> allowedChannels = new HashMap<>();
@@ -33,6 +34,10 @@ public class Config {
             lvlRoles.put(lvlRole, "");
         }
 
+        for (ClassRoles classRole : ClassRoles.values()) {
+            classRoles.put(classRole, "");
+        }
+
         roleRequirements.put(AllSlashCommands.shutdown, Roles.OwnerRole);
         roleRequirements.put(AllSlashCommands.reloadconfig, Roles.OwnerRole);
         roleRequirements.put(AllSlashCommands.checkforupdates, Roles.ChiefRole);
@@ -54,6 +59,8 @@ public class Config {
         roleRequirements.put(AllSlashCommands.editconfigrole, Roles.ChiefRole);
         roleRequirements.put(AllSlashCommands.addtrackedguild, Roles.ChiefRole);
         roleRequirements.put(AllSlashCommands.removetrackedguild, Roles.ChiefRole);
+        roleRequirements.put(AllSlashCommands.sendselfassignedrolemessage, Roles.ChiefRole);
+        roleRequirements.put(AllSlashCommands.editconfigclassrole, Roles.ChiefRole);
     }
 
     public enum Roles {
@@ -82,7 +89,38 @@ public class Config {
         WynnAdminRole,
         WynnContentTeamRole,
         WynnModeratorRole,
-        WynnVetRole
+        WynnVetRole,
+        AnniRole,
+        EventsRole,
+        BombBellRole,
+        TheyThemRole,
+        HeHimRole,
+        SheHerRole,
+        WarPingRole,
+        WarrerRole
+    }
+
+    public enum ClassRoles {
+        Archer,
+        Boltslinger,
+        Trapper,
+        Sharpshooter,
+        Warrior,
+        Fallen,
+        BattleMonk,
+        Paladin,
+        Mage,
+        RiftWalker,
+        LightBender,
+        Arcanist,
+        Assassin,
+        Trickster,
+        Shadestepper,
+        Acrobat,
+        Shaman,
+        Summoner,
+        Ritualist,
+        Acolyte
     }
 
     public enum Channels {

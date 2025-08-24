@@ -7,6 +7,7 @@ import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
 import sidly.discord_bot.Config;
 import sidly.discord_bot.ConfigManager;
+import sidly.discord_bot.RoleUtils;
 import sidly.discord_bot.Utils;
 
 import java.util.Map;
@@ -19,6 +20,7 @@ public enum AllSlashCommands {
     editconfigchannel("edit channels config"),
     editconfigrole("edit role config"),
     editconfiglvlrole("set the roles for lvls"),
+    editconfigclassrole("set the roles for classes and archetypes"),
     getconfigoptions("shows config options"),
     checkforupdates("check if the bot has any updates"),
     getbotversion("gets the current bot version"),
@@ -43,6 +45,7 @@ public enum AllSlashCommands {
     updateplayerranks("update the ranks of all members in your guild"),
     guildstats("view the stats of a guild", 2),
     notindiscord("view players who are in your guild but not in your discord"),
+    sendselfassignedrolemessage("sen the message so users can give themselves roles to a channel"),
     addchannelrestriction("if any channels are whitelisted only whitelisted channels will allow commands"),
     adddemotionexeption("adds a player to be excluded from demotion checks, default length is forever"),
     addinactivityexeption("adds a custom inactivity threshold for a player, default length is forever"),
@@ -127,7 +130,7 @@ public enum AllSlashCommands {
         Config.Roles requiredRole = getRequiredRole();
         if (requiredRole == null) {
             action.accept(event);
-        } else if (Utils.hasRole(event.getMember(), ConfigManager.getConfigInstance().roles.get(requiredRole))) {
+        } else if (RoleUtils.hasRole(event.getMember(), ConfigManager.getConfigInstance().roles.get(requiredRole))) {
             action.accept(event);
         } else if (requiredRole == Config.Roles.RecruitRole ||
                 requiredRole == Config.Roles.RecruiterRole ||
