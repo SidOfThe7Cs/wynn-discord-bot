@@ -120,8 +120,35 @@ public class Config {
         Shaman,
         Summoner,
         Ritualist,
-        Acolyte
-    }
+        Acolyte;
+
+        public static Config.ClassRoles getRoleFromName(String name) {
+            return switch (name.toLowerCase()) {
+                case "warrior" -> Config.ClassRoles.Warrior;
+                case "fallen" -> Config.ClassRoles.Fallen;
+                case "battle monk", "battlemonk" -> Config.ClassRoles.BattleMonk;
+                case "paladin" -> Config.ClassRoles.Paladin;
+                case "mage" -> Config.ClassRoles.Mage;
+                case "riftwalker" -> ClassRoles.RiftWalker;
+                case "light bender", "lightbender" -> Config.ClassRoles.LightBender;
+                case "arcanist" -> Config.ClassRoles.Arcanist;
+                case "archer" -> Config.ClassRoles.Archer;
+                case "boltslinger" -> Config.ClassRoles.Boltslinger;
+                case "trapper" -> Config.ClassRoles.Trapper;
+                case "sharpshooter" -> Config.ClassRoles.Sharpshooter;
+                case "assassin" -> Config.ClassRoles.Assassin;
+                case "trickster" -> Config.ClassRoles.Trickster;
+                case "shadestepper" -> Config.ClassRoles.Shadestepper;
+                case "acrobat" -> Config.ClassRoles.Acrobat;
+                case "shaman" -> Config.ClassRoles.Shaman;
+                case "summoner" -> Config.ClassRoles.Summoner;
+                case "ritualist" -> Config.ClassRoles.Ritualist;
+                case "acolyte" -> Config.ClassRoles.Acolyte;
+                default -> null; // unknown selection
+            };
+        }
+
+        }
 
     public enum Channels {
         ModerationChannel,

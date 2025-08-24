@@ -93,7 +93,8 @@ public class RoleUtils {
         return removeRolesExcept(member, allWynnRankRoleIds, wynnRankRoleId);
     }
 
-    public static String removeClassRolesExcept(Member member, String classRoleId){
+    public static String removeClassRolesExcept(Member member, Config.ClassRoles classRole){
+        String classRoleId = ConfigManager.getConfigInstance().classRoles.get(classRole);
         // All support rank role IDs from config
         Set<String> allClassRoleIds = Stream.of(
                         ConfigManager.getConfigInstance().classRoles.get(Config.ClassRoles.Warrior),
@@ -108,7 +109,8 @@ public class RoleUtils {
         return removeRolesExcept(member, allClassRoleIds, classRoleId);
     }
 
-    public static String removeArchetypeRolesExcept(Member member, String ArchetypeRoleId){
+    public static String removeArchetypeRolesExcept(Member member, Config.ClassRoles ArchetypeRole){
+        String ArchetypeRoleId = ConfigManager.getConfigInstance().classRoles.get(ArchetypeRole);
         // All support rank role IDs from config
         Set<String> allArchetypeRoleIds = Stream.of(
                         ConfigManager.getConfigInstance().classRoles.get(Config.ClassRoles.Boltslinger),

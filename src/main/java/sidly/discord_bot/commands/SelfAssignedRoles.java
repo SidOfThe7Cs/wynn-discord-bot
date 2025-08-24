@@ -255,8 +255,9 @@ public class SelfAssignedRoles {
         Map<StringSelectorIds, List<String>> userSelections = selections.get(member.getId());
         StringBuilder sb = new StringBuilder();
 
-        sb.append(RoleUtils.removeClassRolesExcept(member, userSelections.get(StringSelectorIds.CLASS).getFirst()));
-        sb.append(RoleUtils.removeArchetypeRolesExcept(member, userSelections.get(StringSelectorIds.ARCHETYPE).getFirst()));
+        sb.append(RoleUtils.removeClassRolesExcept(member, Config.ClassRoles.getRoleFromName(userSelections.get(StringSelectorIds.CLASS).getFirst())));
+        sb.append(RoleUtils.removeArchetypeRolesExcept(member, Config.ClassRoles.getRoleFromName(userSelections.get(StringSelectorIds.ARCHETYPE).getFirst())));
+
         List<String> pings = userSelections.get(StringSelectorIds.PINGS);
         List<String> pronouns = userSelections.get(StringSelectorIds.PRONOUNS);
 
