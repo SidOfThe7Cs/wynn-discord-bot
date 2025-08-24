@@ -367,7 +367,11 @@ public class GuildCommands {
 
         StringBuilder sb = new StringBuilder();
         sb.append("**").append(rank).append(". ").append(Utils.escapeDiscordMarkdown(playerData.username)).append(" (").append(playerData.guild.rank).append(")**");
-        sb.append(playerData.online ? "Online " + playerData.server + "\n" : "Offline, last seen " + Utils.timeSinceIso(playerData.lastJoin, ChronoUnit.HOURS) + " hours ago\n");
+        long lastSeen = Utils.timeSinceIso(playerData.lastJoin, ChronoUnit.MINUTES);
+        sb.append(playerData.online
+                ? "Online " + playerData.server + "\n"
+                : "Offline, last seen " + (lastSeen > 100 ? (int)(lastSeen / 60) + " hours" : lastSeen + " minutes") + " ago\n");
+
         sb.append(Utils.formatNumbersInString(String.valueOf(guildMemberData.contributed))).append(" XP (").append(xpPerDayMillions).append("M/day)\n");
         sb.append("Joined ").append(joinedDaysAgo).append(" days ago\n");
         if (playerData.globalData != null) {

@@ -44,7 +44,6 @@ public class MassGuild {
     private static int count = 0;
     private static int attempsCounter = 0;
     private static long startTime;
-    private static List<String> statusCodes = new ArrayList<>();
 
     public static void init() {
         client = HttpClient.newHttpClient();
@@ -173,14 +172,15 @@ public class MassGuild {
         httpResponseCompletableFuture.thenAccept(response -> handleApiResponse(prefix, response)).exceptionally(ex -> {
             Throwable cause = ex instanceof CompletionException ? ex.getCause() : ex;
 
-            if (cause instanceof TimeoutException) {
-                statusCodes.add("timeout");
+            if (cause instanceof java.net.SocketException) {
+                tempHighPrioQueue.addFirst(prefix); // retry
+            } else if (cause instanceof TimeoutException) {
                 tempHighPrioQueue.addFirst(prefix); // retry
             } else if (cause instanceof IOException && cause.getMessage().contains("GOAWAY")) {
-                statusCodes.add("goaway");
+                tempHighPrioQueue.addFirst(prefix); // retry
+            } else if (cause instanceof IOException && cause.getMessage().contains("Connection reset")) {
                 tempHighPrioQueue.addFirst(prefix); // retry
             } else {
-                statusCodes.add("network/connection error");
                 cause.printStackTrace();
             }
             return null;
@@ -195,7 +195,6 @@ public class MassGuild {
         //String remaining = response.headers().map().getOrDefault("ratelimit-remaining", List.of("unknown")).getFirst();
 
         int status = response.statusCode();
-        statusCodes.add(String.valueOf(status));
         if (status == 404) {
             System.out.println("not found");
             return;
@@ -284,15 +283,15 @@ public class MassGuild {
                     .orTimeout(30, TimeUnit.SECONDS);
             httpResponseCompletableFuture.thenAccept(responseName -> handleApiResponse(prefix, responseName)).exceptionally(ex -> {
                 Throwable cause = ex instanceof CompletionException ? ex.getCause() : ex;
-
-                if (cause instanceof TimeoutException) {
-                    statusCodes.add("timeout");
+                if (cause instanceof java.net.SocketException) {
+                    tempHighPrioQueue.addFirst(prefix); // retry
+                } else if (cause instanceof TimeoutException) {
                     tempHighPrioQueue.addFirst(prefix); // retry
                 } else if (cause instanceof IOException && cause.getMessage().contains("GOAWAY")) {
-                    statusCodes.add("goaway");
+                    tempHighPrioQueue.addFirst(prefix); // retry
+                } else if (cause instanceof IOException && cause.getMessage().contains("Connection reset")) {
                     tempHighPrioQueue.addFirst(prefix); // retry
                 } else {
-                    statusCodes.add("network/connection error");
                     cause.printStackTrace();
                 }
                 return null;
@@ -347,13 +346,15 @@ public class MassGuild {
                     })
                     .exceptionally(ex -> {
                         Throwable cause = ex instanceof CompletionException ? ex.getCause() : ex;
-
-                        if (cause instanceof TimeoutException) {
+                        if (cause instanceof java.net.SocketException) {
+                            System.err.println("SocketException: " + Players.get(uuid));
+                        } else if (cause instanceof TimeoutException) {
                             System.out.println("timeout " + Players.get(uuid));
                         } else if (cause instanceof IOException && cause.getMessage().contains("GOAWAY")) {
 
+                        } else if (cause instanceof IOException && cause.getMessage().contains("Connection reset")) {
+
                         } else {
-                            statusCodes.add("network/connection error");
                             cause.printStackTrace();
                         }
                         return null;

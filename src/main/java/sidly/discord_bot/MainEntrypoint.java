@@ -247,7 +247,8 @@ public class MainEntrypoint extends ListenerAdapter {
         commands.addCommands(AllSlashCommands.trackedguilds.getBaseCommandData()
                 .addOption(INTEGER, "days", "average over the last number of days", false));
         AllSlashCommands.trackedguilds.setAction(GuildCommands::viewTrackedGuilds);
-        PageBuilder.PaginationManager.register(PaginationIds.GUILD.name(), trackedGuild -> GuildCommands.guildConverter((GuildAverages) trackedGuild), "Average activity for tracked guilds",9);
+        PageBuilder.PaginationManager.register(PaginationIds.GUILD.name(),
+                trackedGuild -> GuildCommands.guildConverter((GuildAverages) trackedGuild), "Average activity for tracked guilds",9);
 
         commands.addCommands(AllSlashCommands.getsysteminfo.getBaseCommandData());
         AllSlashCommands.getsysteminfo.setAction(HelpCommands::getSystemInfo);
@@ -278,6 +279,11 @@ public class MainEntrypoint extends ListenerAdapter {
                         )
         ));
         AllSlashCommands.stoptimer.setAction(TimerCommands::stopTimer);
+
+        commands.addCommands(AllSlashCommands.say.getBaseCommandData()
+                .addOption(CHANNEL, "channel", "channel", true)
+                .addOption(STRING, "message", "what to say", true));
+        AllSlashCommands.say.setAction(HelpCommands::sendMessage);
 
         commands.addCommands(
                 AllSlashCommands.adddemotionexeption.getBaseCommandData()

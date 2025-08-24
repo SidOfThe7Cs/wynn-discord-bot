@@ -1,6 +1,7 @@
 package sidly.discord_bot.commands;
 
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.channel.unions.GuildChannelUnion;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import sidly.discord_bot.ConfigManager;
 import sidly.discord_bot.page.PageBuilder;
@@ -62,5 +63,13 @@ public class HelpCommands {
 
         if (command.getAction() == null) sb.append("this command currently does nothing\n");
         return sb.toString();
+    }
+
+    public static void sendMessage(SlashCommandInteractionEvent event) {
+        GuildChannelUnion channel = event.getOption("channel").getAsChannel();
+        String message = event.getOption("message").getAsString();
+
+        channel.asTextChannel().sendMessage(message);
+        event.reply("done").setEphemeral(true).queue();
     }
 }

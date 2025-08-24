@@ -61,6 +61,7 @@ public class Config {
         roleRequirements.put(AllSlashCommands.removetrackedguild, Roles.ChiefRole);
         roleRequirements.put(AllSlashCommands.sendselfassignedrolemessage, Roles.ChiefRole);
         roleRequirements.put(AllSlashCommands.editconfigclassrole, Roles.ChiefRole);
+        roleRequirements.put(AllSlashCommands.say, Roles.ChiefRole);
     }
 
     public enum Roles {
