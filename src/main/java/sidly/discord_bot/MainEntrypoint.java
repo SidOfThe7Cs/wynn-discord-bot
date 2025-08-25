@@ -219,6 +219,10 @@ public class MainEntrypoint extends ListenerAdapter {
                 .addOption(CHANNEL, "channel", "channel", true));
         AllSlashCommands.sendselfassignedrolemessage.setAction(SelfAssignedRoles::sendMessage);
 
+        commands.addCommands(AllSlashCommands.sendwarrolesmessage.getBaseCommandData()
+                .addOption(CHANNEL, "channel", "channel", true));
+        AllSlashCommands.sendwarrolesmessage.setAction(SelfAssignedRoles::sendWarMessage);
+
         commands.addCommands(AllSlashCommands.addchannelrestriction.getBaseCommandData()
                 .addOption(CHANNEL, "channel", "channel", true)
                 .addOptions(

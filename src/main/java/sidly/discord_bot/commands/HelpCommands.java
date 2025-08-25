@@ -69,7 +69,7 @@ public class HelpCommands {
         GuildChannelUnion channel = event.getOption("channel").getAsChannel();
         String message = event.getOption("message").getAsString();
 
-        channel.asTextChannel().sendMessage(message);
+        channel.asTextChannel().sendMessage(message).queue();
         event.reply("done").setEphemeral(true).queue();
     }
 }

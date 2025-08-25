@@ -1,7 +1,6 @@
 package sidly.discord_bot.commands;
 
 import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
@@ -24,8 +23,33 @@ public class SelfAssignedRoles {
 
         Button button = Button.primary("configure_roles", "Configure Roles");
 
-        channel.sendMessage("").setComponents(ActionRow.of(button)).queue();
+        channel.sendMessage("Click the button below to get roles for this discord!\n" +
+                "Options:\n" +
+                "• Class & Archetype roles\n" +
+                "• Pronoun roles\n" +
+                "• Guild Pingable roles").setComponents(ActionRow.of(button)).queue();
 
+        event.reply("sent").setEphemeral(true).queue();
+    }
+
+    public static void sendWarMessage(SlashCommandInteractionEvent event) {
+        TextChannel channel = (TextChannel) event.getOption("channel").getAsChannel();
+
+        StringSelectMenu warMenu = StringSelectMenu.create(StringSelectorIds.WAR.name())
+                .setPlaceholder("Select War Roles")
+                .setMinValues(0)
+                .setMaxValues(6)
+                .addOptions(
+                        SelectOption.of("Trial Solo", "trial_solo"),
+                        SelectOption.of("Trial Dps", "trial_dps"),
+                        SelectOption.of("Trial Tank", "trial_tank"),
+                        SelectOption.of("Trial Healer", "trial_healer"),
+                        SelectOption.of("Trial Eco", "trial_eco"),
+                        SelectOption.of("War Ping", "war_ping")
+                )
+                .build();
+
+        channel.sendMessage("If you are interested in warring, and want to help out, click this button below to get your roles!").setComponents(ActionRow.of(warMenu)).queue();
         event.reply("sent").setEphemeral(true).queue();
     }
 
@@ -127,6 +151,34 @@ public class SelfAssignedRoles {
                 event.deferEdit().queue();
             }
 
+
+            case WAR -> {
+                Map<String, Config.Roles> VALUE_TO_ROLE = Map.of(
+                        "trial_solo", Config.Roles.TrialSoloRole,
+                        "trial_dps", Config.Roles.TrialDpsRole,
+                        "trial_tank", Config.Roles.TrialTankRole,
+                        "trial_healer", Config.Roles.TrialHealerRole,
+                        "trial_eco", Config.Roles.TrialEcoRole,
+                        "war_ping", Config.Roles.WarPingRole
+                );
+
+                StringBuilder sb = new StringBuilder();
+                List<String> values = event.getValues();
+                VALUE_TO_ROLE.forEach((key, role) -> {
+                    if (values.contains(key)) {
+                        sb.append(RoleUtils.addRole(event.getMember(), role));
+                    } else {
+                        sb.append(RoleUtils.removeRole(event.getMember(), role));
+                    }
+                });
+
+                if (values.isEmpty()) {
+                    sb.append(RoleUtils.removeRole(event.getMember(), Config.Roles.WarrerRole));
+                } else sb.append(RoleUtils.addRole(event.getMember(), Config.Roles.WarrerRole));
+
+                event.reply(sb.toString()).setEphemeral(true).queue();
+            }
+
         }
     }
 
@@ -138,7 +190,11 @@ public class SelfAssignedRoles {
             String chosenClass = selections.get(userId).get(StringSelectorIds.CLASS).getFirst();
 
             // Generate archetype dropdown based on class
-            StringSelectMenu archetypes = switch (chosenClass) {
+            if (chosenClass.equals("none")) {
+                selections.get(userId).put(StringSelectorIds.ARCHETYPE, new ArrayList<>());
+            }
+
+            return switch (chosenClass) {
                 case "warrior" -> StringSelectMenu.create(StringSelectorIds.ARCHETYPE.name())
                         .setPlaceholder("Select your favorite archetype")
                         .addOptions(
@@ -188,9 +244,8 @@ public class SelfAssignedRoles {
                         .build();
             };
 
-            return archetypes;
-
         } else {
+            selections.get(userId).put(StringSelectorIds.ARCHETYPE, new ArrayList<>());
             return StringSelectMenu.create(StringSelectorIds.ARCHETYPE.name())
                     .setPlaceholder("Select a class first")
                     .addOptions(
@@ -247,6 +302,7 @@ public class SelfAssignedRoles {
         CLASS,
         ARCHETYPE,
         PINGS,
+        WAR,
         PRONOUNS
     }
     

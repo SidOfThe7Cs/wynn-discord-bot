@@ -46,6 +46,7 @@ public enum AllSlashCommands {
     guildstats("view the stats of a guild", 2),
     notindiscord("view players who are in your guild but not in your discord"),
     say("send a message"),
+    sendwarrolesmessage("send a message to let users give themselves war roles"),
     sendselfassignedrolemessage("sen the message so users can give themselves roles to a channel"),
     addchannelrestriction("if any channels are whitelisted only whitelisted channels will allow commands"),
     adddemotionexeption("adds a player to be excluded from demotion checks, default length is forever"),
