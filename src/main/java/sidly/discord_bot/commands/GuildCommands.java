@@ -141,48 +141,69 @@ public class GuildCommands {
     }
 
     public static void viewActiveHours(SlashCommandInteractionEvent event) {
-        boolean codeBlock = Optional.ofNullable(event.getOption("use_code_block"))
-                .map(OptionMapping::getAsBoolean)
-                .orElse(false);
+        event.deferReply(false).queue(hook -> {
 
-        String guildPrefix = event.getOption("guild_prefix").getAsString();
-        String uuid = AllGuilds.getGuild(guildPrefix).uuid();
-        int days = Optional.ofNullable(event.getOption("days"))
-                .map(OptionMapping::getAsInt)
-                .orElse(30);
+            boolean codeBlock = Optional.ofNullable(event.getOption("use_code_block"))
+                    .map(OptionMapping::getAsBoolean)
+                    .orElse(true);
+
+            String guildPrefix = event.getOption("guild_prefix").getAsString();
+            String uuid = AllGuilds.getGuild(guildPrefix).uuid();
+            int days = Optional.ofNullable(event.getOption("days"))
+                    .map(OptionMapping::getAsInt)
+                    .orElse(30);
 
 
-        if (!GuildActivity.containsPrefix(guildPrefix)) {
-            event.reply("guild not found").setEphemeral(true).queue();
-            return;
-        }
+            if (!GuildActivity.containsPrefix(guildPrefix)) {
+                hook.editOriginal("guild not found").queue();
+                return;
+            }
 
-        EmbedBuilder embed = new EmbedBuilder();
-        embed.setColor(Color.CYAN);
-        embed.setTitle("[" + guildPrefix + "] " + GuildActivity.getGuildName(uuid) + " Active Hours\n");
+            EmbedBuilder embed = new EmbedBuilder();
+            embed.setColor(Color.CYAN);
+            embed.setTitle("[" + guildPrefix + "] " + GuildActivity.getGuildName(uuid) + " Active Hours\n");
 
-        List<String> hours = new ArrayList<>();
-        List<String> players = new ArrayList<>();
-        List<String> captains = new ArrayList<>();
+            List<String> hours = new ArrayList<>();
+            List<String> players = new ArrayList<>();
+            List<String> captains = new ArrayList<>();
 
-        for (int hour = 0; hour < 24; hour++) {
-            double averagePlayers = GuildActivity.getAverageOnline(uuid, hour, days, false);
-            double averageCaptains = GuildActivity.getAverageOnline(uuid, hour, days, true);
+            StringBuilder sb = new StringBuilder();
+            sb.append("00:00 is your ").append(Utils.getTimestampFromInt(0)).append("\n");
+            sb.append("``` Hour ┃ Players ┃ Captains\n━━━━━━╋━━━━━━━━━╋━━━━━━━━━\n");
 
-            // If the average is negative (no data), show "--.00"
-            String playersStr = averagePlayers < 0 ? "--.--" : String.format("%02.2f", averagePlayers);
-            String captainsStr = averageCaptains < 0 ? "--.--" : String.format("%02.2f", averageCaptains);
+            for (int hour = 0; hour < 24; hour++) {
+                double averagePlayers = GuildActivity.getAverageOnline(uuid, hour, days, false);
+                double averageCaptains = GuildActivity.getAverageOnline(uuid, hour, days, true);
 
-            hours.add(Utils.getTimestampFromInt(hour));
-            players.add(playersStr);
-            captains.add(captainsStr);
-        }
+                if (codeBlock) {
+                    sb.append(String.format(
+                            "%02d:00 ┃ %s%.1f   ┃ %s%.1f%n",
+                            hour,
+                            (averagePlayers >= 10.0 ? " " : "  "), averagePlayers,
+                            (averageCaptains >= 10.0 ? " " : "  "), averageCaptains
+                    ));
 
-        embed.addField("Hours", String.join("\n", hours), true);
-        embed.addField("Players", String.join("\n", players), true);
-        embed.addField("Captains", String.join("\n", captains), true);
+                } else {
+                    String playersStr = averagePlayers < 0 ? "--.--" : String.format("%02.2f", averagePlayers);
+                    String captainsStr = averageCaptains < 0 ? "--.--" : String.format("%02.2f", averageCaptains);
 
-        event.replyEmbeds(embed.build()).queue();
+                    hours.add(Utils.getTimestampFromInt(hour));
+                    players.add(playersStr);
+                    captains.add(captainsStr);
+                }
+            }
+
+            if (codeBlock) {
+                sb.append("```");
+                embed.setDescription(sb.toString());
+            } else {
+                embed.addField("Hours", String.join("\n", hours), true);
+                embed.addField("Players", String.join("\n", players), true);
+                embed.addField("Captains", String.join("\n", captains), true);
+            }
+
+            hook.editOriginalEmbeds(embed.build()).queue();
+        });
     }
 
     public static int guildDays = -1;
