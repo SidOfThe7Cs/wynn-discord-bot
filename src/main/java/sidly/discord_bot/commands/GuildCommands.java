@@ -1,6 +1,7 @@
 package sidly.discord_bot.commands;
 
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.ClientType;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -140,11 +141,15 @@ public class GuildCommands {
     }
 
     public static void viewActiveHours(SlashCommandInteractionEvent event) {
+        boolean codeBlock = Optional.ofNullable(event.getOption("use_code_block"))
+                .map(OptionMapping::getAsBoolean)
+                .orElse(false);
+
         String guildPrefix = event.getOption("guild_prefix").getAsString();
         String uuid = AllGuilds.getGuild(guildPrefix).uuid();
         int days = Optional.ofNullable(event.getOption("days"))
                 .map(OptionMapping::getAsInt)
-                .orElse(-1);
+                .orElse(30);
 
 
         if (!GuildActivity.containsPrefix(guildPrefix)) {
@@ -185,7 +190,7 @@ public class GuildCommands {
     public static void viewTrackedGuilds(SlashCommandInteractionEvent event) {
         guildDays = Optional.ofNullable(event.getOption("days"))
                 .map(OptionMapping::getAsInt)
-                .orElse(28);
+                .orElse(30);
 
 
         PageBuilder.PaginationState pageState = PageBuilder.PaginationManager.get(PaginationIds.GUILD.name());
@@ -422,9 +427,66 @@ public class GuildCommands {
                 sb.append(username).append(" is in the discord but not verified\n");
             }
         }
+    }
 
-        event.replyEmbeds(Utils.getEmbed("Not-Verified", sb.toString())).queue();
+    public static void viewLastLogins(SlashCommandInteractionEvent event) {
+        String guildPrefix = event.getOption("guild").getAsString();
+
+        event.deferReply(false).addComponents(PageBuilder.getPaginationActionRow(PaginationIds.LAST_LOGINS)).queue(hook -> {
+
+            GuildInfo guildInfo = ApiUtils.getGuildInfo(guildPrefix);
+            if (guildInfo == null || guildInfo.members == null) {
+                hook.editOriginal("failed").queue();
+                return;
+            }
+
+            Map<String, GuildInfo.MemberInfo> allMembers = guildInfo.members.getAllMembers();
+
+            List<LastLoginInfo> sortedMembers = new ArrayList<>();
+
+            Set<PlayerDataShortened> memberData = Players.getAll(allMembers.keySet());
+
+            for (PlayerDataShortened playerDataShortened : memberData) {
+                if (playerDataShortened == null) {
+                    continue;
+                }
+                String username = playerDataShortened.username;
+                long lastJoined = Utils.timeSinceIso(playerDataShortened.lastJoined, ChronoUnit.DAYS);
+                Utils.RankList rankOfMember = guildInfo.members.getRankOfMember(playerDataShortened.uuid);
+                int highestLvl = playerDataShortened.highestLvl;
+
+                sortedMembers.add(new LastLoginInfo(playerDataShortened.uuid, username, lastJoined, rankOfMember, highestLvl));
+            }
+
+            sortedMembers.sort(Comparator.comparingLong(LastLoginInfo::lastJoinedDays).reversed());
+
+            PageBuilder.PaginationState pageState = PageBuilder.PaginationManager.get(PaginationIds.LAST_LOGINS.name());
+            pageState.reset(sortedMembers);
+            pageState.title = "[" + guildInfo.prefix + "] " + guildInfo.name + " Last Logins";
+
+            EmbedBuilder embed = pageState.buildEmbedPage();
+
+            if (embed == null) {
+                hook.editOriginalEmbeds(Utils.getEmbed("well this is awkward", "something went wrong")).queue();
+                return;
+            }
+
+            hook.editOriginalEmbeds(embed.build()).queue();
+        });
+    }
+
+    public static String lastLoginsConverter(LastLoginInfo m) {
+        return String.format("%s joined %d days ago (%s, lvl %d)%n",
+                m.username(), m.lastJoinedDays(), m.rank(), m.highestLvl());
     }
 
     public record GuildStatEntry(String uuid, GuildInfo.MemberInfo guildMemberData){}
+    public record LastLoginInfo(
+            String uuid,
+            String username,
+            long lastJoinedDays,
+            Utils.RankList rank,
+            int highestLvl
+    ) {}
+
 }

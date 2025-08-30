@@ -180,6 +180,12 @@ public class MainEntrypoint extends ListenerAdapter {
                 .addOption(STRING, "guild_prefix", "e", true));
         AllSlashCommands.online.setAction(GuildCommands::showOnlineMembers);
 
+        commands.addCommands(AllSlashCommands.lastlogins.getBaseCommandData()
+                .addOption(STRING, "guild", "e", true));
+        AllSlashCommands.lastlogins.setAction(GuildCommands::viewLastLogins);
+        PageBuilder.PaginationManager.register(PaginationIds.LAST_LOGINS.name(),
+                stats -> GuildCommands.lastLoginsConverter((GuildCommands.LastLoginInfo) stats), "Last Logins", 25);
+
         commands.addCommands(AllSlashCommands.verify.getBaseCommandData()
                 .addOption(STRING, "username", "e", true));
         AllSlashCommands.verify.setAction(VerificationCommands::verify);
@@ -245,6 +251,7 @@ public class MainEntrypoint extends ListenerAdapter {
 
         commands.addCommands(AllSlashCommands.activehours.getBaseCommandData()
                 .addOption(STRING, "guild_prefix", "e", true)
+                .addOption(BOOLEAN, "use_code_block", "doesn't show timestamps in favor of being readable on mobile", false)
                 .addOption(INTEGER, "days", "average over the last number of days", false));
         AllSlashCommands.activehours.setAction(GuildCommands::viewActiveHours);
 

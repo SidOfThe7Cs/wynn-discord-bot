@@ -6,5 +6,6 @@ public enum PaginationIds {
     COMMAND_LIST,
     GUILD_STATS,
     AVERAGE_PLAYTIME,
+    LAST_LOGINS,
     CONFIG_LIST
 }
