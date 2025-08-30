@@ -62,6 +62,7 @@ public class MassGuild {
         queue.addAll(AllGuilds.getTracked(false));
         System.out.println("tracked guilds: " + queue.size());
         lowPriorityQueue.addAll(AllGuilds.getTracked(true));
+        cleanQueue(ApiUtils.getAllGuildsList());
 
         next();
 
@@ -103,11 +104,18 @@ public class MassGuild {
         }
     }
 
+    public static void cleanQueue(Map<String, GuildName> guildMap) {
+        queue.removeIf(id -> !guildMap.containsKey(id));
+        lowPriorityQueue.removeIf(id -> !guildMap.containsKey(id));
+    }
+
+
     public static void next() {
 
         if (updateNext && !isUpdating) {
             isUpdating = true;
             Map<String, GuildName> allGuildsList = ApiUtils.getAllGuildsList();
+            cleanQueue(allGuildsList);
             AllGuilds.addGuilds(allGuildsList);
             queue.addAll(
                     allGuildsList.values().stream()
@@ -217,7 +225,7 @@ public class MassGuild {
             return;
         }
         if (status == 500) {
-            System.out.println("failed to connect to api (500) " + prefix);
+            System.out.println("failed to connect to api (500) " + prefix); //TODO
             return;
         }
 

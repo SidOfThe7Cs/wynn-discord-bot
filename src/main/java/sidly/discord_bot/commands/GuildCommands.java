@@ -154,7 +154,7 @@ public class GuildCommands {
 
         EmbedBuilder embed = new EmbedBuilder();
         embed.setColor(Color.CYAN);
-        embed.setTitle("[" + guildPrefix + "] " + GuildActivity.getGuildName(uuid) + "Active Hours\n");
+        embed.setTitle("[" + guildPrefix + "] " + GuildActivity.getGuildName(uuid) + " Active Hours\n");
 
         List<String> hours = new ArrayList<>();
         List<String> players = new ArrayList<>();

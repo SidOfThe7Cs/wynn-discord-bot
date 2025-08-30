@@ -62,6 +62,7 @@ public class Config {
         roleRequirements.put(AllSlashCommands.sendselfassignedrolemessage, Roles.ChiefRole);
         roleRequirements.put(AllSlashCommands.editconfigclassrole, Roles.ChiefRole);
         roleRequirements.put(AllSlashCommands.say, Roles.ChiefRole);
+        roleRequirements.put(AllSlashCommands.sendwarrolesmessage, Roles.ChiefRole);
     }
 
     public enum Roles {

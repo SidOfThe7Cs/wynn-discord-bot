@@ -19,6 +19,7 @@ public class RoleUtils {
                 removeRole(member, Config.Roles.GuildRaidsRole) +
                 removeRole(member, Config.Roles.WarrerRole) +
                 removeRole(member, Config.Roles.WarPingRole) +
+                removeRole(member, Config.Roles.EventsRole) +
                 removeRole(member, Config.Roles.GiveawayRole);
     }
 

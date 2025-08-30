@@ -60,8 +60,17 @@ Server owner can always run commands
 
 /delete old versions
 
-war roles message
 Active hours and tracked guild should only be last 4 weeks
 
+/lastlogins Takes in 1 input which is a guild identifier (name or prefix) and will return a list of all the members of that guild ordered by how long it has been since they last logged in. It also shows their guild rank and highest character level
 
+/updateallplayers
+
+active hours uses code block if sent from mobile
+
+
+
+
+/edit config cmd that sends a thing with components v2 maybe
+have either pages or cmd parameters and have tokens as a seperate cmd
  */
