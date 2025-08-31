@@ -1,5 +1,8 @@
 import sidly.discord_bot.Utils;
+import sidly.discord_bot.database.PlaytimeHistoryList;
 import sidly.discord_bot.database.SQLDB;
+import sidly.discord_bot.database.tables.PlaytimeHistory;
+import sidly.discord_bot.database.tables.UuidMap;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -13,17 +16,15 @@ public class TestEntrypoint {
     private static List<String> list = new ArrayList<>();
 
     public static void main(String[] args) throws SQLException {
-        //Map<String, GuildName> testApiResponce = ApiUtils.getAllGuildsList();
+        SQLDB.init();
 
-        //Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        //System.out.println("there are a total of: " + testApiResponce.entrySet().size() + " guilds");
-
-        //new DynamicTimer(list, TestEntrypoint::testPriont, 7000, 400).start();
-
-        //UuidMap.put("testUser", "123456789");
-        //System.out.println(UuidMap.get("testUser"));
-
-        System.out.println(Utils.getTotalGuildExperience(93, 1));
+        String uuid = UuidMap.getMinecraftIdByUsername("FurbyVessel");
+        PlaytimeHistoryList playtimeHistory = PlaytimeHistory.getPlaytimeHistory(uuid);
+        double averagePlaytime = playtimeHistory.getAverage(1);
+        double averagePlaytime4 = playtimeHistory.getAverage(4);
+        System.out.println("FurbyVessels playtimes (test)");
+        System.out.println(averagePlaytime);
+        System.out.println(averagePlaytime4);
     }
 
     public static void testPriont() {
