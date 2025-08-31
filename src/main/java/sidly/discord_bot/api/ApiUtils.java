@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
+import org.jetbrains.annotations.NotNull;
 import sidly.discord_bot.Config;
 import sidly.discord_bot.ConfigManager;
 import sidly.discord_bot.database.PlayerDataShortened;
@@ -33,6 +34,7 @@ public class ApiUtils {
 
     private static long lastRateLimitUpdate = 0;
 
+    @NotNull
     public static PlayerProfile getPlayerData(String username){
         String apiToken = ConfigManager.getConfigInstance().other.get(Config.Settings.ApiToken);
         try {
@@ -53,13 +55,11 @@ public class ApiUtils {
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
             int status = response.statusCode();
             if (status == 404) {
-                return null;
+                return new PlayerProfile(response.statusCode());
             }
 
             String body = response.body().trim();
             if (!(body.startsWith("{") || body.startsWith("["))) {
-                System.out.println("status code: " + status);
-                System.err.println("Unexpected response: " + body);
                 return new PlayerProfile(response.statusCode());
             }
             parseRateLimit(response);

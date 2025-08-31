@@ -233,14 +233,19 @@ public class VerificationCommands {
         String uuid = UuidMap.getMinecraftIdByUsername(nickname.toLowerCase()) == null ? nickname : UuidMap.getMinecraftIdByUsername(nickname.toLowerCase());
 
         PlayerProfile playerData = ApiUtils.getPlayerData(uuid);
-        if (playerData == null || playerData.playersMultiselectorMap != null) {
+        if (playerData.statusCode == 520 || playerData.statusCode == 500 || playerData.statusCode == 522) {
+            return "failed to connect to api";
+        }
+
+        if (playerData.statusCode == 404 || playerData.playersMultiselectorMap != null) {
             System.out.println("unverifying " + nickname);
 
-            String text = RoleUtils.removeRolesUnverify(member);
-            //Utils.sendToModChannel("**Updates Roles For **" + member.getAsMention(), text, true);
-            return text;
-        } else if (playerData.statusCode == 520) {
-            return "failed to connect to api";
+            return RoleUtils.removeRolesUnverify(member);
+        }
+
+        if (playerData.statusCode != 200) {
+            System.out.println("Unhandled status code " + playerData.statusCode);
+            return "unhandled status code";
         }
 
         UuidMap.addMinecraftId(nickname.toLowerCase(), playerData.uuid);

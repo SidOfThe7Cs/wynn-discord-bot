@@ -54,7 +54,8 @@ public class TestEntrypoint {
 /*
 TODO
 
-add info like number of days to playtime
+add info like number of days to playtime (/checkforinactivity)
+also it seems broken
 
 
 
