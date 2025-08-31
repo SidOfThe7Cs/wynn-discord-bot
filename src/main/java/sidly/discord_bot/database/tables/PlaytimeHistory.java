@@ -92,37 +92,33 @@ public class PlaytimeHistory {
     public static Map<String, PlaytimeHistoryList> getPlaytimeHistoryForAll(Collection<String> uuids) {
         if (uuids.isEmpty()) return Collections.emptyMap();
 
-        // Wrap each UUID in quotes
-        String joinedUuids = uuids.stream()
-                .map(uuid -> "'" + uuid + "'")
-                .collect(Collectors.joining(","));
+        // Build a string of '?' placeholders for each UUID
+        String placeholders = uuids.stream().map(u -> "?").collect(Collectors.joining(","));
+        String sql = "SELECT uuid, playtime, timeLogged FROM playtime_history WHERE uuid IN (" + placeholders + ") ORDER BY uuid, timeLogged ASC";
 
-        // Build the query string
-        String sql = "SELECT * FROM playtime_history WHERE uuid IN (" + joinedUuids + ")";
-
-        // Execute
-        ResultSet rs = SQLDB.executeAndGetQuery(sql);
-        return PlaytimeHistory.fromResultSet(rs);
-    }
-
-    public static Map<String, PlaytimeHistoryList> fromResultSet(ResultSet rs) {
         Map<String, List<PlaytimeHistoryList.PlaytimeHistoryEntry>> tempMap = new HashMap<>();
 
-        try {
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            int index = 1;
+            for (String uuid : uuids) {
+                pstmt.setString(index++, uuid);
+            }
+
+            ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
                 String uuid = rs.getString("uuid");
                 double playtime = rs.getDouble("playtime");
                 long timeLogged = rs.getLong("timeLogged");
 
                 PlaytimeHistoryList.PlaytimeHistoryEntry entry = new PlaytimeHistoryList.PlaytimeHistoryEntry(playtime, timeLogged);
-
                 tempMap.computeIfAbsent(uuid, k -> new ArrayList<>()).add(entry);
             }
+
         } catch (SQLException e) {
             e.printStackTrace();
         }
 
-        // Convert the list of entries into PlaytimeHistoryList for each UUID
+        // Convert to PlaytimeHistoryList
         Map<String, PlaytimeHistoryList> result = new HashMap<>();
         for (Map.Entry<String, List<PlaytimeHistoryList.PlaytimeHistoryEntry>> e : tempMap.entrySet()) {
             result.put(e.getKey(), new PlaytimeHistoryList(e.getValue()));
@@ -130,7 +126,6 @@ public class PlaytimeHistory {
 
         return result;
     }
-
 
     public static List<String> getSortedPlaytimeReport() {
         List<String> results = new ArrayList<>();

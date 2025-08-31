@@ -55,10 +55,6 @@ public class TestEntrypoint {
 /*
 TODO
 
-speed up check for inactivity by inst returning when a condition is met
-
-
-
 Server owner can always run commands
 
 /delete old versions
