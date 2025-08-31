@@ -20,9 +20,9 @@ import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction;
 import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import sidly.discord_bot.api.MassGuild;
 import sidly.discord_bot.commands.*;
-import sidly.discord_bot.commands.demotion_promotion.InactivityCommands;
-import sidly.discord_bot.commands.demotion_promotion.PromotionCommands;
-import sidly.discord_bot.commands.demotion_promotion.RequirementType;
+import sidly.discord_bot.commands.inactivity_promotion.InactivityCommands;
+import sidly.discord_bot.commands.inactivity_promotion.PromotionCommands;
+import sidly.discord_bot.commands.inactivity_promotion.RequirementType;
 import sidly.discord_bot.database.SQLDB;
 import sidly.discord_bot.database.records.GuildAverages;
 import sidly.discord_bot.page.PageBuilder;
@@ -297,24 +297,18 @@ public class MainEntrypoint extends ListenerAdapter {
         AllSlashCommands.say.setAction(HelpCommands::sendMessage);
 
         commands.addCommands(
-                AllSlashCommands.adddemotionexeption.getBaseCommandData()
-                        .addOption(USER, "user", "e", true)
-                        .addOption(INTEGER, "length", "in days")
-        );
-
-        commands.addCommands(
                 AllSlashCommands.addinactivityexeption.getBaseCommandData()
                         .addOption(USER, "user", "e", true)
-                        .addOption(INTEGER, "length", "in days")
+                        .addOption(INTEGER, "length", "in days", true)
         );
+        AllSlashCommands.addinactivityexeption.setAction(InactivityCommands::addException);
 
         commands.addCommands(
                 AllSlashCommands.addpromotionexeption.getBaseCommandData()
                         .addOption(USER, "user", "e", true)
-                        .addOption(INTEGER, "length", "in days")
+                        .addOption(INTEGER, "length", "in days", true)
         );
-
-        commands.addCommands(AllSlashCommands.checkfordemotions.getBaseCommandData());
+        AllSlashCommands.addpromotionexeption.setAction(PromotionCommands::addException);
 
         commands.addCommands(AllSlashCommands.checkforinactivity.getBaseCommandData());
         AllSlashCommands.checkforinactivity.setAction(InactivityCommands::checkForInactivity);
@@ -323,6 +317,8 @@ public class MainEntrypoint extends ListenerAdapter {
         AllSlashCommands.checkforpromotions.setAction(PromotionCommands::checkForPromotions);
         PageBuilder.PaginationManager.register(PaginationIds.PROMOTIONS.name(), entry -> PromotionCommands.promotionConverter((PromotionCommands.PromotionEntry) entry), "Promotions", 8);
 
+        commands.addCommands(AllSlashCommands.getexceptions.getBaseCommandData());
+        AllSlashCommands.getexceptions.setAction(InactivityCommands::getExceptions);
 
         commands.addCommands(AllSlashCommands.addpromotionrequirement.getBaseCommandData().addOptions(
                         new OptionData(OptionType.STRING, "rank", "what rank to add the requirement too", true)

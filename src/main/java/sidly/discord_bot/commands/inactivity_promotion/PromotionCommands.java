@@ -1,4 +1,4 @@
-package sidly.discord_bot.commands.demotion_promotion;
+package sidly.discord_bot.commands.inactivity_promotion;
 
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
@@ -10,9 +10,7 @@ import sidly.discord_bot.api.ApiUtils;
 import sidly.discord_bot.api.GuildInfo;
 import sidly.discord_bot.database.PlayerDataShortened;
 import sidly.discord_bot.database.PlaytimeHistoryList;
-import sidly.discord_bot.database.tables.Players;
-import sidly.discord_bot.database.tables.PlaytimeHistory;
-import sidly.discord_bot.database.tables.UuidMap;
+import sidly.discord_bot.database.tables.*;
 import sidly.discord_bot.page.PageBuilder;
 import sidly.discord_bot.page.PaginationIds;
 
@@ -20,6 +18,7 @@ import java.awt.*;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class PromotionCommands {
@@ -135,8 +134,13 @@ public class PromotionCommands {
 
         if (playerDataShortened == null || guildInfo == null || guildInfo.members == null) return "null error ❌";
 
-
         String uuid = playerDataShortened.uuid;
+
+        Long exception = PromotionExceptions.get(uuid);
+        if (exception != null && exception > System.currentTimeMillis()) {
+            return username + "❌ has a promotions exception that expires " + Utils.getDiscordTimestamp(exception, true);
+        }
+
         Utils.RankList playerRank = guildInfo.members.getRankOfMember(uuid);
         if (playerRank == Utils.RankList.Owner || playerRank == Utils.RankList.Chief) {
             return username + " cant be promoted error ❌";
@@ -332,6 +336,22 @@ public class PromotionCommands {
         sb.append(info.username).append("** is eligible for **").append(promoteTo).append("** rank\n");
         sb.append(info.progress).append("\n");
         return sb.toString();
+    }
+
+    public static void addException(SlashCommandInteractionEvent event) {
+        User user = event.getOption("user").getAsUser();
+        int days = event.getOption("length").getAsInt();
+
+        long timestampExp = TimeUnit.DAYS.toMillis(days) + System.currentTimeMillis();
+
+        String uuid = UuidMap.getMinecraftIdByUsername(event.getGuild().getMember(user).getEffectiveName().toLowerCase());
+        if (uuid == null) {
+            event.reply("user not found in database").setEphemeral(true).queue();
+            return;
+        }
+        PromotionExceptions.add(uuid, timestampExp);
+
+        event.reply("added a promotion exception to \n" + uuid + "\n expires " + Utils.getDiscordTimestamp(timestampExp, true)).setEphemeral(true).queue();
     }
 
     public record PromotionEntry (String uuid, String username, GuildInfo guildInfo, String progress){}

@@ -208,7 +208,6 @@ public class VerificationCommands {
             guild.modifyNickname(member, newNick).queue(nickSuccess -> runUpdate.run());
         });
 
-        UuidMap.addDiscordId(username.toLowerCase(), member.getId());
         return future;
     }
 
@@ -228,6 +227,8 @@ public class VerificationCommands {
 
         String fullEffectiveName = member.getEffectiveName();
         String nickname = fullEffectiveName.split("\\[")[0].trim();
+
+        UuidMap.addDiscordId(nickname.toLowerCase(), member.getId());
 
         String uuid = UuidMap.getMinecraftIdByUsername(nickname.toLowerCase()) == null ? nickname : UuidMap.getMinecraftIdByUsername(nickname.toLowerCase());
 

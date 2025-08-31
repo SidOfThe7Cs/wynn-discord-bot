@@ -10,7 +10,7 @@ public class UuidMap {
     public static void addDiscordId(String username, String discordId) {
         try (PreparedStatement insertStmt = connection.prepareStatement(
                 "INSERT OR IGNORE INTO uuidMap (username) VALUES (?)")) {
-            insertStmt.setString(1, username);
+            insertStmt.setString(1, username.toLowerCase());
             insertStmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -29,7 +29,7 @@ public class UuidMap {
     public static void addMinecraftId(String username, String minecraftId) {
         try (PreparedStatement insertStmt = connection.prepareStatement(
                 "INSERT OR IGNORE INTO uuidMap (username) VALUES (?)")) {
-            insertStmt.setString(1, username);
+            insertStmt.setString(1, username.toLowerCase());
             insertStmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -48,7 +48,7 @@ public class UuidMap {
     public static String getDiscordIdByUsername(String username) {
         String sql = "SELECT discord_id FROM uuidMap WHERE username = ?";
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            stmt.setString(1, username);
+            stmt.setString(1, username.toLowerCase());
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
                 return rs.getString("discord_id");
@@ -62,7 +62,7 @@ public class UuidMap {
     public static String getMinecraftIdByUsername(String username) {
         String sql = "SELECT minecraft_id FROM uuidMap WHERE username = ?";
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            stmt.setString(1, username);
+            stmt.setString(1, username.toLowerCase());
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
                 return rs.getString("minecraft_id");
@@ -72,6 +72,22 @@ public class UuidMap {
         }
         return null; // not found
     }
+
+    public static String getDiscordIdByMinecraftId(String minecraftId) {
+        String sql = "SELECT discord_id FROM uuidMap WHERE minecraft_id = ? LIMIT 1";
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setString(1, minecraftId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("discord_id");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null; // not found
+    }
+
 
     public static String getUsernameByMinecraftId(String minecraftId) {
         String sql = "SELECT username FROM uuidMap WHERE minecraft_id = ? LIMIT 1";
@@ -110,6 +126,4 @@ public class UuidMap {
             e.printStackTrace();
         }
     }
-
-
 }

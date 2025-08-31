@@ -1,4 +1,4 @@
-package sidly.discord_bot.commands.demotion_promotion;
+package sidly.discord_bot.commands.inactivity_promotion;
 
 import java.util.ArrayList;
 import java.util.List;

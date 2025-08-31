@@ -77,6 +77,15 @@ public class SQLDB {
         ));
         addColumn("guilds_40_plus", "low_priority", "INTEGER");
         executeQuery("CREATE INDEX IF NOT EXISTS idx_tracked_priority ON guilds_40_plus(low_priority)");
+
+        createTable("inactivity_exceptions", Map.of(
+                "uuid", "TEXT PRIMARY KEY",
+                "exp_timestamp", "INTEGER"
+        ));
+        createTable("promotion_exceptions", Map.of(
+                "uuid", "TEXT PRIMARY KEY",
+                "exp_timestamp", "INTEGER"
+        ));
     }
 
     public static void createTable(String tableName, Map<String, String> columns) {

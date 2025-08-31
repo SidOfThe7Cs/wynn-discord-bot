@@ -49,13 +49,20 @@ public class MassGuild {
         client = HttpClient.newHttpClient();
         client2 = HttpClient.newHttpClient();
 
-        apiTokens.add(ConfigManager.getConfigInstance().other.get(Config.Settings.ApiToken1));
-        apiTokens.add(ConfigManager.getConfigInstance().other.get(Config.Settings.ApiToken2));
-        apiTokens.add(ConfigManager.getConfigInstance().other.get(Config.Settings.ApiToken3));
-        apiTokens.add(ConfigManager.getConfigInstance().other.get(Config.Settings.ApiToken4));
-        apiTokens.add(ConfigManager.getConfigInstance().other.get(Config.Settings.ApiToken5));
-        apiTokens.add(ConfigManager.getConfigInstance().other.get(Config.Settings.ApiToken6));
-        apiTokens.add(ConfigManager.getConfigInstance().other.get(Config.Settings.ApiToken7));
+        for (Config.Settings tokenSetting : new Config.Settings[]{
+                Config.Settings.ApiToken1,
+                Config.Settings.ApiToken2,
+                Config.Settings.ApiToken3,
+                Config.Settings.ApiToken4,
+                Config.Settings.ApiToken5,
+                Config.Settings.ApiToken6,
+                Config.Settings.ApiToken7
+        }) {
+            String token = ConfigManager.getConfigInstance().other.get(tokenSetting);
+            if (token != null && !token.isEmpty()) {
+                apiTokens.add(token);
+            }
+        }
 
         multiselectorApiToken = (ConfigManager.getConfigInstance().other.get(Config.Settings.ApiToken8));
 

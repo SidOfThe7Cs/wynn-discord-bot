@@ -1,4 +1,4 @@
-package sidly.discord_bot.commands.demotion_promotion;
+package sidly.discord_bot.commands.inactivity_promotion;
 
 public enum RequirementType {
     Verified,

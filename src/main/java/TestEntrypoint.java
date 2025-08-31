@@ -55,13 +55,11 @@ public class TestEntrypoint {
 TODO
 
 Add exception cmds
+checkfor any null cmds
 
 Server owner can always run commands
 
 /delete old versions
-
-active hours uses code block if sent from mobile
-
 
 /edit config cmd that sends a thing with components v2 maybe
 have either pages or cmd parameters and have tokens as a seperate cmd

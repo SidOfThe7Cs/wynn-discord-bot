@@ -1,9 +1,10 @@
-package sidly.discord_bot.commands.demotion_promotion;
+package sidly.discord_bot.commands.inactivity_promotion;
 
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
-import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import sidly.discord_bot.Config;
 import sidly.discord_bot.ConfigManager;
 import sidly.discord_bot.Utils;
@@ -11,17 +12,14 @@ import sidly.discord_bot.api.ApiUtils;
 import sidly.discord_bot.api.GuildInfo;
 import sidly.discord_bot.database.PlayerDataShortened;
 import sidly.discord_bot.database.PlaytimeHistoryList;
-import sidly.discord_bot.database.records.GuildAverages;
-import sidly.discord_bot.database.tables.GuildActivity;
-import sidly.discord_bot.database.tables.Players;
-import sidly.discord_bot.database.tables.PlaytimeHistory;
+import sidly.discord_bot.database.tables.*;
 import sidly.discord_bot.page.PageBuilder;
 import sidly.discord_bot.page.PaginationIds;
 
-import java.awt.*;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class InactivityCommands {
     public static void checkForInactivity(SlashCommandInteractionEvent event) {
@@ -36,6 +34,13 @@ public class InactivityCommands {
             Map<String, GuildInfo.MemberInfo> allMembers = guildinfo.members.getAllMembers();
             for (Map.Entry<String, GuildInfo.MemberInfo> entry : allMembers.entrySet()) {
                 String username = entry.getValue().username;
+
+                System.out.println(username); //TODO
+                Long inactiveException = InactivityExceptions.get(UuidMap.getMinecraftIdByUsername(username.toLowerCase()));
+                System.out.println(inactiveException);
+                if (inactiveException != null && inactiveException > System.currentTimeMillis()) continue;
+
+
                 PlayerDataShortened playerDataShortened = Players.get(entry.getKey());
                 Utils.RankList rankOfMember = guildinfo.members.getRankOfMember(entry.getKey());
 
@@ -101,7 +106,7 @@ public class InactivityCommands {
 
             StringBuilder sb = new StringBuilder();
             for (InactivityEntry entry : inactiveMembers) {
-                sb.append("**").append(entry.username).append("**\n");
+                sb.append("**").append(Utils.escapeDiscordMarkdown(entry.username)).append("**\n");
                 sb.append("playtime ").append(Utils.formatNumber(entry.averagePlaytime)).append(" / ").append(Utils.formatNumber(entry.averagePlaytimeReq)).append("\n");
                 sb.append("last online ").append(Utils.formatNumber(entry.lastOnline)).append(" / ").append(Utils.formatNumber(entry.inactiveThreashhold)).append("\n\n");
             }
@@ -124,6 +129,50 @@ public class InactivityCommands {
             }
 
             hook.editOriginalEmbeds(embed.build()).queue();
+        });
+    }
+
+    public static void addException(SlashCommandInteractionEvent event) {
+        User user = event.getOption("user").getAsUser();
+        int days = event.getOption("length").getAsInt();
+
+        long timestampExp = TimeUnit.DAYS.toMillis(days) + System.currentTimeMillis();
+
+        String uuid = UuidMap.getMinecraftIdByUsername(event.getGuild().getMember(user).getEffectiveName().toLowerCase());
+        if (uuid == null) {
+            event.reply("user not found in database").setEphemeral(true).queue();
+            return;
+        }
+        InactivityExceptions.add(uuid, timestampExp);
+
+        event.reply("added an inactivity exception to \n" + uuid + "\n expires " + Utils.getDiscordTimestamp(timestampExp, true)).setEphemeral(true).queue();
+    }
+
+    public static void getExceptions(SlashCommandInteractionEvent event) {
+        event.deferReply(true).queue(hook -> {
+            Map<String, Long> inactiveExc = InactivityExceptions.getAll();
+            Map<String, Long> promotionExc = PromotionExceptions.getAll();
+            long currentTime = System.currentTimeMillis();
+            Guild guild = event.getGuild();
+
+            StringBuilder sb = new StringBuilder();
+
+            sb.append("Inactivity Exceptions\n");
+            for (Map.Entry<String, Long> entry : inactiveExc.entrySet()) {
+                if (entry.getValue() > currentTime) {
+                    String discordId = UuidMap.getDiscordIdByMinecraftId(entry.getKey());
+                    sb.append(guild.getMemberById(discordId).getAsMention()).append(" expires ").append(Utils.getDiscordTimestamp(entry.getValue(), true)).append("\n");
+                }
+            }
+            sb.append("\nPromotion Exceptions\n");
+            for (Map.Entry<String, Long> entry : promotionExc.entrySet()) {
+                if (entry.getValue() > currentTime) {
+                    String discordId = UuidMap.getDiscordIdByMinecraftId(entry.getKey());
+                    sb.append(guild.getMemberById(discordId).getAsMention()).append(" expires ").append(Utils.getDiscordTimestamp(entry.getValue(), true)).append("\n");
+                }
+            }
+
+            hook.editOriginalEmbeds(Utils.getEmbed("", sb.toString())).queue();
         });
     }
 

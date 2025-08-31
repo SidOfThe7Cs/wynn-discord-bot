@@ -1,7 +1,7 @@
 package sidly.discord_bot;
 
 import sidly.discord_bot.commands.AllSlashCommands;
-import sidly.discord_bot.commands.demotion_promotion.RequirementList;
+import sidly.discord_bot.commands.inactivity_promotion.RequirementList;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -18,9 +18,10 @@ public class Config {
 
     public Config() {
         // default values
-        other.put(Settings.Token, "");
-        other.put(Settings.YourGuildPrefix, "");
-        other.put(Settings.MaxContentCompletion, "1128");
+        for (Settings setting : Settings.values()) {
+            other.put(setting, "");
+        }
+        other.put(Settings.MaxContentCompletion, "1133");
 
         for (Roles role : Roles.values()) {
             roles.put(role, "");
@@ -47,9 +48,7 @@ public class Config {
         roleRequirements.put(AllSlashCommands.setrolerequirement, Roles.OwnerRole);
         roleRequirements.put(AllSlashCommands.removerolerequirement, Roles.OwnerRole);
         roleRequirements.put(AllSlashCommands.addpromotionexeption, Roles.ChiefRole);
-        roleRequirements.put(AllSlashCommands.adddemotionexeption, Roles.ChiefRole);
         roleRequirements.put(AllSlashCommands.addinactivityexeption, Roles.ChiefRole);
-        roleRequirements.put(AllSlashCommands.checkfordemotions, Roles.StrategistRole);
         roleRequirements.put(AllSlashCommands.checkforpromotions, Roles.StrategistRole);
         roleRequirements.put(AllSlashCommands.checkforinactivity, Roles.StrategistRole);
         roleRequirements.put(AllSlashCommands.removeverification, Roles.OwnerRole);
@@ -63,6 +62,8 @@ public class Config {
         roleRequirements.put(AllSlashCommands.editconfigclassrole, Roles.ChiefRole);
         roleRequirements.put(AllSlashCommands.say, Roles.ChiefRole);
         roleRequirements.put(AllSlashCommands.sendwarrolesmessage, Roles.ChiefRole);
+        roleRequirements.put(AllSlashCommands.stoptimer, Roles.ChiefRole);
+        roleRequirements.put(AllSlashCommands.starttimer, Roles.ChiefRole);
     }
 
     public enum Roles {
