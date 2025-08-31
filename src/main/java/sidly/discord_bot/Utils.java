@@ -87,6 +87,19 @@ public class Utils {
         }
     }
 
+    public static long getEpochTimeFromIso(String isoTimestamp) {
+        if (isoTimestamp == null || isoTimestamp.isEmpty()) return -1;
+        try {
+            // Parse the ISO-8601 timestamp string into an Instant
+            Instant instant = Instant.parse(isoTimestamp);
+            return instant.toEpochMilli();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return -1; // Return -1 if parsing failed
+        }
+    }
+
+
     public static GuildChannel getChannelFromGuild(Guild guild, String id){
         if (id == null || id.isEmpty()){
             return null;

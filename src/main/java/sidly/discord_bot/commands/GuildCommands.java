@@ -445,7 +445,7 @@ public class GuildCommands {
             }
 
             if (!inDisct) {
-                sb.append(username).append(" is not in the discord\n");
+                sb.append(username).append(" is not in the discord (or is in discord with a different name)\n");
             } else if (!verified) {
                 sb.append(username).append(" is in the discord but not verified\n");
             }
