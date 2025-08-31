@@ -189,7 +189,11 @@ public class MassGuild {
 
             if (cause instanceof java.net.SocketException) {
                 tempHighPrioQueue.addFirst(prefix); // retry
+            } else if (cause instanceof javax.net.ssl.SSLHandshakeException) {
+                tempHighPrioQueue.addFirst(prefix); // retry
             } else if (cause instanceof TimeoutException) {
+                tempHighPrioQueue.addFirst(prefix); // retry
+            } else if ("too many concurrent streams".equals(cause.getMessage())) {
                 tempHighPrioQueue.addFirst(prefix); // retry
             } else if (cause instanceof IOException && cause.getMessage().contains("GOAWAY")) {
                 tempHighPrioQueue.addFirst(prefix); // retry
@@ -232,7 +236,7 @@ public class MassGuild {
             return;
         }
         if (status == 500) {
-            System.out.println("failed to connect to api (500) " + prefix); //TODO
+            System.out.println("failed to connect to api (500) " + prefix);
             return;
         }
 
@@ -300,6 +304,10 @@ public class MassGuild {
                 Throwable cause = ex instanceof CompletionException ? ex.getCause() : ex;
                 if (cause instanceof java.net.SocketException) {
                     tempHighPrioQueue.addFirst(prefix); // retry
+                } else if (cause instanceof javax.net.ssl.SSLHandshakeException) {
+                    tempHighPrioQueue.addFirst(prefix); // retry
+                } else if ("too many concurrent streams".equals(cause.getMessage())) {
+                    tempHighPrioQueue.addFirst(prefix); // retry
                 } else if (cause instanceof TimeoutException) {
                     tempHighPrioQueue.addFirst(prefix); // retry
                 } else if (cause instanceof IOException && cause.getMessage().contains("GOAWAY")) {
@@ -363,6 +371,10 @@ public class MassGuild {
                         Throwable cause = ex instanceof CompletionException ? ex.getCause() : ex;
                         if (cause instanceof java.net.SocketException) {
                             System.err.println("SocketException: " + Players.get(uuid));
+                        } else if ("too many concurrent streams".equals(cause.getMessage())) {
+                            System.err.println("Too many concurrent streams, skipping request.");
+                        } else if (cause instanceof javax.net.ssl.SSLHandshakeException) {
+
                         } else if (cause instanceof TimeoutException) {
                             System.out.println("timeout " + Players.get(uuid));
                         } else if (cause instanceof IOException && cause.getMessage().contains("GOAWAY")) {

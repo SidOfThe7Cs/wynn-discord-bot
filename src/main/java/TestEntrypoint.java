@@ -53,10 +53,6 @@ public class TestEntrypoint {
 }
 /*
 TODO
-
-Add exception cmds
-checkfor any null cmds
-
 Server owner can always run commands
 
 /delete old versions

@@ -86,6 +86,9 @@ public class ApiUtils {
 
             return apiData;
 
+        } catch (javax.net.ssl.SSLHandshakeException e) {
+            System.err.println("SSL handshake failed for " + username + " — skipping request.");
+            return null;
         } catch (IOException e) {
             System.err.println("IOException: " + username);
             throw new RuntimeException(e);
@@ -138,7 +141,10 @@ public class ApiUtils {
 
             return apiData;
 
-        } catch (IOException e) {
+        } catch (javax.net.ssl.SSLHandshakeException e) {
+            System.err.println("SSL handshake failed for " + prefix + " — skipping request.");
+            return null;
+        }  catch (IOException e) {
             System.err.println("IOException");
             throw new RuntimeException(e);
         } catch (InterruptedException e) {
