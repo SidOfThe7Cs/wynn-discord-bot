@@ -415,7 +415,6 @@ public class GuildCommands {
             sb.append("\n");
         }
 
-        System.out.println("playerData.uuid = " + playerData.uuid + " for " + playerData.username);
         PlaytimeHistoryList playtimeHistory = PlaytimeHistory.getPlaytimeHistory(playerData.uuid);
         sb.append(String.format("%.2f", playtimeHistory.getAverage(4))).append(" ");
         sb.append("hours per week (").append(String.format("%.2f", playtimeHistory.getAverage(1))).append(")");
@@ -425,8 +424,8 @@ public class GuildCommands {
     }
 
     // this could be optimized so much
-    public static void notInDiscord(SlashCommandInteractionEvent event) {
-        List<Member> discordMembers = event.getGuild().getMembers();
+    public static String notInDiscord(Guild guild) {
+        List<Member> discordMembers = guild.getMembers();
         GuildInfo guildInfo = ApiUtils.getGuildInfo(ConfigManager.getConfigInstance().other.get(Config.Settings.YourGuildPrefix));
         Map<String, GuildInfo.MemberInfo> wynnMembers = guildInfo.members.getAllMembersByUsername();
 
@@ -447,10 +446,15 @@ public class GuildCommands {
 
             if (!inDisct) {
                 sb.append(username).append(" is not in the discord\n");
-            }else if (!verified) {
+            } else if (!verified) {
                 sb.append(username).append(" is in the discord but not verified\n");
             }
         }
+        return sb.toString();
+    }
+
+    public static void notInDiscord(SlashCommandInteractionEvent event) {
+        event.deferReply(false).queue(hook -> hook.editOriginalEmbeds(Utils.getEmbed("", notInDiscord(event.getGuild()))).queue());
     }
 
     public static void viewLastLogins(SlashCommandInteractionEvent event) {

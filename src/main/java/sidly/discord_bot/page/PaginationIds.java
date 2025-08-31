@@ -7,5 +7,6 @@ public enum PaginationIds {
     GUILD_STATS,
     AVERAGE_PLAYTIME,
     LAST_LOGINS,
-    CONFIG_LIST
+    CONFIG_LIST,
+    CHECK_INACTIVITY
 }

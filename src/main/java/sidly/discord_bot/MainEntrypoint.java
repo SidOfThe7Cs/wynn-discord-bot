@@ -312,10 +312,13 @@ public class MainEntrypoint extends ListenerAdapter {
 
         commands.addCommands(AllSlashCommands.checkforinactivity.getBaseCommandData());
         AllSlashCommands.checkforinactivity.setAction(InactivityCommands::checkForInactivity);
+        PageBuilder.PaginationManager.register(PaginationIds.CHECK_INACTIVITY.name(),
+                stats -> InactivityCommands.inactiveityEntryConverter((InactivityCommands.InactivityEntry) stats), "Inactive Players", 8);
 
         commands.addCommands(AllSlashCommands.checkforpromotions.getBaseCommandData());
         AllSlashCommands.checkforpromotions.setAction(PromotionCommands::checkForPromotions);
-        PageBuilder.PaginationManager.register(PaginationIds.PROMOTIONS.name(), entry -> PromotionCommands.promotionConverter((PromotionCommands.PromotionEntry) entry), "Promotions", 8);
+        PageBuilder.PaginationManager.register(PaginationIds.PROMOTIONS.name(),
+                entry -> PromotionCommands.promotionConverter((PromotionCommands.PromotionEntry) entry), "Promotions", 8);
 
         commands.addCommands(AllSlashCommands.getexceptions.getBaseCommandData());
         AllSlashCommands.getexceptions.setAction(InactivityCommands::getExceptions);

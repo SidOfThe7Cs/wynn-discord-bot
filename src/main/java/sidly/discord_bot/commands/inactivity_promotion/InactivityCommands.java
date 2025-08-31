@@ -24,7 +24,7 @@ import java.util.concurrent.TimeUnit;
 public class InactivityCommands {
     public static void checkForInactivity(SlashCommandInteractionEvent event) {
 
-        event.deferReply(false).queue(hook -> {
+        event.deferReply(false).addComponents(PageBuilder.getPaginationActionRow(PaginationIds.CHECK_INACTIVITY)).queue(hook -> {
 
             GuildInfo guildinfo = ApiUtils.getGuildInfo(ConfigManager.getConfigInstance().other.get(Config.Settings.YourGuildPrefix));
             if (guildinfo == null || guildinfo.members == null) return;
@@ -97,21 +97,32 @@ public class InactivityCommands {
                     double lastOnline = Utils.timeSinceIso(playerDataShortened.lastJoined, ChronoUnit.DAYS);
 
                     if (averagePlaytime < averagePlaytimeReq || lastOnline > inactiveThreashhold) {
-                        inactiveMembers.add(new InactivityEntry(username, averagePlaytime, averagePlaytimeReq, lastOnline, inactiveThreashhold));
+                        inactiveMembers.add(new InactivityEntry(username, averagePlaytime, averagePlaytimeReq, Utils.timeSinceIso(playerDataShortened.lastJoined, ChronoUnit.MILLIS), inactiveThreashhold, playtimeHistory.getAverageTimeSpan(averageWeeks)));
                     }
                 }
             }
 
-            StringBuilder sb = new StringBuilder();
-            for (InactivityEntry entry : inactiveMembers) {
-                sb.append("**").append(Utils.escapeDiscordMarkdown(entry.username)).append("**\n");
-                sb.append("playtime ").append(Utils.formatNumber(entry.averagePlaytime)).append(" / ").append(Utils.formatNumber(entry.averagePlaytimeReq)).append("\n");
-                sb.append("last online ").append(Utils.formatNumber(entry.lastOnline)).append(" / ").append(Utils.formatNumber(entry.inactiveThreashhold)).append("\n\n");
+            PageBuilder.PaginationState pageState = PageBuilder.PaginationManager.get(PaginationIds.CHECK_INACTIVITY.name());
+            pageState.reset(inactiveMembers);
+
+            EmbedBuilder embed = pageState.buildEmbedPage();
+
+            if (embed == null) {
+                hook.editOriginalEmbeds(Utils.getEmbed("well this is awkward", "something went wrong")).queue();
+                return;
             }
 
-            MessageEmbed embed = Utils.getEmbed("Inactive Players", sb.toString());
-            hook.editOriginalEmbeds(embed).queue();
+            hook.editOriginalEmbeds(embed.build()).queue();
         });
+    }
+
+    public static String inactiveityEntryConverter(InactivityEntry entry) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("**").append(Utils.escapeDiscordMarkdown(entry.username)).append("**\n");
+        sb.append("playtime ").append(Utils.formatNumber(entry.averagePlaytime)).append(" / ").append(Utils.formatNumber(entry.averagePlaytimeReq)).append("\n");
+        sb.append("data from ").append(Utils.getDiscordTimestamp(entry.timeSpan().getValue(), true)).append(" to ").append(Utils.getDiscordTimestamp(entry.timeSpan().getValue(), true)).append("\n");
+        sb.append("last online ").append(Utils.getDiscordTimestamp(entry.lastOnline(), true)).append(" / ").append(Utils.formatNumber(entry.inactiveThreashhold)).append(" days\n\n");
+        return sb.toString();
     }
 
     public static void getAveragePlaytime(SlashCommandInteractionEvent event) {
@@ -174,5 +185,5 @@ public class InactivityCommands {
         });
     }
 
-    private record InactivityEntry(String username, double averagePlaytime, double averagePlaytimeReq, double lastOnline, double inactiveThreashhold){}
+    public record InactivityEntry(String username, double averagePlaytime, double averagePlaytimeReq, long lastOnline, double inactiveThreashhold, AbstractMap.SimpleEntry<Long, Long> timeSpan){}
 }

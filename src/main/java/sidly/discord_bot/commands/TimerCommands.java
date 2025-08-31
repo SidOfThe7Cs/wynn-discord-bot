@@ -3,9 +3,6 @@ package sidly.discord_bot.commands;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import sidly.discord_bot.Utils;
 import sidly.discord_bot.api.MassGuild;
-import sidly.discord_bot.database.PlaytimeHistoryList;
-import sidly.discord_bot.database.tables.PlaytimeHistory;
-import sidly.discord_bot.database.tables.UuidMap;
 import sidly.discord_bot.timed_actions.GuildRankUpdater;
 import sidly.discord_bot.timed_actions.UpdatePlayers;
 
@@ -14,17 +11,6 @@ public class TimerCommands {
         boolean allGuildTrackerTimerStatus = MassGuild.getTimerStatus();
         boolean yourGuildTrackerTimerStatus = GuildRankUpdater.getYourGuildTrackerTimerStatus();
         boolean playerUpdater = UpdatePlayers.isRunning();
-
-        //TODO
-        String uuid = UuidMap.getMinecraftIdByUsername("FurbyVessel");
-        PlaytimeHistoryList playtimeHistory = PlaytimeHistory.getPlaytimeHistory(uuid);
-        double averagePlaytime = playtimeHistory.getAverage(1);
-        double averagePlaytime4 = playtimeHistory.getAverage(4);
-        System.out.println("FurbyVessels playtimes (test)");
-        System.out.println(uuid);
-        System.out.println(averagePlaytime);
-        System.out.println(averagePlaytime4);
-
 
         String description = "PlayerUpdater: " + (playerUpdater ? "active" : "inactive") + "\n" +
                 "guildTracker: " + (allGuildTrackerTimerStatus ? "active" : "inactive") + "\n" +

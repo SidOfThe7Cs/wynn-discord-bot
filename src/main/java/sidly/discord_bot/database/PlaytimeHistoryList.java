@@ -2,7 +2,9 @@ package sidly.discord_bot.database;
 
 import sidly.discord_bot.Utils;
 
+import java.util.AbstractMap;
 import java.util.List;
+import java.util.Vector;
 import java.util.concurrent.TimeUnit;
 
 public class PlaytimeHistoryList {
@@ -42,6 +44,21 @@ public class PlaytimeHistoryList {
         // Scale to a 7-day (per-week) rate
         double millisInWeek = TimeUnit.DAYS.toMillis(7);
         return totalIncrease / (timeSpan / millisInWeek);
+    }
+
+    public AbstractMap.SimpleEntry<Long, Long> getAverageTimeSpan(int weeks) {
+        if (playtimeHistory.size() < 2) {
+            return new AbstractMap.SimpleEntry<>(0L, 0L);
+        }
+
+        // Start from the end and go back up to 'weeks' entries
+        int endIndex = playtimeHistory.size() - 1;
+        int startIndex = Math.max(0, playtimeHistory.size() - weeks - 1);
+
+        long startTime = playtimeHistory.get(startIndex).timeLogged; // assuming millis or seconds
+        long endTime = playtimeHistory.get(endIndex).timeLogged;
+
+        return new AbstractMap.SimpleEntry<>(startTime, endTime);
     }
 
     public double getLinear10WeekAverage() {
