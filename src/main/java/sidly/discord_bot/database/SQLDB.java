@@ -19,6 +19,14 @@ public class SQLDB {
         }
     }
 
+    public static ResultSet executeAndGetQuery(String sql) {
+        try (Statement stmt = connection.createStatement()) {
+            return stmt.executeQuery(sql);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 
     public static void init() throws SQLException {
         SQLDB.connection = DriverManager.getConnection("jdbc:sqlite:" + dbFile.getAbsolutePath());

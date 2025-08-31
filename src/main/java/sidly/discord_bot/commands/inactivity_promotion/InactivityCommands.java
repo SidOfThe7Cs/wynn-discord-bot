@@ -23,6 +23,18 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class InactivityCommands {
+    private record RankThreshold(double inactiveDays, int averageWeeks) {}
+
+    private static final Map<Utils.RankList, RankThreshold> thresholds = Map.of(
+            Utils.RankList.Recruit,    new RankThreshold(10, 2),
+            Utils.RankList.Recruiter,  new RankThreshold(10, 4),
+            Utils.RankList.Captain,    new RankThreshold(16, 8),
+            Utils.RankList.Strategist, new RankThreshold(30, 20),
+            Utils.RankList.Chief,      new RankThreshold(365, 100),
+            Utils.RankList.Owner,      new RankThreshold(Long.MAX_VALUE, 4)
+    );
+
+
     public static void checkForInactivity(SlashCommandInteractionEvent event) {
 
         event.deferReply(false).addComponents(PageBuilder.getPaginationActionRow(PaginationIds.CHECK_INACTIVITY)).queue(hook -> {
@@ -35,6 +47,15 @@ public class InactivityCommands {
             List<String> membersNotInDiscord = new ArrayList<>();
 
             Map<String, GuildInfo.MemberInfo> allMembers = guildinfo.members.getAllMembers();
+            int totalGuildMembers = guildinfo.members.total;
+            int currentGuildMembers = allMembers.size();
+            double averageOnline = GuildActivity.getAverageOnline(guildinfo.uuid, 28, false);
+            double multiplier = (averageOnline > 5) ? 1.2 : 0.8;
+            double usedPercent = (double) currentGuildMembers / (double) totalGuildMembers;
+            multiplier = usedPercent > 0.9 ? multiplier + 0.3 : multiplier - 0.3;
+
+            Map<String, PlaytimeHistoryList> playtimeHistoryForAll = PlaytimeHistory.getPlaytimeHistoryForAll(allMembers.keySet());
+
             for (Map.Entry<String, GuildInfo.MemberInfo> entry : allMembers.entrySet()) {
                 String username = entry.getValue().username;
 
@@ -47,65 +68,30 @@ public class InactivityCommands {
 
 
                 PlayerDataShortened playerDataShortened = Players.get(entry.getKey());
+                if (playerDataShortened == null || playerDataShortened.lastJoined == null) continue;
+
+                PlaytimeHistoryList playtimeHistory = playtimeHistoryForAll.get(playerDataShortened.uuid);
+                if (playtimeHistory == null) {
+                    playtimeHistory = new PlaytimeHistoryList(new ArrayList<>());
+                    System.out.println("no playtime data for " + playerDataShortened.username);
+                }
+
                 Utils.RankList rankOfMember = guildinfo.members.getRankOfMember(entry.getKey());
+                RankThreshold threshold = thresholds.get(rankOfMember);
+                double inactiveThreshold = threshold.inactiveDays() / multiplier;
+                double averagePlaytimeReq = 4 * multiplier;
+                int averageWeeks = threshold.averageWeeks();
+                double averagePlaytime = playtimeHistory.getAverage(averageWeeks);
 
-                if (playerDataShortened != null && playerDataShortened.lastJoined != null) {
+                if (Utils.timeSinceIso(entry.getValue().joined, ChronoUnit.DAYS) < 8) {
+                    inactiveThreshold = 5;
+                    averagePlaytimeReq = 0;
+                }
 
-                    double inactiveThreashhold;
-                    double averagePlaytimeReq = 4;
-                    int averageWeeks = switch (rankOfMember) {
-                        case Utils.RankList.Recruit -> {
-                            inactiveThreashhold = 10;
-                            yield 2;
-                        }
-                        case Utils.RankList.Recruiter -> {
-                            inactiveThreashhold = 10;
-                            yield 4;
-                        }
-                        case Utils.RankList.Captain -> {
-                            inactiveThreashhold = 16;
-                            yield 8;
-                        }
-                        case Utils.RankList.Strategist -> {
-                            inactiveThreashhold = 30;
-                            yield 20;
-                        }
-                        case Utils.RankList.Chief -> {
-                            inactiveThreashhold = 365;
-                            yield 100;
-                        }
-                        case Utils.RankList.Owner -> {
-                            inactiveThreashhold = Long.MAX_VALUE;
-                            yield 4;
-                        }
-                    };
+                double lastOnline = Utils.timeSinceIso(playerDataShortened.lastJoined, ChronoUnit.DAYS);
 
-                    PlaytimeHistoryList playtimeHistory = PlaytimeHistory.getPlaytimeHistory(playerDataShortened.uuid);
-                    double averagePlaytime = playtimeHistory.getAverage(averageWeeks);
-
-                    double averageOnline = GuildActivity.getAverageOnline(guildinfo.uuid, 28, false);
-                    double multiplier = (averageOnline > 5) ? 1.2 : 0.8;
-
-                    int totalGuildMembers = guildinfo.members.total;
-                    int currentGuildMembers = guildinfo.members.getAllMembers().keySet().size();
-
-                    double usedPercent = (double) currentGuildMembers / (double) totalGuildMembers;
-
-                    multiplier = usedPercent > 0.9 ? multiplier + 0.3 : multiplier - 0.3;
-
-                    averagePlaytimeReq *= multiplier;
-                    inactiveThreashhold /= multiplier;
-
-                    if (Utils.timeSinceIso(entry.getValue().joined, ChronoUnit.DAYS) < 8) {
-                        inactiveThreashhold = 5;
-                        averagePlaytimeReq = 0;
-                    }
-
-                    double lastOnline = Utils.timeSinceIso(playerDataShortened.lastJoined, ChronoUnit.DAYS);
-
-                    if (averagePlaytime < averagePlaytimeReq || lastOnline > inactiveThreashhold) {
-                        inactiveMembers.add(new InactivityEntry(username, averagePlaytime, averagePlaytimeReq, Utils.getEpochTimeFromIso(playerDataShortened.lastJoined), inactiveThreashhold, playtimeHistory.getAverageTimeSpan(averageWeeks)));
-                    }
+                if (averagePlaytime < averagePlaytimeReq || lastOnline > inactiveThreshold) {
+                    inactiveMembers.add(new InactivityEntry(username, averagePlaytime, averagePlaytimeReq, Utils.getEpochTimeFromIso(playerDataShortened.lastJoined), inactiveThreshold, playtimeHistory.getAverageTimeSpan(averageWeeks)));
                 }
             }
 
@@ -124,6 +110,7 @@ public class InactivityCommands {
         });
     }
 
+    @SuppressWarnings("unchecked")
     public static String inactiveityEntryConverter(InactivityEntry entry) {
         PageBuilder.PaginationState pageState = PageBuilder.PaginationManager.get(PaginationIds.CHECK_INACTIVITY.name());
         List<String> membersNotInDiscord = (List<String>) pageState.customData;
@@ -131,11 +118,11 @@ public class InactivityCommands {
         StringBuilder sb = new StringBuilder();
         sb.append("**").append(Utils.escapeDiscordMarkdown(entry.username)).append("** ");
         if (membersNotInDiscord.contains(entry.username())) {
-            sb.append("is either not verified or not in the discord\n");
+            sb.append("is unverified or not in discord, so playtime isn't tracked");
         }
-        sb.append("playtime ").append(Utils.formatNumber(entry.averagePlaytime)).append(" / ").append(Utils.formatNumber(entry.averagePlaytimeReq)).append("\n");
-        sb.append("data from ").append(Utils.getDiscordTimestamp(entry.timeSpan().getKey(), true)).append(" to ").append(Utils.getDiscordTimestamp(entry.timeSpan().getValue(), true)).append("\n");
-        sb.append("last online ").append(Utils.getDiscordTimestamp(entry.lastOnline(), true)).append(" / ").append(Utils.formatNumber(entry.inactiveThreashhold)).append(" days\n\n");
+        sb.append("\nplaytime ").append(Utils.formatNumber(entry.averagePlaytime)).append(" / ").append(Utils.formatNumber(entry.averagePlaytimeReq)).append(" (hours)\n");
+        sb.append("last online ").append(Utils.getDiscordTimestamp(entry.lastOnline(), true)).append(" / ").append(Utils.formatNumber(entry.inactiveThreashhold)).append(" days\n");
+        sb.append("data from ").append(Utils.getDiscordTimestamp(entry.timeSpan().getKey(), true)).append(" to ").append(Utils.getDiscordTimestamp(entry.timeSpan().getValue(), true)).append("\n\n");
 
         return sb.toString();
     }

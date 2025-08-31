@@ -55,13 +55,7 @@ public class TestEntrypoint {
 /*
 TODO
 
-add info like number of days to playtime (/checkforinactivity)
-also it seems broken
-get time since (weeks)
-last online minutes/hours/days
 speed up check for inactivity by inst returning when a condition is met
-
-playerData.uuid = 57a2c13b-68fc-48aa-8648-ceb5591c5e0b for FurbyVessel
 
 
 

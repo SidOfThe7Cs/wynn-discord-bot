@@ -4,7 +4,6 @@ import sidly.discord_bot.Utils;
 
 import java.util.AbstractMap;
 import java.util.List;
-import java.util.Vector;
 import java.util.concurrent.TimeUnit;
 
 public class PlaytimeHistoryList {
