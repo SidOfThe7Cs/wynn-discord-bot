@@ -57,6 +57,8 @@ TODO
 
 add info like number of days to playtime (/checkforinactivity)
 also it seems broken
+get time since (weeks)
+last online minutes/hours/days
 
 
 

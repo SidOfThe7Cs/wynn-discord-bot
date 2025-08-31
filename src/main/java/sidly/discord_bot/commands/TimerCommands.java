@@ -21,6 +21,7 @@ public class TimerCommands {
         double averagePlaytime = playtimeHistory.getAverage(1);
         double averagePlaytime4 = playtimeHistory.getAverage(4);
         System.out.println("FurbyVessels playtimes (test)");
+        System.out.println(uuid);
         System.out.println(averagePlaytime);
         System.out.println(averagePlaytime4);
 

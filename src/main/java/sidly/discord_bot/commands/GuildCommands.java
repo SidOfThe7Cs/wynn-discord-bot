@@ -415,6 +415,7 @@ public class GuildCommands {
             sb.append("\n");
         }
 
+        System.out.println("playerData.uuid = " + playerData.uuid + " for " + playerData.username);
         PlaytimeHistoryList playtimeHistory = PlaytimeHistory.getPlaytimeHistory(playerData.uuid);
         sb.append(String.format("%.2f", playtimeHistory.getAverage(4))).append(" ");
         sb.append("hours per week (").append(String.format("%.2f", playtimeHistory.getAverage(1))).append(")");
