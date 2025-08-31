@@ -53,6 +53,11 @@ public class TestEntrypoint {
 }
 /*
 TODO
+
+add info like number of days to playtime
+
+
+
 Server owner can always run commands
 
 /delete old versions

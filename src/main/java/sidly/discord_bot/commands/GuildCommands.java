@@ -177,10 +177,12 @@ public class GuildCommands {
 
                 if (codeBlock) {
                     sb.append(String.format(
-                            "%02d:00 ┃ %s%.1f   ┃ %s%.1f%n",
+                            "%02d:00 ┃ %s%.2f  ┃ %s%.2f%n",
                             hour,
-                            (averagePlayers >= 10.0 ? " " : "  "), averagePlayers,
-                            (averageCaptains >= 10.0 ? " " : "  "), averageCaptains
+                            Double.isNaN(averagePlayers) ? "   " : (averagePlayers >= 10.0 ? " " : "  "),
+                            averagePlayers,
+                            Double.isNaN(averageCaptains) ? "   " : (averageCaptains >= 10.0 ? " " : "  "),
+                            averageCaptains
                     ));
 
                 } else {
@@ -497,8 +499,8 @@ public class GuildCommands {
     }
 
     public static String lastLoginsConverter(LastLoginInfo m) {
-        return String.format("%s joined %d days ago (%s, lvl %d)%n",
-                m.username(), m.lastJoinedDays(), m.rank(), m.highestLvl());
+        return String.format("%s last joined %d days ago (%s, lvl %d)%n",
+                Utils.escapeDiscordMarkdown(m.username()), m.lastJoinedDays(), m.rank(), m.highestLvl());
     }
 
     public record GuildStatEntry(String uuid, GuildInfo.MemberInfo guildMemberData){}

@@ -112,9 +112,47 @@ public class MassGuild {
     }
 
     public static void cleanQueue(Map<String, GuildName> guildMap) {
-        queue.removeIf(id -> !guildMap.containsKey(id));
-        lowPriorityQueue.removeIf(id -> !guildMap.containsKey(id));
+        // Collect all valid prefixes
+        Set<String> validPrefixes = new HashSet<>();
+        for (GuildName guild : guildMap.values()) {
+            if (guild.prefix() != null) {
+                validPrefixes.add(guild.prefix());
+            }
+        }
+
+        // For main queue
+        List<String> removedFromQueue = new ArrayList<>();
+        queue.removeIf(id -> {
+            if (!validPrefixes.contains(id)) {
+                removedFromQueue.add(id);
+                return true;
+            }
+            return false;
+        });
+
+        // For low-priority queue
+        List<String> removedFromLowPriority = new ArrayList<>();
+        lowPriorityQueue.removeIf(id -> {
+            if (!validPrefixes.contains(id)) {
+                removedFromLowPriority.add(id);
+                return true;
+            }
+            return false;
+        });
+
+        // Combine removed items and print
+        List<String> allRemoved = new ArrayList<>();
+        allRemoved.addAll(removedFromQueue);
+        allRemoved.addAll(removedFromLowPriority);
+
+        if (!allRemoved.isEmpty()) {
+            //System.out.println("Deleted Guilds: " + allRemoved);
+            for (String prefix : allRemoved) {
+                AllGuilds.unTracked(prefix);
+            }
+        }
     }
+
 
 
     public static void next() {

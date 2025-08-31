@@ -13,9 +13,8 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -254,6 +253,19 @@ public class Utils {
         totalExp += nextXp * (percentToNextLevel / 100.0);
 
         return totalExp;
+    }
+
+    // Generic method to clean a collection based on a reference set
+    public static <T> List<T> removeIfNotIn(Collection<T> collection, Set<T> allowed) {
+        List<T> removed = new ArrayList<>();
+        collection.removeIf(item -> {
+            if (!allowed.contains(item)) {
+                removed.add(item);
+                return true;
+            }
+            return false;
+        });
+        return removed;
     }
 
 

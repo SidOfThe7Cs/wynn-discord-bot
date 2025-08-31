@@ -35,9 +35,7 @@ public class InactivityCommands {
             for (Map.Entry<String, GuildInfo.MemberInfo> entry : allMembers.entrySet()) {
                 String username = entry.getValue().username;
 
-                System.out.println(username); //TODO
                 Long inactiveException = InactivityExceptions.get(UuidMap.getMinecraftIdByUsername(username.toLowerCase()));
-                System.out.println(inactiveException);
                 if (inactiveException != null && inactiveException > System.currentTimeMillis()) continue;
 
 

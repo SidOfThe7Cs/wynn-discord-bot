@@ -6,6 +6,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -84,6 +85,25 @@ public class AllGuilds {
         return null; // No valid prefix found
     }
 
+    public static Map<String, String> getAllPrefixes() {
+        Map<String, String> prefixes = new HashMap<>();
+        String sql = "SELECT uuid, prefix FROM all_guilds WHERE prefix IS NOT NULL";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+
+            while (rs.next()) {
+                String uuid = rs.getString("uuid");
+                String prefix = rs.getString("prefix");
+                prefixes.put(uuid, prefix);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return prefixes;
+    }
 
     // Gets a guild by prefix
     public static GuildName getGuild(String prefix) {
@@ -154,6 +174,7 @@ public class AllGuilds {
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setString(1, prefix);
             stmt.executeUpdate();
+            System.out.println("deleted guild: " + prefix);
         } catch (SQLException e) {
             e.printStackTrace();
         }
