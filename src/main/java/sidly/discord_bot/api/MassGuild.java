@@ -11,6 +11,7 @@ import sidly.discord_bot.database.tables.GuildActivity;
 import sidly.discord_bot.database.tables.Players;
 import sidly.discord_bot.database.tables.PlaytimeHistory;
 import sidly.discord_bot.timed_actions.DynamicTimer;
+import sidly.discord_bot.timed_actions.GuildRankUpdater;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -78,23 +79,21 @@ public class MassGuild {
         // these timers are 7x for target time between because it does one call for every api token
         mainTimer = new DynamicTimer(queue, MassGuild::next, TimeUnit.MINUTES.toMillis(30), 600);
         lowPrioTimer = new DynamicTimer(lowPriorityQueue, MassGuild::nextLowPrio, TimeUnit.HOURS.toMillis(10), 6000);
-        mainTimer.start();
-        lowPrioTimer.start();
-        timersRunning = true;
+        startTimer();
 
     }
 
     public static void stopTimer() {
         mainTimer.cancel();
         lowPrioTimer.cancel();
-        timersRunning = true;
+        timersRunning = false;
     }
 
     public static void startTimer() {
         if (!timersRunning) {
             mainTimer.start();
             lowPrioTimer.start();
-            timersRunning = false;
+            timersRunning = true;
         }
     }
 
@@ -362,7 +361,6 @@ public class MassGuild {
 
     private static final AtomicInteger tokenIndex = new AtomicInteger(0);
     public static Map<String, PlayerProfile> getPlayerData(Set<String> uuids) {
-
         if (apiTokens.isEmpty()) throw new IllegalStateException("No API tokens available");
 
         Gson gson = new GsonBuilder().create();
@@ -435,4 +433,9 @@ public class MassGuild {
     }
 
 
+    public static void updateAllGuildMembers() {
+        GuildInfo guildInfo = ApiUtils.getGuildInfo(ConfigManager.getConfigInstance().other.get(Config.Settings.YourGuildPrefix));
+        Set<String> memberUuids = guildInfo.members.getAllMembers().keySet();
+        getPlayerData(memberUuids);
+    }
 }

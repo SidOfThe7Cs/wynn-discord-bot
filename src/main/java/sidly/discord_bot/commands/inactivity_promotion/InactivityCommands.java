@@ -2,7 +2,6 @@ package sidly.discord_bot.commands.inactivity_promotion;
 
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import sidly.discord_bot.Config;
@@ -91,7 +90,14 @@ public class InactivityCommands {
                 double lastOnline = Utils.timeSinceIso(playerDataShortened.lastJoined, ChronoUnit.DAYS);
 
                 if (averagePlaytime < averagePlaytimeReq || lastOnline > inactiveThreshold) {
-                    inactiveMembers.add(new InactivityEntry(username, averagePlaytime, averagePlaytimeReq, Utils.getEpochTimeFromIso(playerDataShortened.lastJoined), inactiveThreshold, playtimeHistory.getAverageTimeSpan(averageWeeks)));
+                    inactiveMembers.add(new InactivityEntry(
+                            username,
+                            averagePlaytime,
+                            averagePlaytimeReq,
+                            Utils.getEpochTimeFromIso(playerDataShortened.lastJoined),
+                            inactiveThreshold,
+                            playtimeHistory.getAverageTimeSpan(averageWeeks),
+                            rankOfMember));
                 }
             }
 
@@ -111,18 +117,24 @@ public class InactivityCommands {
     }
 
     @SuppressWarnings("unchecked")
-    public static String inactiveityEntryConverter(InactivityEntry entry) {
+    public static String inactivityEntryConverter(InactivityEntry entry) {
         PageBuilder.PaginationState pageState = PageBuilder.PaginationManager.get(PaginationIds.CHECK_INACTIVITY.name());
         List<String> membersNotInDiscord = (List<String>) pageState.customData;
 
         StringBuilder sb = new StringBuilder();
-        sb.append("**").append(Utils.escapeDiscordMarkdown(entry.username)).append("** ");
-        if (membersNotInDiscord.contains(entry.username())) {
-            sb.append("is unverified or not in discord, so playtime isn't tracked");
-        }
-        sb.append("\nplaytime ").append(Utils.formatNumber(entry.averagePlaytime)).append(" / ").append(Utils.formatNumber(entry.averagePlaytimeReq)).append(" (hours)\n");
-        sb.append("last online ").append(Utils.getDiscordTimestamp(entry.lastOnline(), true)).append(" / ").append(Utils.formatNumber(entry.inactiveThreashhold)).append(" days\n");
-        sb.append("data from ").append(Utils.getDiscordTimestamp(entry.timeSpan().getKey(), true)).append(" to ").append(Utils.getDiscordTimestamp(entry.timeSpan().getValue(), true)).append("\n\n");
+        sb.append("**").append(Utils.escapeDiscordMarkdown(entry.username)).append("** (");
+        sb.append(entry.rank).append(") ");
+
+        PlaytimeHistoryList playtimeHistory = PlaytimeHistory.getPlaytimeHistory(UuidMap.getMinecraftIdByUsername(entry.username()));
+
+        sb.append("\nplaytime ").append(Utils.formatNumber(entry.averagePlaytime)).append(" / ")
+                .append(Utils.formatNumber(entry.averagePlaytimeReq))
+                .append(" (").append(playtimeHistory.getAverage(1)).append(" since ")
+                .append(Utils.getDiscordTimestamp(playtimeHistory.getAverageTimeSpan(1).getKey(), true)).append(")\n");
+        sb.append("last online ").append(Utils.getDiscordTimestamp(entry.lastOnline(), true)).append(" / ")
+                .append(Utils.formatNumber(entry.inactiveThreashhold)).append(" days\n");
+        sb.append("data from ").append(Utils.getDiscordTimestamp(entry.timeSpan().getKey(), true)).append(" to ")
+                .append(Utils.getDiscordTimestamp(entry.timeSpan().getValue(), true)).append("\n\n");
 
         return sb.toString();
     }
@@ -187,5 +199,13 @@ public class InactivityCommands {
         });
     }
 
-    public record InactivityEntry(String username, double averagePlaytime, double averagePlaytimeReq, long lastOnline, double inactiveThreashhold, AbstractMap.SimpleEntry<Long, Long> timeSpan){}
+    public record InactivityEntry(
+            String username,
+            double averagePlaytime,
+            double averagePlaytimeReq,
+            long lastOnline,
+            double inactiveThreashhold,
+            AbstractMap.SimpleEntry<Long, Long> timeSpan,
+            Utils.RankList rank)
+    {}
 }

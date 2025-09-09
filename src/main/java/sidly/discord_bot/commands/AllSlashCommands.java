@@ -57,9 +57,10 @@ public enum AllSlashCommands {
     getexceptions("view current exceptions"),
     addpromotionrequirement("add a requiment to be promoted to a rank"),
     getpromotionrequirements("just view em"),
-    checkpromotionprogress("view what a member needs to do to be promoted"),
+    promotionprogress("view what a member needs to do to be promoted"),
     setpromotionoptionalrequirement("set the required number of optional requirements that need to be met"),
-    removepromotionrequirement("remove a requirement from the promotion check");
+    removepromotionrequirement("remove a requirement from the promotion check"),
+    getserverlist("shows the list of server the bot is a member of");
 
     public Consumer<SlashCommandInteractionEvent> getAction() {
         return action;
@@ -95,6 +96,10 @@ public enum AllSlashCommands {
     }
 
     public void run(SlashCommandInteractionEvent event) {
+        if (!event.getGuild().getId().equals(ConfigManager.getConfigInstance().other.get(Config.Settings.YourDiscordServerId))) {
+            event.reply("this bot current does not support multiple servers please try again in like a month").setEphemeral(true).queue();
+            return;
+        }
 
         if (cooldown > 0) {
             long cooldownRemaining = lastRan + (cooldown * 1000L) - System.currentTimeMillis();

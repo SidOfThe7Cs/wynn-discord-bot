@@ -54,6 +54,8 @@ public class TestEntrypoint {
 }
 /*
 TODO
+maybe /getplaytimedata user that shows all playtime entries and how far apart they are
+add /resstartalltimers
 
 Server owner can always run commands
 

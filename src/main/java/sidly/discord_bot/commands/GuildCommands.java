@@ -387,10 +387,10 @@ public class GuildCommands {
         GuildInfo.MemberInfo guildMemberData = statEntry.guildMemberData();
         long joinedDaysAgo = Utils.timeSinceIso(guildMemberData.joined, ChronoUnit.DAYS);
 
-        long xpPerDayMillions;
+        long xpPerDay;
         if (joinedDaysAgo > 0) {
-            xpPerDayMillions = guildMemberData.contributed / joinedDaysAgo / 1000000;
-        } else xpPerDayMillions = guildMemberData.contributed / 1000000;
+            xpPerDay = guildMemberData.contributed / joinedDaysAgo;
+        } else xpPerDay = guildMemberData.contributed;
         int rank = guildMemberData.contributionRank;
 
         StringBuilder sb = new StringBuilder();
@@ -400,7 +400,7 @@ public class GuildCommands {
                 ? "Online " + playerData.server + "\n"
                 : "Offline, last seen " + (lastSeen > 100 ? (int)(lastSeen / 60) + " hours" : lastSeen + " minutes") + " ago\n");
 
-        sb.append(Utils.formatNumbersInString(String.valueOf(guildMemberData.contributed))).append(" XP (").append(xpPerDayMillions).append("M/day)\n");
+        sb.append(Utils.formatNumbersInString(String.valueOf(guildMemberData.contributed))).append(" XP (").append(Utils.formatNumber(xpPerDay)).append("/day)\n");
         sb.append("Joined ").append(joinedDaysAgo).append(" days ago\n");
         if (playerData.globalData != null) {
             sb.append("Wars: ").append(Utils.formatNumber(playerData.globalData.wars)).append(", ");

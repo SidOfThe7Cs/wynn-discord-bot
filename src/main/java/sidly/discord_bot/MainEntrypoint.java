@@ -5,6 +5,8 @@ import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
+import net.dv8tion.jda.api.events.guild.GuildJoinEvent;
+import net.dv8tion.jda.api.events.guild.GuildLeaveEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
@@ -27,6 +29,7 @@ import sidly.discord_bot.database.SQLDB;
 import sidly.discord_bot.database.records.GuildAverages;
 import sidly.discord_bot.page.PageBuilder;
 import sidly.discord_bot.page.PaginationIds;
+import sidly.discord_bot.timed_actions.GuildMemberUpdater;
 import sidly.discord_bot.timed_actions.GuildRankUpdater;
 import sidly.discord_bot.timed_actions.UpdatePlayers;
 
@@ -286,7 +289,8 @@ public class MainEntrypoint extends ListenerAdapter {
                         .addChoices(
                                 new Command.Choice("playerUpdater", "playerUpdater"),
                                 new Command.Choice("guildTracker", "guildTracker"),
-                                new Command.Choice("yourGuildRankUpdater", "yourGuildRankUpdater")
+                                new Command.Choice("yourGuildRankUpdater", "yourGuildRankUpdater"),
+                                new Command.Choice("yourGuildMemberUpdater", "yourGuildMemberUpdater")
                         )
         ));
         AllSlashCommands.stoptimer.setAction(TimerCommands::stopTimer);
@@ -313,7 +317,7 @@ public class MainEntrypoint extends ListenerAdapter {
         commands.addCommands(AllSlashCommands.checkforinactivity.getBaseCommandData());
         AllSlashCommands.checkforinactivity.setAction(InactivityCommands::checkForInactivity);
         PageBuilder.PaginationManager.register(PaginationIds.CHECK_INACTIVITY.name(),
-                stats -> InactivityCommands.inactiveityEntryConverter((InactivityCommands.InactivityEntry) stats), "Inactive Players", 8);
+                stats -> InactivityCommands.inactivityEntryConverter((InactivityCommands.InactivityEntry) stats), "Inactive Players", 8);
 
         commands.addCommands(AllSlashCommands.checkforpromotions.getBaseCommandData());
         AllSlashCommands.checkforpromotions.setAction(PromotionCommands::checkForPromotions);
@@ -344,9 +348,9 @@ public class MainEntrypoint extends ListenerAdapter {
         commands.addCommands(AllSlashCommands.getpromotionrequirements.getBaseCommandData());
         AllSlashCommands.getpromotionrequirements.setAction(PromotionCommands::getRequirements);
 
-        commands.addCommands(AllSlashCommands.checkpromotionprogress.getBaseCommandData()
+        commands.addCommands(AllSlashCommands.promotionprogress.getBaseCommandData()
                 .addOption(USER, "user", "e", true));
-        AllSlashCommands.checkpromotionprogress.setAction(PromotionCommands::checkPromotionProgress);
+        AllSlashCommands.promotionprogress.setAction(PromotionCommands::checkPromotionProgress);
 
         commands.addCommands(AllSlashCommands.setpromotionoptionalrequirement.getBaseCommandData().addOptions(
                 new OptionData(OptionType.STRING, "rank", "what rank to set for", true)
@@ -376,6 +380,9 @@ public class MainEntrypoint extends ListenerAdapter {
         );
         AllSlashCommands.removepromotionrequirement.setAction(PromotionCommands::removeRequirement);
 
+        commands.addCommands(AllSlashCommands.getserverlist.getBaseCommandData());
+        AllSlashCommands.getserverlist.setAction(HelpCommands::getServerList);
+
 
         // Send the new set of commands to discord, this will override any existing global commands with the new set provided here
         commands.queue();
@@ -384,8 +391,9 @@ public class MainEntrypoint extends ListenerAdapter {
         MainEntrypoint.jda = jda;
 
         UpdatePlayers.init();
-        GuildRankUpdater.init();
+        GuildRankUpdater.start();
         MassGuild.init();
+        GuildMemberUpdater.start();
     }
 
 
@@ -563,4 +571,15 @@ public class MainEntrypoint extends ListenerAdapter {
             }
         }
     }
+
+    @Override
+    public void onGuildJoin(GuildJoinEvent event) {
+        Utils.sendToModChannel("Guild joined", event.getGuild().getName(), false);
+    }
+
+    @Override
+    public void onGuildLeave(GuildLeaveEvent event) {
+        Utils.sendToModChannel("Guild left", event.getGuild().getName(), false);
+    }
+
 }

@@ -117,14 +117,23 @@ public class PromotionCommands {
         String username = event.getGuild().getMember(user).getEffectiveName();
 
         GuildInfo guildInfo = ApiUtils.getGuildInfo(ConfigManager.getConfigInstance().other.get(Config.Settings.YourGuildPrefix));
-        String s = checkPromotionProgress(username, guildInfo);
+
+        StringBuilder sb = new StringBuilder();
+
+        Utils.RankList rank = guildInfo.members.getRankOfMember(UuidMap.getMinecraftIdByUsername(username));
+        Utils.RankList promoteTo = Utils.RankList.values()[rank.ordinal() - 1];
+        String progress = checkPromotionProgress(username, guildInfo);
+        boolean missingReqs = (progress.split("-#")[0].contains("❌"));
+
+        sb.append("**").append(username).append("** is ").append((missingReqs) ? "missing requirements" : "eligible").append(" for **").append(promoteTo).append("** rank\n");
+        sb.append(progress);
 
         EmbedBuilder embed = new EmbedBuilder()
                 .setTitle("Promotion Progress for " + username)
                 .setColor(Color.CYAN)
-                .setDescription(s);
+                .setDescription(sb.toString());
 
-        event.replyEmbeds(embed.build()).setEphemeral(true).queue();
+        event.replyEmbeds(embed.build()).setEphemeral(false).queue();
 
     }
 

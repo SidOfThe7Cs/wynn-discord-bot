@@ -1,41 +1,39 @@
 package sidly.discord_bot.timed_actions;
 
-import sidly.discord_bot.commands.GuildCommands;
+import sidly.discord_bot.api.MassGuild;
 
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class GuildRankUpdater {
+public class GuildMemberUpdater {
     private static Timer timer;
-    private static boolean yourGuildTrackerRunning = false;
+    private static boolean running = false;
 
     public static void start(){
-        if (yourGuildTrackerRunning) {
+        if (running) {
             return;
         }
         timer = new Timer();
-        yourGuildTrackerRunning = true;
+        running = true;
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
                 try {
-                    GuildCommands.updatePlayerRanks();
+                    MassGuild.updateAllGuildMembers();
                 } catch (Exception e) {
                     e.printStackTrace(); // Log and keep going
                 }
             }
-        },  4 * 1000, 25 * 1000); // 25 seconds
+        },  4 * 1000, 2 * 60000);
     }
 
     public static void stop(){
-        yourGuildTrackerRunning = false;
+        running = false;
         timer.cancel();
     }
 
     public static boolean getStatus() {
-        return yourGuildTrackerRunning;
+        return running;
     }
-
-
 
 }
