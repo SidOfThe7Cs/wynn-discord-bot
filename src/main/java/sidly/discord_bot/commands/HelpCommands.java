@@ -2,6 +2,7 @@ package sidly.discord_bot.commands;
 
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.channel.unions.GuildChannelUnion;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import sidly.discord_bot.ConfigManager;
@@ -83,10 +84,11 @@ public class HelpCommands {
 
         sb.append("bot is in ").append(guilds.size()).append(" servers\n");
         for (Guild guild : guilds) {
-            sb.append("**").append(guild.getName()).append("** owned by **").append(guild.getOwner().getUser().getName()).append("**\n");
-
+            Member ownerMember = guild.getOwner();
+            String ownerName = ownerMember == null ? "unknown" : ownerMember.getUser().getName();
+            sb.append("**").append(guild.getName()).append("** owned by **").append(ownerName).append("**\n");
         }
 
-        event.replyEmbeds(Utils.getEmbed("Server List", sb.toString())).setEphemeral(true).queue();
+        event.replyEmbeds(Utils.getEmbed("Server List", sb.toString())).setEphemeral(false).queue();
     }
 }

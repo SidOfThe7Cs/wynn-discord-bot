@@ -129,7 +129,7 @@ public class InactivityCommands {
 
         sb.append("\nplaytime ").append(Utils.formatNumber(entry.averagePlaytime)).append(" / ")
                 .append(Utils.formatNumber(entry.averagePlaytimeReq))
-                .append(" (").append(playtimeHistory.getAverage(1)).append(" since ")
+                .append(" (").append(Utils.formatNumber(playtimeHistory.getAverage(1))).append(" since ")
                 .append(Utils.getDiscordTimestamp(playtimeHistory.getAverageTimeSpan(1).getKey(), true)).append(")\n");
         sb.append("last online ").append(Utils.getDiscordTimestamp(entry.lastOnline(), true)).append(" / ")
                 .append(Utils.formatNumber(entry.inactiveThreashhold)).append(" days\n");
