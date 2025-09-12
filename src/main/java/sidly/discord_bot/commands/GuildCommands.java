@@ -163,13 +163,14 @@ public class GuildCommands {
             embed.setColor(Color.CYAN);
             embed.setTitle("[" + guildPrefix + "] " + GuildActivity.getGuildName(uuid) + " Active Hours\n");
 
+            StringBuilder sb = new StringBuilder();
+            sb.append("Data based off the past ").append(days).append(" days").append("\n");
+            sb.append("00:00 is your ").append(Utils.getTimestampFromInt(0)).append("\n");
+            sb.append("``` Hour ┃ Players ┃ Captains\n━━━━━━╋━━━━━━━━━╋━━━━━━━━━\n");
+
             List<String> hours = new ArrayList<>();
             List<String> players = new ArrayList<>();
             List<String> captains = new ArrayList<>();
-
-            StringBuilder sb = new StringBuilder();
-            sb.append("00:00 is your ").append(Utils.getTimestampFromInt(0)).append("\n");
-            sb.append("``` Hour ┃ Players ┃ Captains\n━━━━━━╋━━━━━━━━━╋━━━━━━━━━\n");
 
             for (int hour = 0; hour < 24; hour++) {
                 double averagePlayers = GuildActivity.getAverageOnline(uuid, hour, days, false);
@@ -232,7 +233,7 @@ public class GuildCommands {
                 }
             }
 
-            pageState.customData = "[" + prefix +"] is in position " + (index + 1) + "\n\n";
+            pageState.customData = "[" + prefix +"] is in position " + (index + 1) + "\n" + "Data based off the past " + guildDays + " days" + "\n\n";
 
             pageState.reset(guildAverages);
 

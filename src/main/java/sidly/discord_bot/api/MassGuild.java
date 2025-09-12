@@ -6,10 +6,7 @@ import sidly.discord_bot.Config;
 import sidly.discord_bot.ConfigManager;
 import sidly.discord_bot.database.PlayerDataShortened;
 import sidly.discord_bot.database.records.GuildName;
-import sidly.discord_bot.database.tables.AllGuilds;
-import sidly.discord_bot.database.tables.GuildActivity;
-import sidly.discord_bot.database.tables.Players;
-import sidly.discord_bot.database.tables.PlaytimeHistory;
+import sidly.discord_bot.database.tables.*;
 import sidly.discord_bot.timed_actions.DynamicTimer;
 import sidly.discord_bot.timed_actions.GuildRankUpdater;
 
@@ -383,6 +380,10 @@ public class MassGuild {
 
                         if (status == 404) {
                             return; // no player found
+                        }
+                        if (status == 500) {
+                            System.out.println("failed ot connect to api " + UuidMap.getUsernameByMinecraftId(uuid));
+                            return;
                         }
 
                         String body = response.body().trim();

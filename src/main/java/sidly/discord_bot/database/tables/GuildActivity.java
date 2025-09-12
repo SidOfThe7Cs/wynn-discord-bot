@@ -161,26 +161,31 @@ public class GuildActivity {
     public static List<GuildAverages> getGuildAverages(int daysInPast) {
         List<GuildAverages> results = new ArrayList<>();
 
+
+
         long startTime = 0;
         if (daysInPast > 0) {
             startTime = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(daysInPast);
         }
 
         String sql = """
-        SELECT uuid,
-               AVG(hourly_avg_online) AS avg_online,
-               AVG(hourly_avg_captains) AS avg_captains
-        FROM (
-            SELECT uuid,
-                   hour,
-                   AVG(online_count) AS hourly_avg_online,
-                   AVG(captains_online) AS hourly_avg_captains
-            FROM guild_activity
-            WHERE timestamp >= ?
-            GROUP BY uuid, hour
-        ) sub
-        GROUP BY uuid
-        ORDER BY avg_online DESC;
+                SELECT sub.uuid,
+                               AVG(sub.hourly_avg_online)   AS avg_online,
+                               AVG(sub.hourly_avg_captains) AS avg_captains
+                        FROM (
+                            SELECT a.uuid,
+                                   a.hour,
+                                   AVG(a.online_count)    AS hourly_avg_online,
+                                   AVG(a.captains_online) AS hourly_avg_captains
+                            FROM guild_activity a
+                            JOIN guilds_40_plus g
+                              ON a.prefix = g.prefix
+                            WHERE a.timestamp >= ?
+                              AND g.low_priority = 0
+                            GROUP BY a.uuid, a.hour
+                        ) sub
+                        GROUP BY sub.uuid
+                        ORDER BY avg_online DESC;
         """;
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {

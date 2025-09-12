@@ -72,6 +72,8 @@ public class SQLDB {
         executeQuery("CREATE INDEX IF NOT EXISTS idx_activity_uuid ON guild_activity(uuid)");
         executeQuery("CREATE INDEX IF NOT EXISTS idx_activity_uuid_time ON guild_activity(uuid, hour)");
         executeQuery("CREATE INDEX IF NOT EXISTS idx_activity_hour_timestamp ON guild_activity(hour, timestamp)");
+        executeQuery("CREATE INDEX IF NOT EXISTS idx_activity_prefix ON guild_activity(prefix)");
+        executeQuery("CREATE INDEX IF NOT EXISTS idx_activity_prefix_timestamp ON guild_activity(prefix, timestamp)");
 
         createTable("all_guilds", Map.of(
                 "prefix", "TEXT",
@@ -85,6 +87,7 @@ public class SQLDB {
         ));
         addColumn("guilds_40_plus", "low_priority", "INTEGER");
         executeQuery("CREATE INDEX IF NOT EXISTS idx_tracked_priority ON guilds_40_plus(low_priority)");
+        executeQuery("CREATE INDEX IF NOT EXISTS idx_guilds_40_plus_prefix_priority ON guilds_40_plus(prefix, low_priority)");
 
         createTable("inactivity_exceptions", Map.of(
                 "uuid", "TEXT PRIMARY KEY",

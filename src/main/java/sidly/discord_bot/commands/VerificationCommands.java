@@ -249,6 +249,7 @@ public class VerificationCommands {
         }
 
         UuidMap.addMinecraftId(nickname.toLowerCase(), playerData.uuid);
+        nickname = playerData.username;
 
         boolean isOwner = member.getGuild().getOwnerIdLong() == member.getIdLong();
         boolean isMember;
