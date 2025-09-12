@@ -329,7 +329,7 @@ public class PromotionCommands {
             EmbedBuilder embed = pageState.buildEmbedPage();
 
             if (embed == null) {
-                hook.editOriginalEmbeds(Utils.getEmbed("No Promotions", "there is no-one good enough for the next rank")).queue();
+                hook.editOriginalEmbeds(Utils.getEmbed("", "No Promotions")).queue();
                 return;
             }
 

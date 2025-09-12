@@ -240,7 +240,7 @@ public class GuildCommands {
             EmbedBuilder embed = pageState.buildEmbedPage();
 
             if (embed == null) {
-                event.reply("no guilds").setEphemeral(true).queue();
+                hook.editOriginalEmbeds(Utils.getEmbed("", "no guilds")).queue();
                 return;
             }
 

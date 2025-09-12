@@ -18,11 +18,13 @@ public class RoleChangeListener extends ListenerAdapter {
 
     @Override
     public void onGuildMemberRoleAdd(GuildMemberRoleAddEvent event) {
+        if (!ConfigManager.getConfigInstance().other.get(Config.Settings.YourDiscordServerId).equals(event.getGuild().getId())) return;
         handleChange(event.getMember(), event.getRoles(), true);
     }
 
     @Override
     public void onGuildMemberRoleRemove(GuildMemberRoleRemoveEvent event) {
+        if (!ConfigManager.getConfigInstance().other.get(Config.Settings.YourDiscordServerId).equals(event.getGuild().getId())) return;
         handleChange(event.getMember(), event.getRoles(), false);
     }
 

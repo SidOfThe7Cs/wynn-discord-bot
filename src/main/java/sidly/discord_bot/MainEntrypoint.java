@@ -532,6 +532,8 @@ public class MainEntrypoint extends ListenerAdapter {
 
     @Override
     public void onGuildMemberJoin(GuildMemberJoinEvent event) {
+        if (!ConfigManager.getConfigInstance().other.get(Config.Settings.YourDiscordServerId).equals(event.getGuild().getId())) return;
+
         Member member = event.getMember();
         Guild guild = event.getGuild();
         String unverifiedRoleId = ConfigManager.getConfigInstance().roles.get(Config.Roles.UnVerifiedRole);
@@ -556,6 +558,8 @@ public class MainEntrypoint extends ListenerAdapter {
 
     @Override
     public void onGuildMemberRemove(GuildMemberRemoveEvent event) {
+        if (!ConfigManager.getConfigInstance().other.get(Config.Settings.YourDiscordServerId).equals(event.getGuild().getId())) return;
+
         User user = event.getUser();
         Guild guild = event.getGuild();
         String message = ConfigManager.getConfigInstance().other.get(Config.Settings.GuildLeaveMessage);

@@ -148,8 +148,7 @@ public class Utils {
     public static MessageEmbed getEmbed(String title, String description){
         EmbedBuilder embed = new EmbedBuilder();
         embed.setColor(Color.CYAN);
-        title = title.isEmpty() ? "no title specified" : title;
-        embed.setTitle(title);
+        if (!title.isEmpty()) embed.setTitle(title);
 
         if (description.length() > 4096) {
             description = description.substring(0, 4095);

@@ -5,10 +5,8 @@ import sidly.discord_bot.database.records.GuildName;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static sidly.discord_bot.database.SQLDB.connection;
 
@@ -124,6 +122,37 @@ public class AllGuilds {
         }
         return null; // not found
     }
+
+    public static Set<GuildName> getAllByPrefixes(Set<String> prefixes) {
+        Set<GuildName> guilds = new HashSet<>();
+        if (prefixes.isEmpty()) return guilds; // nothing to do
+
+        // build placeholders for the IN clause
+        String placeholders = prefixes.stream().map(p -> "?").collect(Collectors.joining(","));
+        String sql = "SELECT prefix, uuid, name FROM all_guilds WHERE prefix IN (" + placeholders + ") " +
+                "AND prefix IS NOT NULL AND uuid IS NOT NULL AND name IS NOT NULL";
+
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            int idx = 1;
+            for (String prefix : prefixes) {
+                stmt.setString(idx++, prefix);
+            }
+
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                guilds.add(new GuildName(
+                        rs.getString("prefix"),
+                        rs.getString("uuid"),
+                        rs.getString("name")
+                ));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return guilds;
+    }
+
 
     // Checks if a guild exists by prefix
     public static boolean containsGuild(String prefix) {

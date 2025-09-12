@@ -2,14 +2,18 @@ package sidly.discord_bot.database.tables;
 
 import sidly.discord_bot.Utils;
 import sidly.discord_bot.database.records.GuildAverages;
+import sidly.discord_bot.database.records.GuildName;
 import sidly.discord_bot.database.records.TimestampedDouble;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static sidly.discord_bot.database.SQLDB.connection;
 
@@ -158,9 +162,24 @@ public class GuildActivity {
         return total / count;
     }
 
+    public static Set<String> getActivePrefixes() {
+        Set<String> prefixes = new HashSet<>();
+        String sql = "SELECT prefix FROM guilds_40_plus WHERE low_priority = 0";
+
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                prefixes.add(rs.getString("prefix"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return prefixes;
+    }
+
+
     public static List<GuildAverages> getGuildAverages(int daysInPast) {
         List<GuildAverages> results = new ArrayList<>();
-
 
 
         long startTime = 0;
@@ -168,40 +187,46 @@ public class GuildActivity {
             startTime = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(daysInPast);
         }
 
+        Set<String> activePrefixes = getActivePrefixes(); // prefixes where low_priority = 0
+        Set<String> uuids = AllGuilds.getAllByPrefixes(activePrefixes).stream().map(GuildName::uuid).collect(Collectors.toSet());
+
+        // if no UUIDs, nothing to query
+        if (uuids.isEmpty()) return results;
+
+// Build placeholders for the IN clause
+        String placeholders = uuids.stream().map(u -> "?").collect(Collectors.joining(","));
+
+// Single-pass query: average directly per UUID
         String sql = """
-                SELECT sub.uuid,
-                               AVG(sub.hourly_avg_online)   AS avg_online,
-                               AVG(sub.hourly_avg_captains) AS avg_captains
-                        FROM (
-                            SELECT a.uuid,
-                                   a.hour,
-                                   AVG(a.online_count)    AS hourly_avg_online,
-                                   AVG(a.captains_online) AS hourly_avg_captains
-                            FROM guild_activity a
-                            JOIN guilds_40_plus g
-                              ON a.prefix = g.prefix
-                            WHERE a.timestamp >= ?
-                              AND g.low_priority = 0
-                            GROUP BY a.uuid, a.hour
-                        ) sub
-                        GROUP BY sub.uuid
-                        ORDER BY avg_online DESC;
-        """;
+        SELECT uuid,
+               AVG(online_count)    AS avg_online,
+               AVG(captains_online) AS avg_captains
+        FROM guild_activity
+        WHERE timestamp >= ?
+          AND uuid IN (%s)
+        GROUP BY uuid
+        ORDER BY avg_online DESC
+        """.formatted(placeholders);
 
-        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setLong(1, startTime);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                while (rs.next()) {
-                    String uuid = rs.getString("uuid");
-                    double avgOnline = rs.getDouble("avg_online");
-                    double avgCaptains = rs.getDouble("avg_captains");
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            int idx = 1;
+            stmt.setLong(idx++, startTime);
+            for (String uuid : uuids) {
+                stmt.setString(idx++, uuid);
+            }
 
-                    results.add(new GuildAverages(uuid, avgOnline, avgCaptains));
-                }
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                String uuid = rs.getString("uuid");
+                double avgOnline = rs.getDouble("avg_online");
+                double avgCaptains = rs.getDouble("avg_captains");
+
+                results.add(new GuildAverages(uuid, avgOnline, avgCaptains));
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
+
 
         return results;
     }
