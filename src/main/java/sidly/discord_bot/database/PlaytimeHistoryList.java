@@ -96,17 +96,72 @@ public class PlaytimeHistoryList {
         return totalWeighted / totalWeights;
     }
 
+    public String getWarsReport() {
+        if (playtimeHistory.isEmpty()) {
+            return "No data available";
+        }
+
+        // Weeks we want to check back
+        int[] weeks = {1, 2, 4, 6, 12};
+        long now = playtimeHistory.getLast().timeLogged;
+        int currentWars = playtimeHistory.getLast().wars;
+
+        long millisInWeek = TimeUnit.DAYS.toMillis(7);
+
+        StringBuilder sb = new StringBuilder();
+
+        // Line 1: current wars
+        sb.append("Since ")
+                .append(Utils.getDiscordTimestamp(now, true))
+                .append(" total wars: ")
+                .append(currentWars)
+                .append("\n");
+
+        // Lines for each week checkpoint
+        for (int week : weeks) {
+            long targetTime = now - (week * millisInWeek);
+
+            // Find the closest entry at or before this time
+            PlaytimeHistoryEntry closest = null;
+            for (int j = playtimeHistory.size() - 1; j >= 0; j--) {
+                if (playtimeHistory.get(j).timeLogged <= targetTime) {
+                    closest = playtimeHistory.get(j);
+                    break;
+                }
+            }
+
+            if (closest != null) {
+                int warsThen = closest.wars;
+                int diff = currentWars - warsThen;
+
+                sb.append("Since ")
+                        .append(Utils.getDiscordTimestamp(closest.timeLogged, true))
+                        .append(" (").append(week).append("w ago): ")
+                        .append(diff >= 0 ? "+" : "").append(diff)
+                        .append(" wars (was ").append(warsThen).append(")")
+                        .append("\n");
+            } else {
+                sb.append("Since ").append(week).append("w ago: n/a\n");
+            }
+        }
+
+        return sb.toString().trim();
+    }
+
+
     public static class PlaytimeHistoryEntry {
         public double playtime;
         public long timeLogged;
+        public int wars;
 
         public long getTimeLogged() {
             return timeLogged;
         }
 
-        public PlaytimeHistoryEntry(double playtime, long timeLogged) {
+        public PlaytimeHistoryEntry(double playtime, long timeLogged, int wars) {
             this.playtime = playtime;
             this.timeLogged = timeLogged;
+            this.wars = wars;
         }
 
         @Override

@@ -28,27 +28,71 @@ public class PlaytimeHistory {
 
         if (shouldInsert) {
             // Insert new entry
-            String sql = "INSERT INTO playtime_history (uuid, playtime, timeLogged) VALUES (?, ?, ?)";
+            String sql = "INSERT INTO playtime_history (uuid, playtime, timeLogged, wars) VALUES (?, ?, ?, ?)";
             try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
                 pstmt.setString(1, uuid);
                 pstmt.setDouble(2, playerData.latestPlaytime);
                 pstmt.setLong(3, playerData.lastModified);
+                pstmt.setInt(4, playerData.wars);
                 pstmt.executeUpdate();
             } catch (SQLException e) {
                 e.printStackTrace();
             }
         } else {
             // Update the latest entry
-            String sql = "UPDATE playtime_history SET playtime = ?, timeLogged = ? WHERE uuid = ? AND timeLogged = ?";
+            String sql = "UPDATE playtime_history SET playtime = ?, timeLogged = ?, wars = ? WHERE uuid = ? AND timeLogged = ?";
             try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
                 pstmt.setDouble(1, playerData.latestPlaytime);
                 pstmt.setLong(2, playerData.lastModified);
-                pstmt.setString(3, uuid);
-                pstmt.setLong(4, latestEntry.timeLogged);
+                pstmt.setInt(3, playerData.wars);
+                pstmt.setString(4, uuid);
+                pstmt.setLong(5, latestEntry.timeLogged);
                 pstmt.executeUpdate();
             } catch (SQLException e) {
                 e.printStackTrace();
             }
+        }
+    }
+
+    public static void addPlaytimeIfNeeded(Set<PlayerDataShortened> players) {
+        if (players == null || players.isEmpty()) return;
+
+        String insertSql = "INSERT INTO playtime_history (uuid, playtime, timeLogged, wars) VALUES (?, ?, ?, ?)";
+        String updateSql = "UPDATE playtime_history SET playtime = ?, timeLogged = ?, wars = ? WHERE uuid = ? AND timeLogged = ?";
+
+        try (
+                PreparedStatement insertStmt = connection.prepareStatement(insertSql);
+                PreparedStatement updateStmt = connection.prepareStatement(updateSql)
+        ) {
+            for (PlayerDataShortened playerData : players) {
+                String uuid = playerData.uuid;
+                List<PlaytimeHistoryList.PlaytimeHistoryEntry> playtimeHistory = getPlaytimeHistory(uuid).getPlaytimeHistory();
+                playtimeHistory.sort(Comparator.comparingLong(PlaytimeHistoryList.PlaytimeHistoryEntry::getTimeLogged).reversed());
+                PlaytimeHistoryList.PlaytimeHistoryEntry latestEntry = !playtimeHistory.isEmpty() ? playtimeHistory.get(0) : null;
+                boolean shouldInsert = isShouldInsert(playtimeHistory, latestEntry);
+
+                if (shouldInsert) {
+                    insertStmt.setString(1, uuid);
+                    insertStmt.setDouble(2, playerData.latestPlaytime);
+                    insertStmt.setLong(3, playerData.lastModified);
+                    insertStmt.setInt(4, playerData.wars);
+                    insertStmt.addBatch();
+                } else {
+                    updateStmt.setDouble(1, playerData.latestPlaytime);
+                    updateStmt.setLong(2, playerData.lastModified);
+                    updateStmt.setInt(3, playerData.wars);
+                    updateStmt.setString(4, uuid);
+                    updateStmt.setLong(5, latestEntry.timeLogged);
+                    updateStmt.addBatch();
+                }
+            }
+
+            // Run all batched inserts and updates
+            insertStmt.executeBatch();
+            updateStmt.executeBatch();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
@@ -70,16 +114,20 @@ public class PlaytimeHistory {
         return shouldInsert;
     }
 
-
     public static PlaytimeHistoryList getPlaytimeHistory(String uuid) {
-        String sql = "SELECT playtime, timeLogged FROM playtime_history WHERE uuid = ? ORDER BY timeLogged ASC";
+        String sql = "SELECT playtime, timeLogged, wars FROM playtime_history WHERE uuid = ? ORDER BY timeLogged ASC";
 
         List<PlaytimeHistoryList.PlaytimeHistoryEntry> entries = new ArrayList<>();
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, uuid);
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
-                PlaytimeHistoryList.PlaytimeHistoryEntry entry = new PlaytimeHistoryList.PlaytimeHistoryEntry(rs.getDouble("playtime"), rs.getLong("timeLogged"));
+                PlaytimeHistoryList.PlaytimeHistoryEntry entry =
+                        new PlaytimeHistoryList.PlaytimeHistoryEntry(
+                                rs.getDouble("playtime"),
+                                rs.getLong("timeLogged"),
+                                rs.getInt("wars")
+                        );
                 entries.add(entry);
             }
         } catch (SQLException e) {
@@ -92,9 +140,8 @@ public class PlaytimeHistory {
     public static Map<String, PlaytimeHistoryList> getPlaytimeHistoryForAll(Collection<String> uuids) {
         if (uuids.isEmpty()) return Collections.emptyMap();
 
-        // Build a string of '?' placeholders for each UUID
         String placeholders = uuids.stream().map(u -> "?").collect(Collectors.joining(","));
-        String sql = "SELECT uuid, playtime, timeLogged FROM playtime_history WHERE uuid IN (" + placeholders + ") ORDER BY uuid, timeLogged ASC";
+        String sql = "SELECT uuid, playtime, timeLogged, wars FROM playtime_history WHERE uuid IN (" + placeholders + ") ORDER BY uuid, timeLogged ASC";
 
         Map<String, List<PlaytimeHistoryList.PlaytimeHistoryEntry>> tempMap = new HashMap<>();
 
@@ -109,8 +156,10 @@ public class PlaytimeHistory {
                 String uuid = rs.getString("uuid");
                 double playtime = rs.getDouble("playtime");
                 long timeLogged = rs.getLong("timeLogged");
+                int wars = rs.getInt("wars");
 
-                PlaytimeHistoryList.PlaytimeHistoryEntry entry = new PlaytimeHistoryList.PlaytimeHistoryEntry(playtime, timeLogged);
+                PlaytimeHistoryList.PlaytimeHistoryEntry entry =
+                        new PlaytimeHistoryList.PlaytimeHistoryEntry(playtime, timeLogged, wars);
                 tempMap.computeIfAbsent(uuid, k -> new ArrayList<>()).add(entry);
             }
 
@@ -118,7 +167,6 @@ public class PlaytimeHistory {
             e.printStackTrace();
         }
 
-        // Convert to PlaytimeHistoryList
         Map<String, PlaytimeHistoryList> result = new HashMap<>();
         for (Map.Entry<String, List<PlaytimeHistoryList.PlaytimeHistoryEntry>> e : tempMap.entrySet()) {
             result.put(e.getKey(), new PlaytimeHistoryList(e.getValue()));
@@ -130,7 +178,6 @@ public class PlaytimeHistory {
     public static List<String> getSortedPlaytimeReport() {
         List<String> results = new ArrayList<>();
 
-        // Step 1: get all unique UUIDs from the table
         List<String> uuids = new ArrayList<>();
         String uuidSql = "SELECT DISTINCT uuid FROM playtime_history";
         try (PreparedStatement ps = connection.prepareStatement(uuidSql);
@@ -142,18 +189,18 @@ public class PlaytimeHistory {
             e.printStackTrace();
         }
 
-        // Step 2: fetch all playtime histories
         List<PlayerReport> reports = new ArrayList<>();
         for (String uuid : uuids) {
             List<PlaytimeHistoryList.PlaytimeHistoryEntry> entries = new ArrayList<>();
-            String historySql = "SELECT playtime, timeLogged FROM playtime_history WHERE uuid = ? ORDER BY timeLogged ASC";
+            String historySql = "SELECT playtime, timeLogged, wars FROM playtime_history WHERE uuid = ? ORDER BY timeLogged ASC";
             try (PreparedStatement ps = connection.prepareStatement(historySql)) {
                 ps.setString(1, uuid);
                 try (ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) {
                         entries.add(new PlaytimeHistoryList.PlaytimeHistoryEntry(
                                 rs.getDouble("playtime"),
-                                rs.getLong("timeLogged")
+                                rs.getLong("timeLogged"),
+                                rs.getInt("wars")
                         ));
                     }
                 }
@@ -164,27 +211,22 @@ public class PlaytimeHistory {
             if (entries.isEmpty()) continue;
 
             PlaytimeHistoryList historyList = new PlaytimeHistoryList(entries);
-
-            // Retrieve player info if needed
             PlayerDataShortened playerData = Players.get(uuid);
 
-            PlayerDataShortened player = Players.get(uuid);
-            if (player != null) {
+            if (playerData != null) {
                 reports.add(new PlayerReport(
-                        player.username,
+                        playerData.username,
                         historyList.getLinear10WeekAverage(),
                         historyList.getAverage(1),
                         historyList.getAverage(5),
                         historyList.getAverage(20),
-                        playerData != null ? playerData.getAllTimeWeeklyAverage() : 0
+                        playerData.getAllTimeWeeklyAverage()
                 ));
             }
         }
 
-        // Step 3: sort descending by linear10WeekAverage
         reports.sort((a, b) -> Double.compare(b.linear10WeekAverage, a.linear10WeekAverage));
 
-        // Step 4: build output strings
         for (PlayerReport report : reports) {
             results.add(String.format("**%s**, %.2f, %.2f, %.2f, %.2f, %.2f\n",
                     report.uuid,
@@ -198,6 +240,7 @@ public class PlaytimeHistory {
 
         return results;
     }
+
 
     // Helper record to hold report data
     private record PlayerReport(

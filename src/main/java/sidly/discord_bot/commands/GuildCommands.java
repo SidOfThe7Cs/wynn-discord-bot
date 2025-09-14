@@ -4,6 +4,7 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.ClientType;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import sidly.discord_bot.*;
@@ -22,6 +23,9 @@ import java.awt.Color;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class GuildCommands {
@@ -164,7 +168,6 @@ public class GuildCommands {
             embed.setTitle("[" + guildPrefix + "] " + GuildActivity.getGuildName(uuid) + " Active Hours\n");
 
             StringBuilder sb = new StringBuilder();
-            sb.append("Data based off the past ").append(days).append(" days").append("\n");
             sb.append("00:00 is your ").append(Utils.getTimestampFromInt(0)).append("\n");
             sb.append("``` Hour ┃ Players ┃ Captains\n━━━━━━╋━━━━━━━━━╋━━━━━━━━━\n");
 
@@ -233,7 +236,7 @@ public class GuildCommands {
                 }
             }
 
-            pageState.customData = "[" + prefix +"] is in position " + (index + 1) + "\n" + "Data based off the past " + guildDays + " days" + "\n\n";
+            pageState.customData = "[" + prefix +"] is in position " + (index + 1) + "\n\n";
 
             pageState.reset(guildAverages);
 
@@ -507,6 +510,62 @@ public class GuildCommands {
     public static String lastLoginsConverter(LastLoginInfo m) {
         return String.format("%s last joined %d days ago (%s, lvl %d)%n",
                 Utils.escapeDiscordMarkdown(m.username()), m.lastJoinedDays(), m.rank(), m.highestLvl());
+    }
+
+    public static void getWarReport(SlashCommandInteractionEvent event) {
+        event.deferReply(false).addComponents(PageBuilder.getPaginationActionRow(PaginationIds.WAR_REPORT)).queue(hook -> {
+
+            GuildInfo guildInfo = ApiUtils.getGuildInfo(ConfigManager.getConfigInstance().other.get(Config.Settings.YourGuildPrefix));
+            Map<String, PlaytimeHistoryList> playtimeHistoryForAll = PlaytimeHistory.getPlaytimeHistoryForAll(guildInfo.members.getAllMembers().keySet());
+
+            List<Map.Entry<String, PlaytimeHistoryList>> entriesList = new ArrayList<>(playtimeHistoryForAll.entrySet());
+
+            // Sort descending by 4-week wars increase parsed from the report
+            entriesList.sort((a, b) -> {
+                String reportA = a.getValue().getWarsReport();
+                String reportB = b.getValue().getWarsReport();
+
+                int increaseA = 0;
+                int increaseB = 0;
+
+                // parse increase for a
+                Matcher matcherA = Pattern.compile("\\(4w ago\\): ([+-]?\\d+)").matcher(reportA);
+                if (matcherA.find()) {
+                    increaseA = Integer.parseInt(matcherA.group(1));
+                }
+
+                // parse increase for b
+                Matcher matcherB = Pattern.compile("\\(4w ago\\): ([+-]?\\d+)").matcher(reportB);
+                if (matcherB.find()) {
+                    increaseB = Integer.parseInt(matcherB.group(1));
+                }
+
+                return Integer.compare(increaseB, increaseA); // descending
+            });
+
+            // Build the sortedEntries list
+            List<String> sortedEntries = new ArrayList<>();
+            for (Map.Entry<String, PlaytimeHistoryList> entry : entriesList) {
+                PlayerDataShortened playerDataShortened = Players.get(entry.getKey());
+                String username = playerDataShortened == null ? "null" : playerDataShortened.username;
+                String warsReport = entry.getValue().getWarsReport();
+
+                sortedEntries.add("**" + username + "**\n" + warsReport + "\n\n");
+            }
+
+            PageBuilder.PaginationState pageState = PageBuilder.PaginationManager.get(PaginationIds.WAR_REPORT.name());
+            pageState.reset(sortedEntries);
+
+            EmbedBuilder embed = pageState.buildEmbedPage();
+
+            if (embed == null) {
+                hook.editOriginalEmbeds(Utils.getEmbed("well this is awkward", "something went wrong")).queue();
+                return;
+            }
+
+            hook.editOriginalEmbeds(embed.build()).queue();
+
+        });
     }
 
     public record GuildStatEntry(String uuid, GuildInfo.MemberInfo guildMemberData){}

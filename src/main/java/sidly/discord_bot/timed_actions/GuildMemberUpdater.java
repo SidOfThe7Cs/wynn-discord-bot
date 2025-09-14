@@ -4,6 +4,7 @@ import sidly.discord_bot.api.MassGuild;
 
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
 
 public class GuildMemberUpdater {
     private static Timer timer;
@@ -24,7 +25,7 @@ public class GuildMemberUpdater {
                     e.printStackTrace(); // Log and keep going
                 }
             }
-        },  4 * 1000, 2 * 60000);
+        },  4 * 1000, TimeUnit.HOURS.toMillis(4));
     }
 
     public static void stop(){

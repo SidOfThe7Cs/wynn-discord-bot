@@ -60,6 +60,7 @@ public enum AllSlashCommands {
     promotionprogress("view what a member needs to do to be promoted"),
     setpromotionoptionalrequirement("set the required number of optional requirements that need to be met"),
     removepromotionrequirement("remove a requirement from the promotion check"),
+    warreport("get player war counts per week"),
     getserverlist("shows the list of server the bot is a member of");
 
     public Consumer<SlashCommandInteractionEvent> getAction() {

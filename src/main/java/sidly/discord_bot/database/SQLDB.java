@@ -57,6 +57,7 @@ public class SQLDB {
                 "playtime", "REAL",
                 "timeLogged", "INTEGER"
         ));
+        addColumn("playtime_history", "wars", "INTEGER");
         executeQuery("CREATE INDEX IF NOT EXISTS idx_playtime_uuid ON playtime_history(uuid)");
 
         createTable("guild_activity", Map.of(

@@ -365,6 +365,7 @@ public class MassGuild {
         Map<String, PlayerProfile> results = new ConcurrentHashMap<>();
 
         List<CompletableFuture<Void>> futures = new ArrayList<>();
+        Set<PlayerDataShortened> toUpdate = new HashSet<>();
 
         for (String uuid : uuids) {
             String apiToken = apiTokens.get(tokenIndex.getAndIncrement() % apiTokens.size());
@@ -382,7 +383,7 @@ public class MassGuild {
                             return; // no player found
                         }
                         if (status == 500) {
-                            System.out.println("failed ot connect to api " + UuidMap.getUsernameByMinecraftId(uuid));
+                            //System.out.println("failed ot connect to api " + UuidMap.getUsernameByMinecraftId(uuid));
                             return;
                         }
 
@@ -401,8 +402,7 @@ public class MassGuild {
                         results.put(uuid, apiData);
 
                         PlayerDataShortened playerDataShortened = new PlayerDataShortened(apiData);
-                        Players.add(playerDataShortened);
-                        PlaytimeHistory.addPlaytimeIfNeeded(playerDataShortened);
+                        toUpdate.add(playerDataShortened);
                     })
                     .exceptionally(ex -> {
                         Throwable cause = ex instanceof CompletionException ? ex.getCause() : ex;
@@ -430,6 +430,7 @@ public class MassGuild {
         // Wait for all to finish
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 
+        PlaytimeHistory.addPlaytimeIfNeeded(toUpdate);
         return results;
     }
 

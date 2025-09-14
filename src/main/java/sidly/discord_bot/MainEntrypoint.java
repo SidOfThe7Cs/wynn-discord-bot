@@ -267,6 +267,10 @@ public class MainEntrypoint extends ListenerAdapter {
         commands.addCommands(AllSlashCommands.getsysteminfo.getBaseCommandData());
         AllSlashCommands.getsysteminfo.setAction(HelpCommands::getSystemInfo);
 
+        commands.addCommands(AllSlashCommands.warreport.getBaseCommandData());
+        AllSlashCommands.warreport.setAction(GuildCommands::getWarReport);
+        PageBuilder.PaginationManager.register(PaginationIds.WAR_REPORT.name(), null, "War report",5);
+
         commands.addCommands(AllSlashCommands.updateplayerranks.getBaseCommandData());
         AllSlashCommands.updateplayerranks.setAction(GuildCommands::updatePlayerRanks);
 

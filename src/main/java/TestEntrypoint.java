@@ -54,6 +54,8 @@ public class TestEntrypoint {
 }
 /*
 TODO
+make a new table and have it store the average per hour for each guild and the number of entries in a way that lets you add more entries without messing up averages and only get the average over the past x days
+
 maybe /getplaytimedata user that shows all playtime entries and how far apart they are
 add /resstartalltimers
 
