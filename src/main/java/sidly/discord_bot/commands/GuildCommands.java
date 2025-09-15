@@ -252,8 +252,13 @@ public class GuildCommands {
     }
 
     public static String guildConverter(GuildAverages trackedGuild) {
-        String averagePlayers = String.format("%.2f", trackedGuild.averageOnline());
-        String averageCaptains = String.format("%.2f", trackedGuild.averageCaptains());
+        GuildInfo guildInfo = ApiUtils.getGuildInfo(AllGuilds.getPrefixByUuid(trackedGuild.uuid())); // afaik there is no api for getting guild by uuid idk why
+
+        int onlineCount = guildInfo.members.getOnlineMembersCount();
+        int onlineCaptainCount = guildInfo.members.getOnlineCaptainsPlusCount();
+
+        String averagePlayers = String.format("%.2f", trackedGuild.averageOnline()) + " (" + onlineCount + ")";
+        String averageCaptains = String.format("%.2f", trackedGuild.averageCaptains()) + " (" + onlineCaptainCount + ")";
         String prefix = AllGuilds.getPrefixByUuid((trackedGuild.uuid()));
         String guildName = AllGuilds.getGuild(prefix).name();
 
@@ -421,7 +426,8 @@ public class GuildCommands {
 
         PlaytimeHistoryList playtimeHistory = PlaytimeHistory.getPlaytimeHistory(playerData.uuid);
         sb.append(String.format("%.2f", playtimeHistory.getAverage(4))).append(" ");
-        sb.append("hours per week (").append(String.format("%.2f", playtimeHistory.getAverage(1))).append(")");
+        sb.append("hours per week (").append(String.format("%.2f", playtimeHistory.getAverage(1))).append(" since ")
+                .append(Utils.getDiscordTimestamp(playtimeHistory.getAverageTimeSpan(1).getKey(), true)).append(")");
         sb.append("\n\n");
 
         return sb.toString();
@@ -520,28 +526,7 @@ public class GuildCommands {
 
             List<Map.Entry<String, PlaytimeHistoryList>> entriesList = new ArrayList<>(playtimeHistoryForAll.entrySet());
 
-            // Sort descending by 4-week wars increase parsed from the report
-            entriesList.sort((a, b) -> {
-                String reportA = a.getValue().getWarsReport();
-                String reportB = b.getValue().getWarsReport();
-
-                int increaseA = 0;
-                int increaseB = 0;
-
-                // parse increase for a
-                Matcher matcherA = Pattern.compile("\\(4w ago\\): ([+-]?\\d+)").matcher(reportA);
-                if (matcherA.find()) {
-                    increaseA = Integer.parseInt(matcherA.group(1));
-                }
-
-                // parse increase for b
-                Matcher matcherB = Pattern.compile("\\(4w ago\\): ([+-]?\\d+)").matcher(reportB);
-                if (matcherB.find()) {
-                    increaseB = Integer.parseInt(matcherB.group(1));
-                }
-
-                return Integer.compare(increaseB, increaseA); // descending
-            });
+            entriesList.sort((a, b) -> compareReports(a.getValue().getWarsReport(), b.getValue().getWarsReport()));
 
             // Build the sortedEntries list
             List<String> sortedEntries = new ArrayList<>();
@@ -566,6 +551,41 @@ public class GuildCommands {
             hook.editOriginalEmbeds(embed.build()).queue();
 
         });
+    }
+    private static int compareReports(String reportA, String reportB) {
+        // Priority: 4w > 2w > 1w > total
+
+        // 4w
+        int cmp = compareIncreases(reportA, reportB, "\\(4w ago\\): ([+-]?\\d+)");
+        if (cmp != 0) return cmp;
+
+        // 2w
+        cmp = compareIncreases(reportA, reportB, "\\(2w ago\\): ([+-]?\\d+)");
+        if (cmp != 0) return cmp;
+
+        // 1w
+        cmp = compareIncreases(reportA, reportB, "\\(1w ago\\): ([+-]?\\d+)");
+        if (cmp != 0) return cmp;
+
+        // total
+        return compareIncreases(reportA, reportB, "total wars: (\\d+)");
+    }
+    private static int compareIncreases(String reportA, String reportB, String regex) {
+        int valA = extractOrZero(reportA, regex);
+        int valB = extractOrZero(reportB, regex);
+
+        // Only compare if at least one has non-zero
+        if (valA != 0 || valB != 0) {
+            return Integer.compare(valB, valA); // descending
+        }
+        return 0;
+    }
+    private static int extractOrZero(String report, String regex) {
+        Matcher m = Pattern.compile(regex).matcher(report);
+        if (m.find()) {
+            return Integer.parseInt(m.group(1));
+        }
+        return 0;
     }
 
     public record GuildStatEntry(String uuid, GuildInfo.MemberInfo guildMemberData){}

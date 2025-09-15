@@ -9,6 +9,7 @@ import java.awt.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 public class PageBuilder {
     public static void handlePagination(ButtonInteractionEvent event) {
@@ -22,7 +23,7 @@ public class PageBuilder {
 
         int page = state.currentPage;
         if ("left".equals(direction)) {
-            page = Math.max(0, page - 1);
+            page--;
         } else if ("right".equals(direction)) {
             page++;
         }
@@ -53,6 +54,10 @@ public class PageBuilder {
         public pageConverterFunction converter;
         public Object customData;
         public List<?> sortedEntries;
+        private CompletableFuture<EmbedBuilder> nextPage;
+        private CompletableFuture<EmbedBuilder> prevPage;
+        private int maxPages;
+        private int lastPage;
 
         public PaginationState(pageConverterFunction converter, int currentPage, String title, int entriesPerPage) {
             this.converter = converter;
@@ -62,45 +67,89 @@ public class PageBuilder {
         }
 
         public void reset(List<?> sortedEntries) {
-            currentPage = 0;
+            this.lastPage = -5;
+            this.currentPage = 0;
             this.sortedEntries = sortedEntries;
+            this.maxPages = ((int) Math.ceil((double) this.sortedEntries.size() / (double) this.entriesPerPage)) - 1;
         }
 
+        // called to display the page after changing this.currentPage remotely
         public EmbedBuilder buildEmbedPage() {
-            if (this.sortedEntries.isEmpty()) return null;
-
-            EmbedBuilder embed = new EmbedBuilder();
-            embed.setColor(Color.CYAN);
-
-            int maxPages = (int) Math.ceil((double) this.sortedEntries.size() / (double) this.entriesPerPage);
-
-            this.currentPage = (this.currentPage >= maxPages) ? 0 : this.currentPage;
-            embed.setTitle(this.title + " (Page " + (this.currentPage + 1) + "/" + (maxPages) + ")");
-
-            StringBuilder sb = new StringBuilder();
-
-
-            //custom data handling
-            if (this.equals(PaginationManager.get(PaginationIds.GUILD_STATS.name())) || this.equals(PaginationManager.get(PaginationIds.GUILD.name()))) {
-                sb.append(this.customData);
+            boolean forward;
+            boolean backward;
+            if (this.lastPage == -5) {
+                // First run special case
+                forward = false;
+                backward = false;
+            } else {
+                forward = (this.currentPage - this.lastPage) == 1;
+                backward = (this.lastPage - this.currentPage) == 1;
             }
 
+            if (this.currentPage > this.maxPages) this.currentPage = 0;
+            else if (this.currentPage < 0) this.currentPage = this.maxPages;
 
-            int start = this.currentPage * this.entriesPerPage;
-            int end = Math.min(start + this.entriesPerPage, this.sortedEntries.size());
+            CompletableFuture<EmbedBuilder> currentFuture;
 
-
-            for (int i = start; i < end; i++) {
-                String entry;
-                if (this.converter != null) {
-                    entry = this.converter.convert(this.sortedEntries.get(i));
-                } else entry = (String) this.sortedEntries.get(i);
-                sb.append(entry);
+            if (forward) {
+                currentFuture = this.nextPage;
+            } else if (backward) {
+                currentFuture = this.prevPage;
+            } else if (currentPage == 0){
+                currentFuture = generateEmbedAsync(this.currentPage);
+            } else {
+                System.out.println("you have confused the page builder");
+                return generateEmbedAsync(this.currentPage).join();
             }
 
-            embed.setDescription(sb.toString());
+            // Preload next/prev for future moves
+            this.nextPage = generateEmbedAsync(this.currentPage + 1);
+            this.prevPage = generateEmbedAsync(this.currentPage - 1);
 
-            return embed;
+            this.lastPage = this.currentPage;
+
+            // Block here until current page is ready
+            return currentFuture.join();
+        }
+        public CompletableFuture<EmbedBuilder> generateEmbedAsync(int page) {
+            if (page > maxPages) page = 0;
+            else if (page < 0) page = maxPages;
+
+            int finalPage = page;
+            return CompletableFuture.supplyAsync(() -> {
+
+                if (this.sortedEntries.isEmpty()) return null;
+
+                EmbedBuilder embed = new EmbedBuilder();
+                embed.setColor(Color.CYAN);
+
+
+                embed.setTitle(this.title + " (Page " + (finalPage + 1) + "/" + (maxPages + 1) + ")");
+
+                StringBuilder sb = new StringBuilder();
+
+
+                //custom data handling
+                if (this.equals(PaginationManager.get(PaginationIds.GUILD_STATS.name())) || this.equals(PaginationManager.get(PaginationIds.GUILD.name()))) {
+                    sb.append(this.customData);
+                }
+
+                int start = finalPage * this.entriesPerPage;
+                int end = Math.min(start + this.entriesPerPage, this.sortedEntries.size());
+
+
+                for (int i = start; i < end; i++) {
+                    String entry;
+                    if (this.converter != null) {
+                        entry = this.converter.convert(this.sortedEntries.get(i));
+                    } else entry = (String) this.sortedEntries.get(i);
+                    sb.append(entry);
+                }
+
+                embed.setDescription(sb.toString());
+
+                return embed;
+            });
         }
     }
 

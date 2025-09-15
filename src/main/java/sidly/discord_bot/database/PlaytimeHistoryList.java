@@ -40,6 +40,8 @@ public class PlaytimeHistoryList {
             return 0;
         }
 
+        if (weeks == 1) return totalIncrease; // if its one week return the playtime that week dont average it to 7d
+
         // Scale to a 7-day (per-week) rate
         double millisInWeek = TimeUnit.DAYS.toMillis(7);
         return totalIncrease / (timeSpan / millisInWeek);
