@@ -52,7 +52,8 @@ public class VerificationCommands {
         UuidMap.remove(member.getEffectiveName().split("\\[")[0].trim().toLowerCase());
 
         // only allow one discord account per mc account
-        if (UuidMap.containsMinecraftId(uuid)) {
+        String storedDiscordId = UuidMap.getDiscordIdByMinecraftId(uuid);
+        if (storedDiscordId != null && !member.getId().equals(storedDiscordId)) { // if it is known about and not you
             event.reply("someone is already verified as that mc account").setEphemeral(true).queue();
             return;
         }
@@ -233,7 +234,7 @@ public class VerificationCommands {
         String uuid = UuidMap.getMinecraftIdByUsername(nickname.toLowerCase()) == null ? nickname : UuidMap.getMinecraftIdByUsername(nickname.toLowerCase());
 
         PlayerProfile playerData = ApiUtils.getPlayerData(uuid);
-        if (playerData.statusCode == 520 || playerData.statusCode == 500 || playerData.statusCode == 522) {
+        if (playerData == null || playerData.statusCode == 520 || playerData.statusCode == 500 || playerData.statusCode == 522 || playerData.statusCode == 503) {
             return "failed to connect to api";
         }
 
@@ -340,12 +341,17 @@ public class VerificationCommands {
         } else {
             Role OneHundredPercentContentCompletionRole = RoleUtils.getRoleFromGuild(member.getGuild(), contentCompletionRoleId);
             if (OneHundredPercentContentCompletionRole != null) {
-                if (playerData.getHighestContentCompletion() >= MAX_CONTENT_COMPLETION) {
-                    if (!RoleUtils.hasRole(member, OneHundredPercentContentCompletionRole.getId())) {
-                        member.getGuild().addRoleToMember(member, OneHundredPercentContentCompletionRole).queue();
+                if (playerData.getHighestContentCompletion() == MAX_CONTENT_COMPLETION) { // they are at 100%
+                    if (!RoleUtils.hasRole(member, OneHundredPercentContentCompletionRole.getId())) { // if they dont have role
+                        member.getGuild().addRoleToMember(member, OneHundredPercentContentCompletionRole).queue(); // add it
                         sb.append("Added the 100% completion role ").append(OneHundredPercentContentCompletionRole.getAsMention()).append('\n');
                     }
-                }
+                } else if (playerData.getHighestContentCompletion() <= MAX_CONTENT_COMPLETION) { // they do not have 100%
+                    if (RoleUtils.hasRole(member, OneHundredPercentContentCompletionRole.getId())) { // if they have role
+                        member.getGuild().removeRoleFromMember(member, OneHundredPercentContentCompletionRole).queue(); // remove it
+                        sb.append("Removed the 100% completion role ").append(OneHundredPercentContentCompletionRole.getAsMention()).append('\n');
+                    }
+                } else System.out.println("a player has " + playerData.getHighestContentCompletion() + " content completion the max is set to " + MAX_CONTENT_COMPLETION); // max is wrong
             } else {
                 sb.append("100% completion role not found in guild for ID: ").append(contentCompletionRoleId).append('\n');
             }

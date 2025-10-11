@@ -34,7 +34,6 @@ public class ApiUtils {
 
     private static long lastRateLimitUpdate = 0;
 
-    @NotNull
     public static PlayerProfile getPlayerData(String username){
         String apiToken = ConfigManager.getConfigInstance().other.get(Config.Settings.ApiToken);
         try {
@@ -90,8 +89,12 @@ public class ApiUtils {
             System.err.println("SSL handshake failed for " + username + " — skipping request.");
             return null;
         } catch (IOException e) {
-            System.err.println("IOException: " + username);
-            throw new RuntimeException(e);
+            if (e.getCause().getMessage().contains("Connection reset")) {
+                return null;
+            } else {
+                System.err.println("IOException: " + username);
+                throw new RuntimeException(e);
+            }
         } catch (InterruptedException e) {
             System.err.println("InterruptedException");
             throw new RuntimeException(e);
@@ -123,21 +126,24 @@ public class ApiUtils {
             if (status == 300) System.out.println("a multiselector was actually returned and i havent added handling for it [" + prefix + "]\n");
             parseRateLimit(response);
 
+            String body = response.body().trim();
+            if (!(body.startsWith("{") || body.startsWith("["))) {
+                System.err.println("invalid json structure from getGuildInfo(" + prefix + "):\n " + body);
+                return null;
+            }
+
             // Parse response with Gson
             Gson gson = new GsonBuilder().create();
 
             Type type = new TypeToken<GuildInfo>(){}.getType();
             GuildInfo apiData = gson.fromJson(response.body(), type);
 
-            int onlinePlayerCount = 0;
             int onlineCaptainPlusCount = 0;
             GuildInfo.Members members = apiData.members;
             if (members != null) {
-                onlinePlayerCount = members.getOnlineMembersCount();
                 onlineCaptainPlusCount = members.getOnlineCaptainsPlusCount();
             }
-            apiData.online = onlinePlayerCount;
-            GuildActivity.add(apiData.uuid, prefix, apiData.name, onlinePlayerCount, onlineCaptainPlusCount);
+            GuildActivity.add(apiData.uuid, prefix, apiData.name, apiData.online, onlineCaptainPlusCount);
 
             return apiData;
 
@@ -145,8 +151,12 @@ public class ApiUtils {
             System.err.println("SSL handshake failed for " + prefix + " — skipping request.");
             return null;
         }  catch (IOException e) {
-            System.err.println("IOException");
-            throw new RuntimeException(e);
+            if (e.getCause().getMessage().contains("Connection reset")) {
+                return null;
+            } else {
+                System.err.println("IOException");
+                throw new RuntimeException(e);
+            }
         } catch (InterruptedException e) {
             System.err.println("InterruptedException");
             throw new RuntimeException(e);
@@ -219,7 +229,20 @@ public class ApiUtils {
         rateLimitInfoMap.put(type, new RateLimitInfo(rateLimitRemaining, rateLimitSecondsTillReset, rateLimitMax, lastRateLimitUpdate));
     }
 
-    public record RateLimitInfo(int rateLimitRemaining, int rateLimitSecondsTillReset, int rateLimitMax, long lastUpdated) {}
+    public record RateLimitInfo(int rateLimitRemaining, int rateLimitSecondsTillReset, int rateLimitMax, long lastUpdated) {
+        public int getRemaining() {
+            long resetTimeMillis = lastUpdated + (rateLimitSecondsTillReset * 1000L);
+            long currentTimeMillis = System.currentTimeMillis();
+
+            // If the reset time is still in the future, return the remaining count.
+            // Otherwise, it has reset, so return the max.
+            if (currentTimeMillis < resetTimeMillis) {
+                return rateLimitRemaining;
+            } else {
+                return rateLimitMax;
+            }
+        }
+    }
 
     public enum RateLimitTypes {
         SHARED,

@@ -97,7 +97,8 @@ public class InactivityCommands {
                             Utils.getEpochTimeFromIso(playerDataShortened.lastJoined),
                             inactiveThreshold,
                             playtimeHistory.getAverageTimeSpan(averageWeeks),
-                            rankOfMember));
+                            rankOfMember,
+                            Utils.formatTime(Utils.timeSinceIso(entry.getValue().joined, ChronoUnit.SECONDS), ChronoUnit.SECONDS)));
                 }
             }
 
@@ -123,11 +124,13 @@ public class InactivityCommands {
 
         StringBuilder sb = new StringBuilder();
         sb.append("**").append(Utils.escapeDiscordMarkdown(entry.username)).append("** (");
-        sb.append(entry.rank).append(") ");
+        sb.append(entry.rank).append(") joined ").append(entry.joinedDaysAgo()).append(" ago");
 
         PlaytimeHistoryList playtimeHistory = PlaytimeHistory.getPlaytimeHistory(UuidMap.getMinecraftIdByUsername(entry.username()));
 
-        sb.append("\nplaytime ").append(Utils.formatNumber(entry.averagePlaytime)).append(" / ")
+        String playtime = entry.averagePlaytime > 0 ? Utils.formatNumber(entry.averagePlaytime) : "No access";
+
+        sb.append("\nplaytime ").append(playtime).append(" / ")
                 .append(Utils.formatNumber(entry.averagePlaytimeReq))
                 .append(" (").append(Utils.formatNumber(playtimeHistory.getAverage(1))).append(" since ")
                 .append(Utils.getDiscordTimestamp(playtimeHistory.getAverageTimeSpan(1).getKey(), true)).append(")\n");
@@ -206,6 +209,7 @@ public class InactivityCommands {
             long lastOnline,
             double inactiveThreashhold,
             AbstractMap.SimpleEntry<Long, Long> timeSpan,
-            Utils.RankList rank)
+            Utils.RankList rank,
+            String joinedDaysAgo)
     {}
 }

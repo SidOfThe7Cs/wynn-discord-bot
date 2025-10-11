@@ -44,7 +44,8 @@ public class PlaytimeHistoryList {
 
         // Scale to a 7-day (per-week) rate
         double millisInWeek = TimeUnit.DAYS.toMillis(7);
-        return totalIncrease / (timeSpan / millisInWeek);
+        double result = totalIncrease / (timeSpan / millisInWeek);
+        return result >= 0 ? result : -1;
     }
 
     public AbstractMap.SimpleEntry<Long, Long> getAverageTimeSpan(int weeks) {
@@ -62,6 +63,7 @@ public class PlaytimeHistoryList {
         return new AbstractMap.SimpleEntry<>(startTime, endTime);
     }
 
+    @Deprecated
     public double getLinear10WeekAverage() {
         if (playtimeHistory.size() < 2) {
             return 0;

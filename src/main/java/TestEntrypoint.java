@@ -1,4 +1,6 @@
 import sidly.discord_bot.Utils;
+import sidly.discord_bot.api.ApiUtils;
+import sidly.discord_bot.api.GuildInfo;
 import sidly.discord_bot.database.PlaytimeHistoryList;
 import sidly.discord_bot.database.SQLDB;
 import sidly.discord_bot.database.tables.PlaytimeHistory;
@@ -18,13 +20,8 @@ public class TestEntrypoint {
     public static void main(String[] args) throws SQLException {
         SQLDB.init();
 
-        String uuid = UuidMap.getMinecraftIdByUsername("FurbyVessel");
-        PlaytimeHistoryList playtimeHistory = PlaytimeHistory.getPlaytimeHistory(uuid);
-        double averagePlaytime = playtimeHistory.getAverage(1);
-        double averagePlaytime4 = playtimeHistory.getAverage(4);
-        System.out.println("FurbyVessels playtimes (test)");
-        System.out.println(averagePlaytime);
-        System.out.println(averagePlaytime4);
+        GuildInfo hoc = ApiUtils.getGuildInfo("HOC");
+        System.out.println(hoc.name + " " + hoc.online + " / " + hoc.members.total);
     }
 
     public static void testPriont() {
@@ -54,6 +51,11 @@ public class TestEntrypoint {
 }
 /*
 TODO
+/leaderboard takes in any type from api
+
+ppl who are not in the discord it fails to get the time this week in inactive players?
+change playtim req for ranks
+
 make a new table and have it store the average per hour for each guild and the number of entries in a way that lets you add more entries without messing up averages and only get the average over the past x days
 
 maybe /getplaytimedata user that shows all playtime entries and how far apart they are

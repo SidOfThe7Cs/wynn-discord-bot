@@ -25,7 +25,7 @@ public class GuildMemberUpdater {
                     e.printStackTrace(); // Log and keep going
                 }
             }
-        },  4 * 1000, TimeUnit.HOURS.toMillis(4));
+        },  4 * 1000, TimeUnit.HOURS.toMillis(1));
     }
 
     public static void stop(){

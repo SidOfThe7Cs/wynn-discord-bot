@@ -39,6 +39,8 @@ public class MassGuild {
     private static List<String> lowToHighMoveQueue = new ArrayList<>();
     private static List<String> highToLowMoveQueue = new ArrayList<>();
 
+    public static ApiUtils.RateLimitInfo guildRateLimitInfo;
+
     private static int count = 0;
     private static int attempsCounter = 0;
     private static long startTime;
@@ -286,11 +288,9 @@ public class MassGuild {
         }.getType();
         GuildInfo apiData = gson.fromJson(response.body(), type);
 
-        int onlinePlayerCount = 0;
         int onlineCaptainPlusCount = 0;
         GuildInfo.Members members = apiData.members;
         if (members != null) {
-            onlinePlayerCount = members.getOnlineMembersCount();
             onlineCaptainPlusCount = members.getOnlineCaptainsPlusCount();
 
             if (members.total > 20) {
@@ -311,7 +311,7 @@ public class MassGuild {
 
         } else System.err.println("members was null " + prefix);
 
-        GuildActivity.add(apiData.uuid, apiData.prefix, apiData.name, onlinePlayerCount, onlineCaptainPlusCount);
+        GuildActivity.add(apiData.uuid, apiData.prefix, apiData.name, apiData.online, onlineCaptainPlusCount);
     }
 
     private static void handleMultiselecters(HttpResponse<String> response) {
@@ -360,6 +360,13 @@ public class MassGuild {
     public static Map<String, PlayerProfile> getPlayerData(Set<String> uuids) {
         if (apiTokens.isEmpty()) throw new IllegalStateException("No API tokens available");
 
+        // to close to ratelimit
+        if (guildRateLimitInfo != null && guildRateLimitInfo.getRemaining() < 20) {
+            Map<String, PlayerProfile> errorReply = new HashMap<>();
+            errorReply.put(null, new PlayerProfile(429));
+            return errorReply;
+        }
+
         Gson gson = new GsonBuilder().create();
         Type type = new TypeToken<PlayerProfile>(){}.getType();
         Map<String, PlayerProfile> results = new ConcurrentHashMap<>();
@@ -378,6 +385,17 @@ public class MassGuild {
             CompletableFuture<Void> future = client2.sendAsync(request, HttpResponse.BodyHandlers.ofString()).orTimeout(30, TimeUnit.SECONDS)
                     .thenAccept(response -> {
                         int status = response.statusCode();
+
+                        String remaining = response.headers().map().getOrDefault("ratelimit-remaining", List.of("unknown")).getFirst();
+                        String reset     = response.headers().map().getOrDefault("ratelimit-reset", List.of("unknown")).getFirst();
+                        String limit     = response.headers().map().getOrDefault("ratelimit-limit", List.of("unknown")).getFirst();
+
+                        guildRateLimitInfo = new ApiUtils.RateLimitInfo(
+                                Integer.parseInt(remaining),
+                                Integer.parseInt(reset),
+                                Integer.parseInt(limit),
+                                System.currentTimeMillis()
+                        );
 
                         if (status == 404) {
                             return; // no player found
@@ -439,5 +457,11 @@ public class MassGuild {
         GuildInfo guildInfo = ApiUtils.getGuildInfo(ConfigManager.getConfigInstance().other.get(Config.Settings.YourGuildPrefix));
         Set<String> memberUuids = guildInfo.members.getAllMembers().keySet();
         getPlayerData(memberUuids);
+    }
+
+    public static Map<String, PlayerProfile> getAllGuildMembers(String prefix) {
+        GuildInfo guildInfo = ApiUtils.getGuildInfo(prefix);
+        Set<String> memberUuids = guildInfo.members.getAllMembers().keySet();
+        return getPlayerData(memberUuids);
     }
 }

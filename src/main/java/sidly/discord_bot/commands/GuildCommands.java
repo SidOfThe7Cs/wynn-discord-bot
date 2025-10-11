@@ -15,6 +15,7 @@ import sidly.discord_bot.api.PlayerProfile;
 import sidly.discord_bot.database.PlayerDataShortened;
 import sidly.discord_bot.database.PlaytimeHistoryList;
 import sidly.discord_bot.database.records.GuildAverages;
+import sidly.discord_bot.database.records.GuildName;
 import sidly.discord_bot.database.tables.*;
 import sidly.discord_bot.page.PageBuilder;
 import sidly.discord_bot.page.PaginationIds;
@@ -78,38 +79,54 @@ public class GuildCommands {
     }
 
     public static void showOnlineMembers(SlashCommandInteractionEvent event) {
-        GuildInfo guild = ApiUtils.getGuildInfo(event.getOption("guild_prefix").getAsString());
-        if (guild == null) return;
-        GuildInfo.Members members = guild.members;
-        int count = guild.online;
+        event.deferReply(false).queue(hook -> {
+            String prefix = event.getOption("guild_prefix").getAsString();
+            GuildInfo guild = ApiUtils.getGuildInfo(prefix);
+            if (guild == null) return;
+            GuildInfo.Members members = guild.members;
 
-        if (members == null) {
-            event.reply("Could not find guild members.").setEphemeral(true).queue();
-            return;
-        }
+            if (members == null) {
+                hook.editOriginalEmbeds(Utils.getEmbed("", "Could not find guild members.")).queue();
+                return;
+            }
 
-        EmbedBuilder embed = new EmbedBuilder()
-                .setTitle("Online Members in " + guild.name + " [" + guild.prefix + "]" + "\n" + count + "/" + guild.members.total)
-                .setColor(Color.CYAN)
-                .setFooter("Last updated");
+            EmbedBuilder embed = new EmbedBuilder()
+                    .setTitle("Online Members in " + guild.name + " [" + guild.prefix + "]" + "\n" + guild.online + "/" + guild.members.total)
+                    .setColor(Color.CYAN)
+                    .setFooter("Last updated");
 
 
-        embed.addField("Owner", membersList(members.owner), false);
-        embed.addField("Chief", membersList(members.chief), false);
-        embed.addField("Strategist", membersList(members.strategist), false);
-        embed.addField("Captain", membersList(members.captain), false);
-        embed.addField("Recruiter", membersList(members.recruiter), false);
-        embed.addField("Recruit", membersList(members.recruit), false);
+            Map<String, PlayerProfile> allGuildMembers = MassGuild.getAllGuildMembers(prefix);
+            Set<String> recentlyOffline = allGuildMembers.entrySet().stream()
+                    .filter(entry -> {
+                        PlayerProfile playerData = entry.getValue();
+                        if (playerData == null) return false;
+                        if (playerData.online) return false;
 
-        event.replyEmbeds(embed.build()).queue();
+                        long lastSeen = Utils.timeSinceIso(playerData.lastJoin, ChronoUnit.SECONDS);
+                        return lastSeen < 90;
+                    })
+                    .map(Map.Entry::getKey)
+                    .collect(Collectors.toSet());
+
+
+            embed.addField("Owner", membersList(members.owner, recentlyOffline), false);
+            embed.addField("Chief", membersList(members.chief, recentlyOffline), false);
+            embed.addField("Strategist", membersList(members.strategist, recentlyOffline), false);
+            embed.addField("Captain", membersList(members.captain, recentlyOffline), false);
+            embed.addField("Recruiter", membersList(members.recruiter, recentlyOffline), false);
+            embed.addField("Recruit", membersList(members.recruit, recentlyOffline), false);
+
+            hook.editOriginalEmbeds(embed.build()).queue();
+        });
     }
 
-    // Helper function to build a string of online members for a rank
-    static String membersList(Map<String, GuildInfo.MemberInfo> map) {
+    // Helper function to build a string of online members for a rank string is uuid
+    static String membersList(Map<String, GuildInfo.MemberInfo> map, Set<String> streamers) {
         if (map == null || map.isEmpty()) return "_None_";
 
         return map.entrySet().stream()
-                .filter(entry -> entry.getValue().online)
+                .filter(entry -> entry.getValue().online || streamers.contains(entry.getKey()))
                 .map(entry -> {
                     String key = entry.getKey();
                     GuildInfo.MemberInfo member = entry.getValue();
@@ -122,6 +139,10 @@ public class GuildCommands {
 
                     if (playerDataShortened != null && playerDataShortened.supportRank != null && !playerDataShortened.supportRank.isEmpty()) {
                         username += " [" + playerDataShortened.supportRank.toUpperCase() + "]";
+                    }
+
+                    if (streamers.contains(key)) {
+                        username += " (Streamer)";
                     }
 
                     return username;
@@ -152,7 +173,14 @@ public class GuildCommands {
                     .orElse(true);
 
             String guildPrefix = event.getOption("guild_prefix").getAsString();
-            String uuid = AllGuilds.getGuild(guildPrefix).uuid();
+            GuildName guild = AllGuilds.getGuild(guildPrefix);
+
+            if (guild == null) {
+                hook.editOriginalEmbeds(Utils.getEmbed("", "could not find guild")).queue();
+                return;
+            }
+
+            String uuid = guild.uuid();
             int days = Optional.ofNullable(event.getOption("days"))
                     .map(OptionMapping::getAsInt)
                     .orElse(30);
@@ -227,7 +255,14 @@ public class GuildCommands {
 
             // check the position of your guild
             String prefix = ConfigManager.getConfigInstance().other.get(Config.Settings.YourGuildPrefix);
-            String uuid = AllGuilds.getGuild(prefix).uuid();
+            GuildName guild = AllGuilds.getGuild(prefix);
+
+            if (guild == null) {
+                hook.editOriginalEmbeds(Utils.getEmbed("", "could not find guild")).queue();
+                return;
+            }
+
+            String uuid = guild.uuid();
             int index = -1;
             for (int i = 0; i < guildAverages.size(); i++) {
                 if (guildAverages.get(i).uuid().equals(uuid)) {
@@ -252,23 +287,31 @@ public class GuildCommands {
     }
 
     public static String guildConverter(GuildAverages trackedGuild) {
-        GuildInfo guildInfo = ApiUtils.getGuildInfo(AllGuilds.getPrefixByUuid(trackedGuild.uuid())); // afaik there is no api for getting guild by uuid idk why
+        ApiUtils.RateLimitInfo rateLimitInfo = ApiUtils.rateLimitInfoMap.get(ApiUtils.RateLimitTypes.GUILD);
 
-        int onlineCount = guildInfo.members.getOnlineMembersCount();
-        int onlineCaptainCount = guildInfo.members.getOnlineCaptainsPlusCount();
+        String onlineCount = "?";
+        String onlineCaptainCount = "?";
+
+        if (rateLimitInfo.getRemaining() > 20) {
+            GuildInfo guildInfo = ApiUtils.getGuildInfo(AllGuilds.getPrefixByUuid(trackedGuild.uuid())); // afaik there is no api for getting guild by uuid idk why
+            if (guildInfo != null && guildInfo.members != null) {
+                onlineCount = String.valueOf(guildInfo.online);
+                onlineCaptainCount = String.valueOf(guildInfo.members.getOnlineCaptainsPlusCount());
+            }
+        }
 
         String averagePlayers = String.format("%.2f", trackedGuild.averageOnline()) + " (" + onlineCount + ")";
         String averageCaptains = String.format("%.2f", trackedGuild.averageCaptains()) + " (" + onlineCaptainCount + ")";
         String prefix = AllGuilds.getPrefixByUuid((trackedGuild.uuid()));
-        String guildName = AllGuilds.getGuild(prefix).name();
+        GuildName guild = AllGuilds.getGuild(prefix);
+        String guildName = "guild name not found";
+        if (guild != null) {
+             guildName = guild.name();
+        }
 
-        StringBuilder sb = new StringBuilder();
-
-        sb.append("**[").append(prefix).append("] ").append(guildName).append("**\n");
-        sb.append("Avg. Online: ").append(averagePlayers).append("\n");
-        sb.append("Avg. Captains+: ").append(averageCaptains).append("\n\n");
-
-        return sb.toString();
+        return "**[" + prefix + "] " + guildName + "**\n" +
+                "Avg. Online: " + averagePlayers + "\n" +
+                "Avg. Captains+: " + averageCaptains + "\n\n";
     }
 
 
@@ -393,6 +436,8 @@ public class GuildCommands {
     public static String guildStatsConverter(GuildStatEntry statEntry) {
 
         PlayerProfile playerData = MassGuild.getPlayerData(Collections.singleton(statEntry.uuid())).values().iterator().next();
+        if (playerData.statusCode == 429) return "ratelimit hit :(";
+
         GuildInfo.MemberInfo guildMemberData = statEntry.guildMemberData();
         long joinedDaysAgo = Utils.timeSinceIso(guildMemberData.joined, ChronoUnit.DAYS);
 
@@ -403,12 +448,13 @@ public class GuildCommands {
         int rank = guildMemberData.contributionRank;
 
         StringBuilder sb = new StringBuilder();
-        sb.append("**").append(rank).append(". ").append(Utils.escapeDiscordMarkdown(playerData.username)).append(" (").append(playerData.guild.rank).append(")**");
-        long lastSeen = Utils.timeSinceIso(playerData.lastJoin, ChronoUnit.MINUTES);
-        sb.append(playerData.online
-                ? "Online " + playerData.server + "\n"
-                : "Offline, last seen " + (lastSeen > 100 ? (int)(lastSeen / 60) + " hours" : lastSeen + " minutes") + " ago\n");
-
+        String guildRank = playerData.guild != null ? playerData.guild.rank : "not in a guild?";
+        sb.append("**").append(rank).append(". ").append(Utils.escapeDiscordMarkdown(playerData.username)).append(" (").append(guildRank).append(")**");
+        long lastSeen = Utils.timeSinceIso(playerData.lastJoin, ChronoUnit.SECONDS);
+        if (lastSeen < 90) sb.append("Online in streamer\n");
+        else sb.append(playerData.online ?
+                "Online " + playerData.server + "\n"
+                : "Offline, last seen " + Utils.formatTime(lastSeen, ChronoUnit.SECONDS) + " ago\n");
         sb.append(Utils.formatNumbersInString(String.valueOf(guildMemberData.contributed))).append(" XP (").append(Utils.formatNumber(xpPerDay)).append("/day)\n");
         sb.append("Joined ").append(joinedDaysAgo).append(" days ago\n");
         if (playerData.globalData != null) {
@@ -425,7 +471,9 @@ public class GuildCommands {
         }
 
         PlaytimeHistoryList playtimeHistory = PlaytimeHistory.getPlaytimeHistory(playerData.uuid);
-        sb.append(String.format("%.2f", playtimeHistory.getAverage(4))).append(" ");
+        double average4w = playtimeHistory.getAverage(4);
+        String average4wS = average4w > 0 ? String.format("%.2f", average4w) : "No access";
+        sb.append(average4wS).append(" ");
         sb.append("hours per week (").append(String.format("%.2f", playtimeHistory.getAverage(1))).append(" since ")
                 .append(Utils.getDiscordTimestamp(playtimeHistory.getAverageTimeSpan(1).getKey(), true)).append(")");
         sb.append("\n\n");
@@ -525,8 +573,7 @@ public class GuildCommands {
             Map<String, PlaytimeHistoryList> playtimeHistoryForAll = PlaytimeHistory.getPlaytimeHistoryForAll(guildInfo.members.getAllMembers().keySet());
 
             List<Map.Entry<String, PlaytimeHistoryList>> entriesList = new ArrayList<>(playtimeHistoryForAll.entrySet());
-
-            entriesList.sort((a, b) -> compareReports(a.getValue().getWarsReport(), b.getValue().getWarsReport()));
+            entriesList.sort((a, b) -> compareIncreases(a.getValue().getWarsReport(), b.getValue().getWarsReport(), "\\(1w ago\\): ([+-]?\\d+)"));
 
             // Build the sortedEntries list
             List<String> sortedEntries = new ArrayList<>();

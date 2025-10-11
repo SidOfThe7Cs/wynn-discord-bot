@@ -219,6 +219,38 @@ public class Utils {
         return sb.toString();
     }
 
+    public static String formatTime(long time, ChronoUnit unit) {
+        // Convert input time to seconds for normalization
+        double seconds = unit.getDuration().toMillis() / 1000.0 * time;
+
+        // Convert to the largest suitable unit
+        if (seconds < 60) {
+            return String.format("%.1fs", seconds);
+        }
+        double minutes = seconds / 60.0;
+        if (minutes < 60) {
+            return String.format("%.1fm", minutes);
+        }
+        double hours = minutes / 60.0;
+        if (hours < 24) {
+            return String.format("%.1fh", hours);
+        }
+        double days = hours / 24.0;
+        if (days < 7) {
+            return String.format("%.1fd", days);
+        }
+        double weeks = days / 7.0;
+        if (weeks < 4.345) { // average weeks per month
+            return String.format("%.1fw", weeks);
+        }
+        double months = days / 30.4375; // average days per month
+        if (months < 12) {
+            return String.format("%.1fmo", months);
+        }
+        double years = days / 365.25;
+        return String.format("%.1fy", years);
+    }
+
     // Reuse the formatNumber(double) function from before
     public static String formatNumber(double number) {
         String[] suffixes = {"", "K", "M", "B", "T"};
