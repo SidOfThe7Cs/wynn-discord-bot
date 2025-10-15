@@ -91,6 +91,8 @@ public class ApiUtils {
         } catch (IOException e) {
             if (e.getCause().getMessage().contains("Connection reset")) {
                 return null;
+            } else if (e.getCause().getMessage().contains("GOAWAY")) {
+                return null;
             } else {
                 System.err.println("IOException: " + username);
                 throw new RuntimeException(e);
@@ -152,6 +154,8 @@ public class ApiUtils {
             return null;
         }  catch (IOException e) {
             if (e.getCause().getMessage().contains("Connection reset")) {
+                return null;
+            } else if (e.getCause().getMessage().contains("GOAWAY")) {
                 return null;
             } else {
                 System.err.println("IOException");
