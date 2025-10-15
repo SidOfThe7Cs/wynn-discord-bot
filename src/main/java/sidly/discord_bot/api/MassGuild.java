@@ -416,6 +416,8 @@ public class MassGuild {
                         PlayerProfile apiData = gson.fromJson(body, type);
                         if (apiData.username == null) return;
 
+                        //System.out.println(apiData.username + " " + apiData.lastJoin);
+
                         apiData.statusCode = status;
                         results.put(uuid, apiData);
 

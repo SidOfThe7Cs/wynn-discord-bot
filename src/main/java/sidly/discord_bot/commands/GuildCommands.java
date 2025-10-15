@@ -451,10 +451,11 @@ public class GuildCommands {
         String guildRank = playerData.guild != null ? playerData.guild.rank : "not in a guild?";
         sb.append("**").append(rank).append(". ").append(Utils.escapeDiscordMarkdown(playerData.username)).append(" (").append(guildRank).append(")**");
         long lastSeen = Utils.timeSinceIso(playerData.lastJoin, ChronoUnit.SECONDS);
-        if (lastSeen < 90) sb.append("Online in streamer\n");
+        if (lastSeen < 90 && !playerData.online) sb.append("Online in streamer\n");
+        else if (lastSeen == Long.MAX_VALUE) sb.append("Data is Hidden\n");
         else sb.append(playerData.online ?
                 "Online " + playerData.server + "\n"
-                : "Offline, last seen " + Utils.formatTime(lastSeen, ChronoUnit.SECONDS) + " ago\n");
+                : "Offline, last seen " + Utils.formatTime(lastSeen, ChronoUnit.SECONDS) + "\n");
         sb.append(Utils.formatNumbersInString(String.valueOf(guildMemberData.contributed))).append(" XP (").append(Utils.formatNumber(xpPerDay)).append("/day)\n");
         sb.append("Joined ").append(joinedDaysAgo).append(" days ago\n");
         if (playerData.globalData != null) {

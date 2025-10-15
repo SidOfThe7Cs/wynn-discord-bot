@@ -70,7 +70,7 @@ public class Utils {
     }
 
     public static long timeSinceIso(String isoTimestamp, ChronoUnit timeunit) {
-        if (isoTimestamp == null || isoTimestamp.isEmpty()) return -1;
+        if (isoTimestamp == null || isoTimestamp.isEmpty()) return Long.MAX_VALUE;
         try {
             // Parse the ISO-8601 timestamp string into an Instant
             Instant past = Instant.parse(isoTimestamp);
@@ -220,36 +220,30 @@ public class Utils {
     }
 
     public static String formatTime(long time, ChronoUnit unit) {
-        // Convert input time to seconds for normalization
-        double seconds = unit.getDuration().toMillis() / 1000.0 * time;
+        boolean negative = time < 0;
 
-        // Convert to the largest suitable unit
+        double seconds = unit.getDuration().toMillis() / 1000.0 * Math.abs(time);
+        String base;
+
         if (seconds < 60) {
-            return String.format("%.1fs", seconds);
+            base = String.format("%.1fs", seconds);
+        } else if ((seconds /= 60.0) < 60) {
+            base = String.format("%.1fm", seconds);
+        } else if ((seconds /= 60.0) < 24) {
+            base = String.format("%.1fh", seconds);
+        } else if ((seconds /= 24.0) < 7) {
+            base = String.format("%.1fd", seconds);
+        } else if ((seconds /= 7.0) < 4.345) {
+            base = String.format("%.1fw", seconds);
+        } else if ((seconds *= 7.0 / 30.4375) < 12) {
+            base = String.format("%.1fmo", seconds);
+        } else {
+            base = String.format("%.1fy", seconds / 12.0);
         }
-        double minutes = seconds / 60.0;
-        if (minutes < 60) {
-            return String.format("%.1fm", minutes);
-        }
-        double hours = minutes / 60.0;
-        if (hours < 24) {
-            return String.format("%.1fh", hours);
-        }
-        double days = hours / 24.0;
-        if (days < 7) {
-            return String.format("%.1fd", days);
-        }
-        double weeks = days / 7.0;
-        if (weeks < 4.345) { // average weeks per month
-            return String.format("%.1fw", weeks);
-        }
-        double months = days / 30.4375; // average days per month
-        if (months < 12) {
-            return String.format("%.1fmo", months);
-        }
-        double years = days / 365.25;
-        return String.format("%.1fy", years);
+
+        return negative ? "in " + base : base + " ago";
     }
+
 
     // Reuse the formatNumber(double) function from before
     public static String formatNumber(double number) {
