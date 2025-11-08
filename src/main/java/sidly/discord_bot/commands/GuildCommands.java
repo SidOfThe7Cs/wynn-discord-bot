@@ -339,6 +339,7 @@ public class GuildCommands {
 
         StringBuilder sbfinal = new StringBuilder();
         for (Member member : members) { // for each user in the discord
+            if (!RoleUtils.hasRole(member, Config.Roles.VerifiedRole)) continue;
             StringBuilder sb = new StringBuilder();
             String username = member.getEffectiveName().split("\\[")[0].trim().toLowerCase();
             String uuid = UuidMap.getMinecraftIdByUsername(username);
