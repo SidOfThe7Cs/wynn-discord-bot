@@ -32,7 +32,6 @@ public class SQLDB {
 
     public static void init() throws SQLException {
         SQLDB.connection = DriverManager.getConnection("jdbc:sqlite:" + dbFile.getAbsolutePath());
-        dropAllGuildActivityTables();
 
         createTable("uuidMap", Map.of(
                 "username", "TEXT PRIMARY KEY",
@@ -175,34 +174,6 @@ public class SQLDB {
         }
         String sql = "ALTER TABLE " + table + " ADD COLUMN " + column + " " + type;
         executeQuery(sql);
-    }
-
-    public static void dropAllGuildActivityTables() {
-        // Query to get all tables that start with 'guild_activity'
-        String sql = "SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'guild_activity%'";
-
-        List<String> tablesToDrop = new ArrayList<>();
-
-        try (PreparedStatement ps = connection.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-
-            while (rs.next()) {
-                String tableName = rs.getString("name");
-                tablesToDrop.add(tableName);
-            }
-
-            // Drop each table
-            for (String tableName : tablesToDrop) {
-                String dropSql = "DROP TABLE IF EXISTS " + tableName;
-                executeQuery(dropSql);
-                System.out.println("Dropped table: " + tableName);
-            }
-
-            System.out.println("Total tables dropped: " + tablesToDrop.size());
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
     }
 
 }

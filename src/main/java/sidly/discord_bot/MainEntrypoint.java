@@ -27,7 +27,6 @@ import sidly.discord_bot.commands.inactivity_promotion.PromotionCommands;
 import sidly.discord_bot.commands.inactivity_promotion.RequirementType;
 import sidly.discord_bot.database.SQLDB;
 import sidly.discord_bot.database.records.GuildAverages;
-import sidly.discord_bot.database.tables.OldGuildActivity;
 import sidly.discord_bot.page.PageBuilder;
 import sidly.discord_bot.page.PaginationIds;
 import sidly.discord_bot.timed_actions.GuildMemberUpdater;
