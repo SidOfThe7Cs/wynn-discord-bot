@@ -64,6 +64,8 @@ public class Config {
         roleRequirements.put(AllSlashCommands.sendwarrolesmessage, Roles.ChiefRole);
         roleRequirements.put(AllSlashCommands.stoptimer, Roles.ChiefRole);
         roleRequirements.put(AllSlashCommands.starttimer, Roles.ChiefRole);
+        roleRequirements.put(AllSlashCommands.sendanniping, Roles.StrategistRole);
+        roleRequirements.put(AllSlashCommands.createanniparties, Roles.StrategistRole);
     }
 
     public enum Roles {

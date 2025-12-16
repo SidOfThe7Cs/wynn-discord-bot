@@ -1,9 +1,12 @@
 package sidly.discord_bot.database;
 
 import sidly.discord_bot.ConfigManager;
+import sidly.discord_bot.database.tables.OldGuildActivity;
 
 import java.io.File;
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class SQLDB {
@@ -98,6 +101,36 @@ public class SQLDB {
                 "uuid", "TEXT PRIMARY KEY",
                 "exp_timestamp", "INTEGER"
         ));
+
+        createGuildActivityTable("1");
+        createGuildActivityTable("2");
+        createGuildActivityTable("3");
+        createGuildActivityTable("4");
+        createGuildActivityTable("5");
+
+        OldGuildActivity.migrateWithTransaction();
+    }
+
+    private static void createGuildActivityTable(String suffix) {
+        createTable("guild_activity_" + suffix, Map.of(
+                "id", "INTEGER PRIMARY KEY AUTOINCREMENT",
+                "uuid", "TEXT",
+                "prefix", "TEXT",
+                "name", "TEXT",
+                "hour", "INTEGER",
+                "avg_online_count", "REAL DEFAULT 0",
+                "avg_captains_online", "REAL DEFAULT 0",
+                "counter", "INTEGER DEFAULT 0",
+                "timestamp", "INTEGER",
+                "last_updated", "INTEGER"
+        ));
+        // Create indexes
+        executeQuery("CREATE INDEX IF NOT EXISTS idx_activity_uuid_" + suffix + " ON " + "guild_activity_" + suffix + "(uuid)");
+        executeQuery("CREATE INDEX IF NOT EXISTS idx_activity_uuid_hour_" + suffix + " ON " + "guild_activity_" + suffix + "(uuid, hour)");
+        executeQuery("CREATE INDEX IF NOT EXISTS idx_activity_hour_" + suffix + " ON " + "guild_activity_" + suffix + "(hour)");
+        executeQuery("CREATE INDEX IF NOT EXISTS idx_activity_prefix_" + suffix + " ON " + "guild_activity_" + suffix + "(prefix)");
+        executeQuery("CREATE INDEX IF NOT EXISTS idx_activity_timestamp_" + suffix + " ON " + "guild_activity_" + suffix + "(timestamp)");
+        executeQuery("CREATE INDEX IF NOT EXISTS idx_activity_last_updated_" + suffix + " ON " + "guild_activity_" + suffix + "(last_updated)");
     }
 
     public static void createTable(String tableName, Map<String, String> columns) {
@@ -111,6 +144,12 @@ public class SQLDB {
             sb.append(entry.getKey()).append(" ").append(entry.getValue());
             first = false;
         }
+
+        // Add UNIQUE constraint for specific tables
+        if (tableName.startsWith("guild_activity_")) {
+            sb.append(", UNIQUE(uuid, hour)");
+        }
+
         sb.append(");");
         String sql = sb.toString();
 
@@ -138,6 +177,34 @@ public class SQLDB {
         }
         String sql = "ALTER TABLE " + table + " ADD COLUMN " + column + " " + type;
         executeQuery(sql);
+    }
+
+    public static void dropAllGuildActivityTables() {
+        // Query to get all tables that start with 'guild_activity'
+        String sql = "SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'guild_activity%'";
+
+        List<String> tablesToDrop = new ArrayList<>();
+
+        try (PreparedStatement ps = connection.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                String tableName = rs.getString("name");
+                tablesToDrop.add(tableName);
+            }
+
+            // Drop each table
+            for (String tableName : tablesToDrop) {
+                String dropSql = "DROP TABLE IF EXISTS " + tableName;
+                executeQuery(dropSql);
+                System.out.println("Dropped table: " + tableName);
+            }
+
+            System.out.println("Total tables dropped: " + tablesToDrop.size());
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
 }

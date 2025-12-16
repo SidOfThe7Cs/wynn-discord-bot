@@ -259,7 +259,7 @@ public class MainEntrypoint extends ListenerAdapter {
         AllSlashCommands.activehours.setAction(GuildCommands::viewActiveHours);
 
         commands.addCommands(AllSlashCommands.trackedguilds.getBaseCommandData()
-                .addOption(INTEGER, "days", "average over the last number of days", false));
+                .addOption(INTEGER, "months", "average over the last months (1-5)", false));
         AllSlashCommands.trackedguilds.setAction(GuildCommands::viewTrackedGuilds);
         PageBuilder.PaginationManager.register(PaginationIds.GUILD.name(),
                 trackedGuild -> GuildCommands.guildConverter((GuildAverages) trackedGuild), "Average activity for tracked guilds",9);
@@ -388,6 +388,16 @@ public class MainEntrypoint extends ListenerAdapter {
         commands.addCommands(AllSlashCommands.getserverlist.getBaseCommandData());
         AllSlashCommands.getserverlist.setAction(HelpCommands::getServerList);
 
+
+        /*
+        commands.addCommands(AllSlashCommands.sendanniping.getBaseCommandData()
+                .addOption(STRING, "time_till_start", "use format xh ym eg: 11h 15m", true));
+        AllSlashCommands.sendanniping.setAction(Annihilation::sendAnniPing);
+
+        commands.addCommands(AllSlashCommands.createanniparties.getBaseCommandData());
+        AllSlashCommands.createanniparties.setAction(Annihilation::createAnniParties);
+
+         */
 
         // Send the new set of commands to discord, this will override any existing global commands with the new set provided here
         commands.queue();

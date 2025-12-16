@@ -243,10 +243,11 @@ public class GuildCommands {
     public static int guildDays = -1;
 
     public static void viewTrackedGuilds(SlashCommandInteractionEvent event) {
-        guildDays = Optional.ofNullable(event.getOption("days"))
+        guildDays = Optional.ofNullable(event.getOption("months"))
                 .map(OptionMapping::getAsInt)
-                .orElse(30);
-
+                .orElse(1);
+        if (guildDays > 5) guildDays = 5;
+        if (guildDays < 1) guildDays = 1;
 
         PageBuilder.PaginationState pageState = PageBuilder.PaginationManager.get(PaginationIds.GUILD.name());
 

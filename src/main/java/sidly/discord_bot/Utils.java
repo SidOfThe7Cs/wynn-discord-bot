@@ -20,10 +20,10 @@ import java.util.regex.Pattern;
 
 public class Utils {
 
-    public static String getDiscordTimestamp(long epoch, boolean relative){
+    public static String getDiscordTimestamp(long epochMillis, boolean relative){
         String type = "t";
         if (relative) type = "R";
-        return "<t:" + epoch/1000 + ":" + type + ">";
+        return "<t:" + epochMillis/1000 + ":" + type + ">";
     }
 
     public static boolean hasAtLeastRank(Member user, String roleId) {
