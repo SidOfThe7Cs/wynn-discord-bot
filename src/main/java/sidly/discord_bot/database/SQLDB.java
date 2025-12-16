@@ -1,7 +1,6 @@
 package sidly.discord_bot.database;
 
 import sidly.discord_bot.ConfigManager;
-import sidly.discord_bot.database.tables.OldGuildActivity;
 
 import java.io.File;
 import java.sql.*;
@@ -33,6 +32,7 @@ public class SQLDB {
 
     public static void init() throws SQLException {
         SQLDB.connection = DriverManager.getConnection("jdbc:sqlite:" + dbFile.getAbsolutePath());
+        dropAllGuildActivityTables();
 
         createTable("uuidMap", Map.of(
                 "username", "TEXT PRIMARY KEY",
