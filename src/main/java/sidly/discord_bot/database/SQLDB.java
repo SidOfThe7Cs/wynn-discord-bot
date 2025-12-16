@@ -107,8 +107,6 @@ public class SQLDB {
         createGuildActivityTable("3");
         createGuildActivityTable("4");
         createGuildActivityTable("5");
-
-        OldGuildActivity.migrateWithTransaction();
     }
 
     private static void createGuildActivityTable(String suffix) {
