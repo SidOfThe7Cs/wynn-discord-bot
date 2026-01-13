@@ -248,6 +248,7 @@ public class GuildCommands {
                 .orElse(30);
 
 
+        GuildActivity.removeOldEntries();
         PageBuilder.PaginationState pageState = PageBuilder.PaginationManager.get(PaginationIds.GUILD.name());
 
         event.deferReply(false).addComponents(PageBuilder.getPaginationActionRow(PaginationIds.GUILD)).queue(hook -> {

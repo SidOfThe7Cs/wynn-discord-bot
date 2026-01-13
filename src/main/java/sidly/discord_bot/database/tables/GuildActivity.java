@@ -8,6 +8,7 @@ import sidly.discord_bot.database.records.TimestampedDouble;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -32,6 +33,22 @@ public class GuildActivity {
             ps.setDouble(6, captainsOnline);
             ps.setLong(7, System.currentTimeMillis());
             ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void removeOldEntries() {
+        long time = System.currentTimeMillis();
+        long days60 = TimeUnit.MILLISECONDS.convert(60, TimeUnit.DAYS);
+        removeOldEntries(time - days60);
+    }
+
+    public static void removeOldEntries(Long before) {
+        String sql = "DELETE FROM guild_activity WHERE timestamp < ?";
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setLong(1, before);
+            stmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
