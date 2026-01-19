@@ -164,7 +164,7 @@ public class MassGuild {
                     allGuildsList.values().stream()
                             .map(GuildName::prefix)
                             .filter(prefix -> !queue.contains(prefix) && !lowPriorityQueue.contains(prefix))
-                            .peek(prefix -> System.out.println("new guild!: " + prefix))
+                            //.peek(prefix -> System.out.println("new guild!: " + prefix))
                             .toList()
             );
             isUpdating = false;
@@ -263,16 +263,16 @@ public class MassGuild {
             return;
         }
         if (status == 429) { // rate limit
+            System.out.println("ratelimited assign more tokens");
             tempHighPrioQueue.addFirst(prefix); // retry current
             return;
         }
         if (status == 520) {
-            System.out.println("failed to connect to api (520) " + prefix);
             tempHighPrioQueue.addFirst(prefix); // retry current
             return;
         }
         if (status == 500) {
-            System.out.println("failed to connect to api (500) " + prefix);
+            System.out.println("is this is being spammed api is probably down" + prefix);
             return;
         }
 
@@ -309,7 +309,7 @@ public class MassGuild {
                 AllGuilds.addTracked(prefix, true);
             }
 
-        } else System.err.println("members was null " + prefix);
+        } else tempHighPrioQueue.add(prefix);
 
         GuildActivity.add(apiData.uuid, apiData.prefix, apiData.name, apiData.online, onlineCaptainPlusCount);
     }

@@ -196,14 +196,32 @@ public class AllGuilds {
         }
     }
 
+    public static boolean isTracked(String prefix) {
+        String sql = "SELECT COUNT(*) as count FROM guilds_40_plus WHERE prefix = ? AND low_priority = 0";
 
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setString(1, prefix);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("count") > 0;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    // this means guild was disbanded nowadays
     public static void unTracked(String prefix) {
         String sql = "DELETE FROM guilds_40_plus WHERE prefix = ?";
+
+        boolean print = isTracked(prefix);
 
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setString(1, prefix);
             stmt.executeUpdate();
-            System.out.println("deleted guild: " + prefix);
+            if (print) System.out.println("deleted guild: " + prefix);
         } catch (SQLException e) {
             e.printStackTrace();
         }

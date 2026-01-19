@@ -154,15 +154,11 @@ public class GuildCommands {
 
 
     public static void addTrackedGuild(SlashCommandInteractionEvent event) {
-        String guildPrefix = event.getOption("guild_prefix").getAsString();
-        AllGuilds.addTracked(guildPrefix, false);
-        event.reply("added " + guildPrefix + " to tracked guilds").queue();
+        event.reply("this command is removed im just lazy").queue();
     }
 
     public static void removeTrackedGuild(SlashCommandInteractionEvent event) {
-        String guildPrefix = event.getOption("guild_prefix").getAsString();
-        AllGuilds.unTracked(guildPrefix);
-        event.reply("removed " + guildPrefix + " from tracked guilds").queue();
+        event.reply("this command is removed im just lazy").queue();
     }
 
     public static void viewActiveHours(SlashCommandInteractionEvent event) {
