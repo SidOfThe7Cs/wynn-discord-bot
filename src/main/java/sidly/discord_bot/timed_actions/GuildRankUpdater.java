@@ -9,6 +9,12 @@ public class GuildRankUpdater {
     private static Timer timer;
     private static boolean yourGuildTrackerRunning = false;
 
+    private static Long lastRunTime = 0L;
+
+    public static Long getLastRunTime() {
+        return lastRunTime;
+    }
+
     public static void start(){
         if (yourGuildTrackerRunning) {
             return;
@@ -20,6 +26,7 @@ public class GuildRankUpdater {
             public void run() {
                 try {
                     GuildCommands.updatePlayerRanks();
+                    lastRunTime = System.currentTimeMillis();
                 } catch (Exception e) {
                     e.printStackTrace(); // Log and keep going
                 }

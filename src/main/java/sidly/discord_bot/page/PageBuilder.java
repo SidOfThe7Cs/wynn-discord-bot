@@ -109,6 +109,8 @@ public class PageBuilder {
             this.lastPage = this.currentPage;
 
             // Block here until current page is ready
+            if (currentFuture == null) return new EmbedBuilder().setTitle("Ahh your future is gone")
+                    .setDescription("Erm where that data run off too \n try running the command again (not the page button)");
             return currentFuture.join();
         }
         public CompletableFuture<EmbedBuilder> generateEmbedAsync(int page) {
@@ -118,7 +120,11 @@ public class PageBuilder {
             int finalPage = page;
             return CompletableFuture.supplyAsync(() -> {
 
-                if (this.sortedEntries.isEmpty()) return null;
+                if (this.sortedEntries.isEmpty()) {
+                        return new EmbedBuilder()
+                                .setDescription("Erm where that data run off too \n try running the command again (not the page button)")
+                                .setTitle("No Entries For Pages :(");
+                }
 
                 EmbedBuilder embed = new EmbedBuilder();
                 embed.setColor(Color.CYAN);

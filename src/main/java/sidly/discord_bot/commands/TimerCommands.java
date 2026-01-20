@@ -10,14 +10,22 @@ import sidly.discord_bot.timed_actions.UpdatePlayers;
 public class TimerCommands {
     public static void getTimerStatus(SlashCommandInteractionEvent event) {
         boolean allGuildTrackerTimerStatus = MassGuild.getTimerStatus();
+        Long allGuildTrackerLastRun = MassGuild.getTimerLastRun();
         boolean yourGuildTrackerTimerStatus = GuildRankUpdater.getStatus();
+        Long yourGuildTrackerLastRun = GuildRankUpdater.getLastRunTime();
         boolean playerUpdater = UpdatePlayers.isRunning();
+        Long playerUpdaterLastRun = UpdatePlayers.getLastRunTime();
         boolean yourGuildMemberUpdater = GuildMemberUpdater.getStatus();
+        Long yourGuildMemberUpdaterLastRun = GuildMemberUpdater.getLastRunTime();
 
-        String description = "PlayerUpdater: " + (playerUpdater ? "active" : "inactive") + "\n" +
-                "guildTracker: " + (allGuildTrackerTimerStatus ? "active" : "inactive") + "\n" +
-                "yourGuildRankUpdater: " + (yourGuildTrackerTimerStatus ? "active" : "inactive") + "\n" +
-                "yourGuildMemberUpdater: " + (yourGuildMemberUpdater ? "active" : "inactive") + "\n";
+        String description = "playerUpdater: " + (playerUpdater ? "active" : "inactive")
+                + " last run " + Utils.getDiscordTimestamp(playerUpdaterLastRun,true) + "\n" +
+                "guildTracker: " + (allGuildTrackerTimerStatus ? "active" : "inactive")
+                + " last run " + Utils.getDiscordTimestamp(allGuildTrackerLastRun,true) + "\n" +
+                "yourGuildRankUpdater: " + (yourGuildTrackerTimerStatus ? "active" : "inactive")
+                + " last run " + Utils.getDiscordTimestamp(yourGuildTrackerLastRun,true) + "\n" +
+                "yourGuildMemberUpdater: " + (yourGuildMemberUpdater ? "active" : "inactive")
+                + " last run " + Utils.getDiscordTimestamp(yourGuildMemberUpdaterLastRun,true) + "\n";
 
         event.replyEmbeds(Utils.getEmbed("Timers", description)).setEphemeral(true).queue();
 

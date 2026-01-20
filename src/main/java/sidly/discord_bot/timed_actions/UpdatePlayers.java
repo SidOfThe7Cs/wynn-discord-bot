@@ -1,6 +1,5 @@
 package sidly.discord_bot.timed_actions;
 
-import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import sidly.discord_bot.Config;
@@ -15,6 +14,12 @@ public class UpdatePlayers {
     private static int serverMemberCount = 0;
     private static Timer timer;
     private static volatile boolean loadingMembers = false;
+
+    private static Long lastRunTime = 0L;
+
+    public static Long getLastRunTime() {
+        return lastRunTime;
+    }
 
     public static boolean isRunning() {
         return isRunning;
@@ -72,6 +77,7 @@ public class UpdatePlayers {
             public void run() {
                 try {
                     updateNext();
+                    lastRunTime = System.currentTimeMillis();
                 } catch (Exception e) {
                     e.printStackTrace(); // Log and keep going
                 }

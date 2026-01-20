@@ -14,6 +14,12 @@ public class DynamicTimer {
     private final long targetMillisPerItemInSet;
     private final long minMillis;
 
+    private Long lastTimeRan = 0L;
+
+    public Long getLastTimeRan() {
+        return lastTimeRan;
+    }
+
     public DynamicTimer(List<?> targetSet, Runnable task, long targetMillisPerItemInSet, long minMillis) {
         this.targetSet = targetSet;
         this.task = task;
@@ -34,6 +40,9 @@ public class DynamicTimer {
             runs = 0;
             lastSize = targetSet.size();
             delay = calculateDelay(lastSize);
+            if (delay == minMillis) {
+                System.out.println("dynamic timer running at max speed this might cause issues");
+            }
         } else {
             delay = lastDelay; // reuse previous delay
         }
@@ -42,6 +51,7 @@ public class DynamicTimer {
         currentTask = scheduler.schedule(() -> {
             try {
                 task.run();
+                lastTimeRan = System.currentTimeMillis();
             } catch (Exception e) {
                 e.printStackTrace();
             }

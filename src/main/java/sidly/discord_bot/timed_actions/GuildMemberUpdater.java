@@ -10,6 +10,12 @@ public class GuildMemberUpdater {
     private static Timer timer;
     private static boolean running = false;
 
+    private static Long lastRunTime = 0L;
+
+    public static Long getLastRunTime() {
+        return lastRunTime;
+    }
+
     public static void start(){
         if (running) {
             return;
@@ -21,6 +27,7 @@ public class GuildMemberUpdater {
             public void run() {
                 try {
                     MassGuild.updateAllGuildMembers();
+                    lastRunTime = System.currentTimeMillis();
                 } catch (Exception e) {
                     e.printStackTrace(); // Log and keep going
                 }

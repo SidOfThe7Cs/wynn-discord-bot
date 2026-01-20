@@ -45,6 +45,9 @@ public class MassGuild {
     private static int attempsCounter = 0;
     private static long startTime;
 
+    private static ConcurrentSkipListMap<Integer, Set<String>> sizeToPrefixes =
+            new ConcurrentSkipListMap<>(Comparator.reverseOrder());
+
     public static void init() {
         client = HttpClient.newHttpClient();
         client2 = HttpClient.newHttpClient();
@@ -76,7 +79,7 @@ public class MassGuild {
         startTime = System.currentTimeMillis();
 
         // these timers are 7x for target time between because it does one call for every api token
-        mainTimer = new DynamicTimer(queue, MassGuild::next, TimeUnit.MINUTES.toMillis(30), 600);
+        mainTimer = new DynamicTimer(queue, MassGuild::next, TimeUnit.MINUTES.toMillis(35), 600);
         lowPrioTimer = new DynamicTimer(lowPriorityQueue, MassGuild::nextLowPrio, TimeUnit.HOURS.toMillis(10), 6000);
         startTimer();
 
@@ -98,6 +101,9 @@ public class MassGuild {
 
     public static boolean getTimerStatus() {
         return timersRunning;
+    }
+    public static Long getTimerLastRun() {
+        return Math.min(lowPrioTimer.getLastTimeRan(), mainTimer.getLastTimeRan());
     }
 
     private static void nextLowPrio() {
@@ -293,23 +299,46 @@ public class MassGuild {
         if (members != null) {
             onlineCaptainPlusCount = members.getOnlineCaptainsPlusCount();
 
-            if (members.total > 20) {
-                // Track large guilds
-                if (!queue.contains(prefix) && !lowToHighMoveQueue.contains(prefix)) {
-                    lowToHighMoveQueue.add(prefix);
-                    System.out.println("tracking guild " + prefix);
-                }
-                AllGuilds.addTracked(prefix, false);
-            } else {
-                // Untrack small guilds
-                if (!lowPriorityQueue.contains(prefix) && !highToLowMoveQueue.contains(prefix)) {
-                    highToLowMoveQueue.add(prefix);
-                    System.out.println("un-tracking guild " + prefix);
-                }
-                AllGuilds.addTracked(prefix, true);
-            }
+            sizeToPrefixes.computeIfAbsent(members.total, k -> ConcurrentHashMap.newKeySet()).add(prefix);
 
-        } else tempHighPrioQueue.add(prefix);
+            if (sizeToPrefixes.values().stream().mapToInt(Set::size).sum() > 300) {
+                Map.Entry<Integer, Set<String>> smallestPrefixes = sizeToPrefixes.lastEntry();
+                if (!smallestPrefixes.getValue().contains(prefix)) {
+                    // Untrack small guilds
+                    for (String prefixToUntrack : smallestPrefixes.getValue()) {
+                        if (AllGuilds.isTracked(prefixToUntrack)) {
+                            if (!lowPriorityQueue.contains(prefixToUntrack) && !highToLowMoveQueue.contains(prefixToUntrack)) {
+                                highToLowMoveQueue.add(prefixToUntrack);
+                                System.out.println("un-tracking guild " + prefixToUntrack);
+                            }
+                            AllGuilds.addTracked(prefixToUntrack, true);
+                        }
+                    }
+
+                    //track current guild
+                    if (!AllGuilds.isTracked(prefix)) {
+                        if (!queue.contains(prefix) && !lowToHighMoveQueue.contains(prefix)) {
+                            lowToHighMoveQueue.add(prefix);
+                            System.out.println("tracking guild " + prefix);
+                        }
+                        AllGuilds.addTracked(prefix, false);
+                    }
+
+                } else {
+                    if (AllGuilds.isTracked(prefix)) {
+                        if (!lowPriorityQueue.contains(prefix) && !highToLowMoveQueue.contains(prefix)) {
+                            highToLowMoveQueue.add(prefix);
+                            System.out.println("un-tracking guild " + prefix);
+                        }
+                        AllGuilds.addTracked(prefix, true);
+                    }
+                }
+                sizeToPrefixes.remove(smallestPrefixes.getKey());
+            }
+        } else {
+            tempHighPrioQueue.add(prefix);
+            return;
+        }
 
         GuildActivity.add(apiData.uuid, apiData.prefix, apiData.name, apiData.online, onlineCaptainPlusCount);
     }
@@ -390,10 +419,20 @@ public class MassGuild {
                         String reset     = response.headers().map().getOrDefault("ratelimit-reset", List.of("unknown")).getFirst();
                         String limit     = response.headers().map().getOrDefault("ratelimit-limit", List.of("unknown")).getFirst();
 
+                        int limitInt = Integer.parseInt(limit);
+                        if (limitInt == 50) {
+                            List<String> invalidTokens = ConfigManager.getConfigInstance().other.entrySet().stream()
+                                    .filter(entry -> entry.getValue().equals(apiToken))
+                                    .map(entry -> entry.getKey().toString())
+                                    .toList();
+                            System.out.println(invalidTokens.isEmpty() ? "a token is invalid" : "token: " + invalidTokens + " is invalid");
+                            return;
+                        }
+
                         guildRateLimitInfo = new ApiUtils.RateLimitInfo(
                                 Integer.parseInt(remaining),
                                 Integer.parseInt(reset),
-                                Integer.parseInt(limit),
+                                limitInt,
                                 System.currentTimeMillis()
                         );
 

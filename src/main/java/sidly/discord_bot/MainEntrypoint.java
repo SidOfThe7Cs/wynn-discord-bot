@@ -399,6 +399,8 @@ public class MainEntrypoint extends ListenerAdapter {
         GuildRankUpdater.start();
         MassGuild.init();
         GuildMemberUpdater.start();
+
+
     }
 
 
