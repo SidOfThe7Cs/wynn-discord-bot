@@ -268,14 +268,9 @@ public class PromotionCommands {
                 sb.append(" WarBuild: ").append(buildCount).append(" / ").append(requirementCount).append('\n');
                 break;
             case WeeklyPlaytime:
-                double average = 0;
                 PlaytimeHistoryList playtimeHistoryList = PlaytimeHistory.getPlaytimeHistory(playerDataShortened.uuid);
-                if (playtimeHistoryList.getAverage(10) > requirementCount) {
-                    average = playtimeHistoryList.getAverage(10);
-                    sb.append("✅ ");
-                } else if (req.isRequired()){
-                    sb.append("❌");
-                } else sb.append(":no_entry_sign:");
+                double average = playtimeHistoryList.getAverage(10);
+                sb.append(getSymbol((int) average, requirementCount));
                 sb.append(" WeeklyPlaytime: ").append(Utils.formatNumber(average)).append(" / ").append(requirementCount).append('\n');
                 break;
             case Eco:

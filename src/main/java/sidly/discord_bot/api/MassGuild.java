@@ -309,9 +309,9 @@ public class MassGuild {
                         if (AllGuilds.isTracked(prefixToUntrack)) {
                             if (!lowPriorityQueue.contains(prefixToUntrack) && !highToLowMoveQueue.contains(prefixToUntrack)) {
                                 highToLowMoveQueue.add(prefixToUntrack);
+                                AllGuilds.addTracked(prefixToUntrack, true);
                                 System.out.println("un-tracking guild " + prefixToUntrack);
                             }
-                            AllGuilds.addTracked(prefixToUntrack, true);
                         }
                     }
 
@@ -319,18 +319,18 @@ public class MassGuild {
                     if (!AllGuilds.isTracked(prefix)) {
                         if (!queue.contains(prefix) && !lowToHighMoveQueue.contains(prefix)) {
                             lowToHighMoveQueue.add(prefix);
+                            AllGuilds.addTracked(prefix, false);
                             System.out.println("tracking guild " + prefix);
                         }
-                        AllGuilds.addTracked(prefix, false);
                     }
 
                 } else {
                     if (AllGuilds.isTracked(prefix)) {
                         if (!lowPriorityQueue.contains(prefix) && !highToLowMoveQueue.contains(prefix)) {
                             highToLowMoveQueue.add(prefix);
+                            AllGuilds.addTracked(prefix, true);
                             System.out.println("un-tracking guild " + prefix);
                         }
-                        AllGuilds.addTracked(prefix, true);
                     }
                 }
                 sizeToPrefixes.remove(smallestPrefixes.getKey());
@@ -419,15 +419,16 @@ public class MassGuild {
                         String reset     = response.headers().map().getOrDefault("ratelimit-reset", List.of("unknown")).getFirst();
                         String limit     = response.headers().map().getOrDefault("ratelimit-limit", List.of("unknown")).getFirst();
 
-                        int limitInt = Integer.parseInt(limit);
-                        if (limitInt == 50) {
+                        if (Objects.equals(limit, "unknown") || Objects.equals(reset, "unknown") || Objects.equals(remaining, "unknown")) {
                             List<String> invalidTokens = ConfigManager.getConfigInstance().other.entrySet().stream()
                                     .filter(entry -> entry.getValue().equals(apiToken))
                                     .map(entry -> entry.getKey().toString())
                                     .toList();
-                            System.out.println(invalidTokens.isEmpty() ? "a token is invalid" : "token: " + invalidTokens + " is invalid");
+                            System.out.println(invalidTokens.isEmpty() ? "where http headers?? (bad)" : "token: " + invalidTokens + " is possibly invalid");
                             return;
                         }
+
+                        int limitInt = Integer.parseInt(limit);
 
                         guildRateLimitInfo = new ApiUtils.RateLimitInfo(
                                 Integer.parseInt(remaining),

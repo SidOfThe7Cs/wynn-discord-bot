@@ -8,6 +8,13 @@ import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 
 public class DetectTimerBreaks {
+
+    private static Long lastRunTime = 0L;
+
+    public static Long getLastRunTime() {
+        return lastRunTime;
+    }
+
     public static void init(){
         new Timer().scheduleAtFixedRate(new TimerTask() {
             @Override

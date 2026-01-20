@@ -3,6 +3,7 @@ package sidly.discord_bot.commands;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import sidly.discord_bot.Utils;
 import sidly.discord_bot.api.MassGuild;
+import sidly.discord_bot.timed_actions.DetectTimerBreaks;
 import sidly.discord_bot.timed_actions.GuildMemberUpdater;
 import sidly.discord_bot.timed_actions.GuildRankUpdater;
 import sidly.discord_bot.timed_actions.UpdatePlayers;
@@ -25,7 +26,8 @@ public class TimerCommands {
                 "yourGuildRankUpdater: " + (yourGuildTrackerTimerStatus ? "active" : "inactive")
                 + " last run " + Utils.getDiscordTimestamp(yourGuildTrackerLastRun,true) + "\n" +
                 "yourGuildMemberUpdater: " + (yourGuildMemberUpdater ? "active" : "inactive")
-                + " last run " + Utils.getDiscordTimestamp(yourGuildMemberUpdaterLastRun,true) + "\n";
+                + " last run " + Utils.getDiscordTimestamp(yourGuildMemberUpdaterLastRun,true) + "\n\n"
+                + " last checked " + Utils.getDiscordTimestamp(DetectTimerBreaks.getLastRunTime(),true) + "\n";
 
         event.replyEmbeds(Utils.getEmbed("Timers", description)).setEphemeral(true).queue();
 

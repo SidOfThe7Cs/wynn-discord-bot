@@ -65,6 +65,8 @@ public class PlaytimeHistory {
                 PreparedStatement updateStmt = connection.prepareStatement(updateSql)
         ) {
             for (PlayerDataShortened playerData : players) {
+                Players.add(playerData);
+
                 String uuid = playerData.uuid;
                 List<PlaytimeHistoryList.PlaytimeHistoryEntry> playtimeHistory = getPlaytimeHistory(uuid).getPlaytimeHistory();
                 playtimeHistory.sort(Comparator.comparingLong(PlaytimeHistoryList.PlaytimeHistoryEntry::getTimeLogged).reversed());
