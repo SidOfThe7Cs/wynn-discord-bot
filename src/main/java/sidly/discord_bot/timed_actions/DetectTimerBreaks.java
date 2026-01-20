@@ -5,6 +5,7 @@ import sidly.discord_bot.api.MassGuild;
 
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
 
 public class DetectTimerBreaks {
     public static void init(){
@@ -21,25 +22,25 @@ public class DetectTimerBreaks {
 
                     Long now = System.currentTimeMillis();
 
-                    if (now - allGuildTrackerLastRun > 20000) {
+                    if (now - allGuildTrackerLastRun > 5000) {
                         sb.append("guildTracker has not run since ");
                         sb.append(Utils.getDiscordTimestamp(allGuildTrackerLastRun, true));
                         sb.append("\n");
                     }
 
-                    if (now - yourGuildTrackerLastRun > 20000) {
+                    if (now - yourGuildTrackerLastRun > 300000) {
                         sb.append("yourGuildRankUpdater has not run since ");
                         sb.append(Utils.getDiscordTimestamp(yourGuildTrackerLastRun, true));
                         sb.append("\n");
                     }
 
-                    if (now - playerUpdaterLastRun > 20000) {
+                    if (now - playerUpdaterLastRun > 10000) {
                         sb.append("playerUpdater has not run since ");
                         sb.append(Utils.getDiscordTimestamp(playerUpdaterLastRun, true));
                         sb.append("\n");
                     }
 
-                    if (now - yourGuildMemberUpdaterLastRun > 20000) {
+                    if (now - yourGuildMemberUpdaterLastRun > TimeUnit.MINUTES.toMillis(150)) {
                         sb.append("yourGuildMemberUpdater has not run since ");
                         sb.append(Utils.getDiscordTimestamp(yourGuildMemberUpdaterLastRun, true));
                         sb.append("\n");

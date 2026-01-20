@@ -120,7 +120,7 @@ public class PageBuilder {
             int finalPage = page;
             return CompletableFuture.supplyAsync(() -> {
 
-                if (this.sortedEntries.isEmpty()) {
+                if ( this.sortedEntries == null || this.sortedEntries.isEmpty()) {
                         return new EmbedBuilder()
                                 .setDescription("Erm where that data run off too \n try running the command again (not the page button)")
                                 .setTitle("No Entries For Pages :(");

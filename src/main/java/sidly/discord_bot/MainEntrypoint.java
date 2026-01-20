@@ -29,6 +29,7 @@ import sidly.discord_bot.database.SQLDB;
 import sidly.discord_bot.database.records.GuildAverages;
 import sidly.discord_bot.page.PageBuilder;
 import sidly.discord_bot.page.PaginationIds;
+import sidly.discord_bot.timed_actions.DetectTimerBreaks;
 import sidly.discord_bot.timed_actions.GuildMemberUpdater;
 import sidly.discord_bot.timed_actions.GuildRankUpdater;
 import sidly.discord_bot.timed_actions.UpdatePlayers;
@@ -400,7 +401,7 @@ public class MainEntrypoint extends ListenerAdapter {
         MassGuild.init();
         GuildMemberUpdater.start();
 
-
+        DetectTimerBreaks.init();
     }
 
 
