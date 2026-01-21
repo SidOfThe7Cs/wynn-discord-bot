@@ -54,11 +54,11 @@ public class DetectTimerBreaks {
                         sb.append("\n");
                     }
 
-                    sb.append(MassGuild.getOverfullQueues());
-
                     if (!sb.isEmpty()) {
                         sb.append("\n").append("maybe try running /stoptimer and /starttimer");
                     }
+
+                    sb.append(MassGuild.getOverfullQueues());
 
                     Utils.sendToModChannel("TIMER ERROR", sb.toString(), false);
 

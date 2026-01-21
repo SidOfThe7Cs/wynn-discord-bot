@@ -4,6 +4,7 @@ import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 import sidly.discord_bot.Config;
 import sidly.discord_bot.ConfigManager;
+import sidly.discord_bot.commands.VerificationCommands;
 import sidly.discord_bot.database.PlayerDataShortened;
 import sidly.discord_bot.database.records.GuildName;
 import sidly.discord_bot.database.tables.*;
@@ -235,6 +236,7 @@ public class MassGuild {
         HttpRequest request;
 
         attempsCounter++;
+        //System.out.println(attempsCounter);
 
         request = HttpRequest.newBuilder()
                 .uri(URI.create("https://api.wynncraft.com/v3/guild/prefix/" + prefix + "?identifier=uuid"))
@@ -267,10 +269,13 @@ public class MassGuild {
 
     private static void handleApiResponse(String prefix, HttpResponse<String> response) {
         count++;
+        //System.out.println(count);
 
         //String reset = response.headers().map().getOrDefault("ratelimit-reset", List.of("unknown")).getFirst();
         //String limit = response.headers().map().getOrDefault("ratelimit-limit", List.of("unknown")).getFirst();
         //String remaining = response.headers().map().getOrDefault("ratelimit-remaining", List.of("unknown")).getFirst();
+
+        //System.out.println(remaining + "/" + limit + " " + reset);
 
         int status = response.statusCode();
         if (status == 404) {
@@ -286,7 +291,7 @@ public class MassGuild {
             return;
         }
         if (status == 429) { // rate limit
-            System.out.println("ratelimited assign more tokens");
+            System.out.println("ratelimited (did you get temp banned from api?)");
             tempHighPrioQueue.addFirst(prefix); // retry current
             return;
         }
@@ -441,7 +446,7 @@ public class MassGuild {
     }
 
     private static final AtomicInteger tokenIndex = new AtomicInteger(0);
-    public static Map<String, PlayerProfile> getPlayerData(Set<String> uuids) {
+    public static Map<String, PlayerProfile> getPlayerData(Set<String> uuids, String guildUuid) {
         if (apiTokens.isEmpty()) throw new IllegalStateException("No API tokens available");
 
         // to close to ratelimit
@@ -546,6 +551,10 @@ public class MassGuild {
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 
         PlaytimeHistory.addPlaytimeIfNeeded(toUpdate);
+        String prefix = ConfigManager.getConfigInstance().other.get(Config.Settings.YourGuildPrefix);
+        if (Objects.equals(AllGuilds.getGuild(prefix).uuid(), guildUuid)) {
+            VerificationCommands.updatePlayers(results);
+        }
         return results;
     }
 
@@ -553,12 +562,12 @@ public class MassGuild {
     public static void updateAllGuildMembers() {
         GuildInfo guildInfo = ApiUtils.getGuildInfo(ConfigManager.getConfigInstance().other.get(Config.Settings.YourGuildPrefix));
         Set<String> memberUuids = guildInfo.members.getAllMembers().keySet();
-        getPlayerData(memberUuids);
+        getPlayerData(memberUuids, guildInfo.uuid);
     }
 
     public static Map<String, PlayerProfile> getAllGuildMembers(String prefix) {
         GuildInfo guildInfo = ApiUtils.getGuildInfo(prefix);
         Set<String> memberUuids = guildInfo.members.getAllMembers().keySet();
-        return getPlayerData(memberUuids);
+        return getPlayerData(memberUuids, guildInfo.uuid);
     }
 }

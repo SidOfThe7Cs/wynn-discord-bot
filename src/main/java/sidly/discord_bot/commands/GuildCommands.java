@@ -432,8 +432,7 @@ public class GuildCommands {
     }
 
     public static String guildStatsConverter(GuildStatEntry statEntry) {
-
-        PlayerProfile playerData = MassGuild.getPlayerData(Collections.singleton(statEntry.uuid())).values().iterator().next();
+        PlayerProfile playerData = MassGuild.getPlayerData(Collections.singleton(statEntry.uuid()), statEntry.uuid).values().iterator().next();
         if (playerData.statusCode == 429) return "ratelimit hit :(";
 
         GuildInfo.MemberInfo guildMemberData = statEntry.guildMemberData();

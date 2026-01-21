@@ -8,10 +8,7 @@ import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
-import sidly.discord_bot.Config;
-import sidly.discord_bot.ConfigManager;
-import sidly.discord_bot.RoleUtils;
-import sidly.discord_bot.Utils;
+import sidly.discord_bot.*;
 import sidly.discord_bot.api.ApiUtils;
 import sidly.discord_bot.api.GuildInfo;
 import sidly.discord_bot.api.PlayerProfile;
@@ -24,7 +21,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class VerificationCommands {
     public static final Map<Integer, uuidAndUsername> tempVerificationUuidMap = new ConcurrentHashMap<>();
-    public record uuidAndUsername(String uuid, String username) {}
+
+    public record uuidAndUsername(String uuid, String username) {
+    }
 
     public static void verify(IReplyCallback event) {
         uuidAndUsername ids;
@@ -43,7 +42,7 @@ public class VerificationCommands {
         Member member = event.getMember();
         String uuid = ids.uuid == null ? ids.username : ids.uuid;
 
-        if (member == null){
+        if (member == null) {
             event.reply("member was null").setEphemeral(true).queue();
             return;
         }
@@ -59,7 +58,7 @@ public class VerificationCommands {
         }
         PlayerProfile playerData = ApiUtils.getPlayerData(uuid);
 
-        if (playerData == null){
+        if (playerData == null) {
             event.reply("playerData was null").setEphemeral(true).queue();
             return;
         } else if (playerData.playersMultiselectorMap != null) {
@@ -136,7 +135,7 @@ public class VerificationCommands {
                     embed.setDescription("Verification complete: \n" + result);
                     hook.editOriginalEmbeds(embed.build()).queue();
                 });
-            } else{
+            } else {
                 embed.setDescription("Waiting for a moderator to accept your verification \n");
                 hook.editOriginalEmbeds(embed.build()).queue();
             }
@@ -168,8 +167,8 @@ public class VerificationCommands {
             }
         }
 
-        if (event.getGuild().getOwnerIdLong() == member.getIdLong()){
-            embed.addField("","You are the server owner so I cant change your nickname please make sure it matches your ign",false);
+        if (event.getGuild().getOwnerIdLong() == member.getIdLong()) {
+            embed.addField("", "You are the server owner so I cant change your nickname please make sure it matches your ign", false);
         }
 
     }
@@ -212,31 +211,61 @@ public class VerificationCommands {
         return future;
     }
 
+    public static void updatePlayers(Map<String, PlayerProfile> allPlayerData) {
+        StringBuilder sb = new StringBuilder();
+        int counter = 0;
+        for (Map.Entry<String, PlayerProfile> entry : allPlayerData.entrySet()) {
+            String discUuid = UuidMap.getDiscordIdByMinecraftId(entry.getKey());
+            String serverId = ConfigManager.getConfigInstance().other.get(Config.Settings.YourDiscordServerId);
+            if (discUuid != null && serverId != null) {
+                Guild discordServer = MainEntrypoint.jda.getGuildById(serverId);
+                if (discordServer != null) {
+                    Member member = discordServer.getMemberById(discUuid);
+                    String reason = updatePlayer(member, entry.getValue());
+                    if (reason.contains(":x:")) {
+                        sb.append("failed to update player ").append(entry.getValue().username).append("\n");
+                        sb.append("   ").append(reason).append("\n");
+                    } else counter++;
+                    continue;
+                }
+            }
+            sb.append("failed to update player ").append(entry.getValue().username).append("\n");
+        }
+        String result = "updated " + counter + " player profiles\n" + sb;
+        Utils.sendToModChannel("updated guild members", result, false);
+    }
 
     public static String updatePlayer(Member member) {
-        if (member == null){
-            return "member was null updatePlayer()";
+        String fullEffectiveName = member.getEffectiveName();
+        String nickname = fullEffectiveName.split("\\[")[0].trim();
+        String uuid = UuidMap.getMinecraftIdByUsername(nickname.toLowerCase()) == null ? nickname : UuidMap.getMinecraftIdByUsername(nickname.toLowerCase());
+        PlayerProfile playerData = ApiUtils.getPlayerData(uuid);
+        return updatePlayer(member, playerData);
+    }
+
+    public static String updatePlayer(Member member, PlayerProfile playerData) {
+        StringBuilder sb = new StringBuilder();
+
+        if (member == null) {
+            return ":x: member was null updatePlayer()";
         }
 
-        StringBuilder sb = new StringBuilder();
 
         // check if there verified
         String verifiedRoleId = ConfigManager.getConfigInstance().roles.get(Config.Roles.VerifiedRole);
         if (!RoleUtils.hasRole(member, verifiedRoleId)) {
-            return member.getAsMention() + " is not verified";
-        } else sb.append(RoleUtils.removeRole(member, ConfigManager.getConfigInstance().roles.get(Config.Roles.UnVerifiedRole)));
+            return member.getAsMention() + " :x: is not verified";
+        } else
+            sb.append(RoleUtils.removeRole(member, ConfigManager.getConfigInstance().roles.get(Config.Roles.UnVerifiedRole)));
+
+        if (playerData == null || playerData.statusCode == 520 || playerData.statusCode == 500 || playerData.statusCode == 522 || playerData.statusCode == 503) {
+            return ":x: failed to connect to api";
+        }
 
         String fullEffectiveName = member.getEffectiveName();
         String nickname = fullEffectiveName.split("\\[")[0].trim();
 
         UuidMap.addDiscordId(nickname.toLowerCase(), member.getId());
-
-        String uuid = UuidMap.getMinecraftIdByUsername(nickname.toLowerCase()) == null ? nickname : UuidMap.getMinecraftIdByUsername(nickname.toLowerCase());
-
-        PlayerProfile playerData = ApiUtils.getPlayerData(uuid);
-        if (playerData == null || playerData.statusCode == 520 || playerData.statusCode == 500 || playerData.statusCode == 522 || playerData.statusCode == 503) {
-            return "failed to connect to api";
-        }
 
         if (playerData.statusCode == 404 || playerData.playersMultiselectorMap != null) {
             System.out.println("unverifying " + nickname);
@@ -254,13 +283,14 @@ public class VerificationCommands {
 
         boolean isOwner = member.getGuild().getOwnerIdLong() == member.getIdLong();
         boolean isMember;
-        if (playerData.guild == null){
+        if (playerData.guild == null) {
             isMember = false;
-        } else isMember = playerData.guild.prefix.equals(ConfigManager.getConfigInstance().other.get(Config.Settings.YourGuildPrefix));
+        } else
+            isMember = playerData.guild.prefix.equals(ConfigManager.getConfigInstance().other.get(Config.Settings.YourGuildPrefix));
         // add / remove the member role and set nickname
         String memberRoleId = ConfigManager.getConfigInstance().roles.get(Config.Roles.MemberRole);
         if (memberRoleId == null || memberRoleId.isEmpty()) {
-            sb.append("Failed to get role ID for member role\n");
+            sb.append(":x: Failed to get role ID for member role\n");
         } else {
             Role memberRole = RoleUtils.getRoleFromGuild(member.getGuild(), memberRoleId);
             if (memberRole != null) {
@@ -278,7 +308,7 @@ public class VerificationCommands {
                     sb.append(RoleUtils.removeRolesIfNotMember(member));
                     // make sure there nick has a guild tag after it
                     if (!isOwner) {
-                        if (playerData.guild == null){
+                        if (playerData.guild == null) {
                             member.getGuild().modifyNickname(member, nickname).queue();
                         } else {
                             member.getGuild().modifyNickname(member, nickname + " [" + playerData.guild.prefix + "]").queue();
@@ -286,7 +316,7 @@ public class VerificationCommands {
                     }
                 }
             } else {
-                sb.append("Member role not found in guild for ID: ").append(memberRoleId).append('\n');
+                sb.append(":x: Member role not found in guild for ID: ").append(memberRoleId).append('\n');
             }
         }
 
@@ -308,7 +338,7 @@ public class VerificationCommands {
                 }
             }
             if (rankRoleId != null && rankRoleId.isEmpty()) {
-                sb.append("Failed to get role ID for rank ").append(rankOfMember).append("\n"); // unset in config
+                sb.append(":x: Failed to get role ID for rank ").append(rankOfMember).append("\n"); // unset in config
             }
             // if null there are not in your guild and it will remove all roles otherwise remove all and add the correct one
             sb.append(RoleUtils.removeRankRolesExcept(member, rankRoleId));
@@ -328,7 +358,7 @@ public class VerificationCommands {
             };
         }
         if (supportRoleId != null && supportRoleId.isEmpty()) {
-            sb.append("Failed to get role ID for support rank ").append(playerData.supportRank).append("\n"); // unset in config
+            sb.append(":x: Failed to get role ID for support rank ").append(playerData.supportRank).append("\n"); // unset in config
         }
         sb.append(RoleUtils.removeSupportRankRolesExcept(member, supportRoleId));
 
@@ -337,7 +367,7 @@ public class VerificationCommands {
         int MAX_CONTENT_COMPLETION = Integer.parseInt(ConfigManager.getConfigInstance().other.get(Config.Settings.MaxContentCompletion));
         String contentCompletionRoleId = ConfigManager.getConfigInstance().roles.get(Config.Roles.OneHundredPercentContentCompletionRole);
         if (contentCompletionRoleId == null || contentCompletionRoleId.isEmpty()) {
-            sb.append("Failed to get role ID for 100% content completion role\n");
+            sb.append(":x: Failed to get role ID for 100% content completion role\n");
         } else {
             Role OneHundredPercentContentCompletionRole = RoleUtils.getRoleFromGuild(member.getGuild(), contentCompletionRoleId);
             if (OneHundredPercentContentCompletionRole != null) {
@@ -351,9 +381,10 @@ public class VerificationCommands {
                         member.getGuild().removeRoleFromMember(member, OneHundredPercentContentCompletionRole).queue(); // remove it
                         sb.append("Removed the 100% completion role ").append(OneHundredPercentContentCompletionRole.getAsMention()).append('\n');
                     }
-                } else System.out.println("a player has " + playerData.getHighestContentCompletion() + " content completion the max is set to " + MAX_CONTENT_COMPLETION); // max is wrong
+                } else
+                    System.out.println("a player has " + playerData.getHighestContentCompletion() + " content completion the max is set to " + MAX_CONTENT_COMPLETION); // max is wrong
             } else {
-                sb.append("100% completion role not found in guild for ID: ").append(contentCompletionRoleId).append('\n');
+                sb.append(":x: 100% completion role not found in guild for ID: ").append(contentCompletionRoleId).append('\n');
             }
         }
 
@@ -371,15 +402,16 @@ public class VerificationCommands {
             }
             String lvlRoleId = ConfigManager.getConfigInstance().lvlRoles.get(matchedRole);
             if (lvlRoleId == null || lvlRoleId.isEmpty()) {
-                sb.append("Failed to get role ID for lvl role ").append(matchedRole).append("\n"); // unset in config
+                sb.append(":x: Failed to get role ID for lvl role ").append(matchedRole).append("\n"); // unset in config
             }
             sb.append(RoleUtils.removeLvlRolesExcept(member, lvlRoleId));
         } else sb.append(RoleUtils.removeLvlRolesExcept(member, null));
 
         // their wynncraft server rank so admin/content team
         String wynnRankRoleId = switch (playerData.rank) {
-            case "Administrator", "WebDev"-> ConfigManager.getConfigInstance().roles.get(Config.Roles.WynnAdminRole);
-            case "Music", "Hybrid", "Game Master" -> ConfigManager.getConfigInstance().roles.get(Config.Roles.WynnContentTeamRole);
+            case "Administrator", "WebDev" -> ConfigManager.getConfigInstance().roles.get(Config.Roles.WynnAdminRole);
+            case "Music", "Hybrid", "Game Master" ->
+                    ConfigManager.getConfigInstance().roles.get(Config.Roles.WynnContentTeamRole);
             case "Moderator" -> ConfigManager.getConfigInstance().roles.get(Config.Roles.WynnModeratorRole);
             default -> null;
         };
@@ -399,8 +431,7 @@ public class VerificationCommands {
     }
 
     public static void removeVerification(SlashCommandInteractionEvent event) {
-        String userId = event.getOption("user_id").getAsString();
-        event.reply("did nothing lmao " + userId).setEphemeral(true).queue();
+        event.reply("did nothing lmao (removed command you can just overwrite verifications with /verify)").setEphemeral(true).queue();
     }
 
     public static void updateRoles(SlashCommandInteractionEvent event) {
