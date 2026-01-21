@@ -44,6 +44,8 @@ public class MassGuild {
     private static int attempsCounter = 0;
     private static long startTime;
 
+    private static final Object LOCK = new Object();
+
     private static ConcurrentSkipListMap<Integer, Set<String>> sizeToPrefixes =
             new ConcurrentSkipListMap<>(Comparator.reverseOrder());
 
@@ -70,7 +72,7 @@ public class MassGuild {
 
         List<String> tracked = AllGuilds.getTracked(false);
         queue.addAll(tracked);
-
+        //todo add all member counts once there stored
         System.out.println("tracked guilds: " + queue.size());
 
         lowPriorityQueue.addAll(AllGuilds.getTracked(true));
@@ -296,55 +298,57 @@ public class MassGuild {
         }.getType();
         GuildInfo apiData = gson.fromJson(response.body(), type);
 
-        int onlineCaptainPlusCount = 0;
+        int onlineCaptainPlusCount;
         GuildInfo.Members members = apiData.members;
         if (members != null) {
-            onlineCaptainPlusCount = members.getOnlineCaptainsPlusCount();
-            GuildActivity.add(apiData.uuid, apiData.prefix, apiData.name, apiData.online, onlineCaptainPlusCount);
+            synchronized (LOCK) {
+                onlineCaptainPlusCount = members.getOnlineCaptainsPlusCount();
+                GuildActivity.add(apiData.uuid, apiData.prefix, apiData.name, apiData.online, onlineCaptainPlusCount);
 
-            int size = sizeToPrefixes.values().stream().mapToInt(Set::size).sum();
-            if (size < 300) {
-                trackGuildIfNot(prefix);
-                sizeToPrefixes.computeIfAbsent(members.total, k -> ConcurrentHashMap.newKeySet()).add(prefix);
-                return;
+                int size = sizeToPrefixes.values().stream().mapToInt(Set::size).sum();
+                int memberCount = members.total;
+                if (size < 300) {
+                    trackGuildIfNot(prefix, memberCount);
+                    sizeToPrefixes.computeIfAbsent(memberCount, k -> ConcurrentHashMap.newKeySet()).add(prefix);
+                    return;
+                }
+
+                Map.Entry<Integer, Set<String>> smallestPrefixes = getSmallest();
+                if (memberCount > smallestPrefixes.getKey()) {
+                    trackGuildIfNot(prefix, memberCount);
+                    sizeToPrefixes.computeIfAbsent(memberCount, k -> ConcurrentHashMap.newKeySet()).add(prefix);
+                } else {
+                    unTrackGuildIfTracked(prefix, memberCount);
+                    return;
+                }
+
+                if (size > 300) {
+                    int count = size - 300;
+                    removeSmallest(count, memberCount);
+                }
             }
-
-            Map.Entry<Integer, Set<String>> smallestPrefixes = getSmallest();
-            if (members.total > smallestPrefixes.getKey()) {
-                trackGuildIfNot(prefix);
-                sizeToPrefixes.computeIfAbsent(members.total, k -> ConcurrentHashMap.newKeySet()).add(prefix);
-            } else {
-                unTrackGuildIfTracked(prefix);
-                return;
-            }
-
-            if (size > 300) {
-                int count = size - 300;
-                removeSmallest(count);
-            }
-
         } else {
             tempHighPrioQueue.add(prefix);
         }
     }
 
-    private static void removeSmallest(int count) {
+    private static void removeSmallest(int count, int memberCount) {
         if (count <= 0) return;
         Map.Entry<Integer, Set<String>> smallest = getSmallest();
         int size = smallest.getValue().size();
         if (size <= count) {
             Set<String> prefixes = new HashSet<>(smallest.getValue());
             for (String prefix : prefixes) {
-                unTrackGuildIfTracked(prefix);
+                unTrackGuildIfTracked(prefix, memberCount);
             }
             sizeToPrefixes.remove(smallest.getKey());
-            removeSmallest(count - size);
+            removeSmallest(count - size, memberCount);
         } else { // need to remove less than are in the set
             int removedCounter = 0;
             Iterator<String> iterator = smallest.getValue().iterator();
             while (iterator.hasNext() && removedCounter < count) {
                 String prefix = iterator.next();
-                unTrackGuildIfTracked(prefix);
+                unTrackGuildIfTracked(prefix, memberCount);
                 iterator.remove();
                 removedCounter++;
             }
@@ -359,22 +363,24 @@ public class MassGuild {
         } else return entry;
     }
 
-    private static void trackGuildIfNot(String prefix) {
+    private static void trackGuildIfNot(String prefix, int memberCount) {
         if (!AllGuilds.isTracked(prefix)) {
             if (!queue.contains(prefix) && !lowToHighMoveQueue.contains(prefix)) {
+                int size = sizeToPrefixes.values().stream().mapToInt(Set::size).sum();
                 lowToHighMoveQueue.add(prefix);
-                AllGuilds.addTracked(prefix, false);
-                System.out.println("tracking guild " + prefix);
+                AllGuilds.addTracked(prefix, false, memberCount);
+                System.out.println("tracking guild " + prefix + " there are now " + size);
             }
         }
     }
 
-    private static void unTrackGuildIfTracked(String prefix) {
+    private static void unTrackGuildIfTracked(String prefix, int memberCount) {
         if (AllGuilds.isTracked(prefix)) {
+            int size = sizeToPrefixes.values().stream().mapToInt(Set::size).sum();
             if (!lowPriorityQueue.contains(prefix) && !highToLowMoveQueue.contains(prefix)) {
                 highToLowMoveQueue.add(prefix);
-                AllGuilds.addTracked(prefix, true);
-                System.out.println("un-tracking guild " + prefix);
+                AllGuilds.addTracked(prefix, true, memberCount);
+                System.out.println("un-tracking guild " + prefix + " there are now " + size);
             }
         }
     }

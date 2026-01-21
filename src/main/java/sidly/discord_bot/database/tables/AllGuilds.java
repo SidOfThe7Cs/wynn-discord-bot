@@ -184,12 +184,13 @@ public class AllGuilds {
         return tracked;
     }
 
-    public static void addTracked(String prefix, boolean lowPrio) {
-        String sql = "INSERT OR REPLACE INTO guilds_40_plus (prefix, low_priority) VALUES (?, ?)";
+    public static void addTracked(String prefix, boolean lowPrio, Integer memberCount) {
+        String sql = "INSERT OR REPLACE INTO guilds_40_plus (prefix, low_priority, member_count) VALUES (?, ?, ?)";
 
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setString(1, prefix);
             stmt.setInt(2, lowPrio ? 1 : 0);
+            stmt.setInt(3, memberCount);
             stmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();

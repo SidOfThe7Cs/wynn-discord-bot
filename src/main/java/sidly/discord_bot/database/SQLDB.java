@@ -87,6 +87,7 @@ public class SQLDB {
                 "prefix", "TEXT PRIMARY KEY"
         ));
         addColumn("guilds_40_plus", "low_priority", "INTEGER");
+        addColumn("guilds_40_plus", "member_count", "INTEGER");
         executeQuery("CREATE INDEX IF NOT EXISTS idx_tracked_priority ON guilds_40_plus(low_priority)");
         executeQuery("CREATE INDEX IF NOT EXISTS idx_guilds_40_plus_prefix_priority ON guilds_40_plus(prefix, low_priority)");
 
