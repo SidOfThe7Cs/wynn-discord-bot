@@ -169,7 +169,7 @@ public class AllGuilds {
 
     public static Map<String, Integer> getTracked(boolean lowPrio) {
         Map<String, Integer> tracked = new HashMap<>();
-        String sql = "SELECT prefix FROM guilds_40_plus WHERE low_priority = ?";
+        String sql = "SELECT prefix, member_count FROM guilds_40_plus WHERE low_priority = ?";
 
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setInt(1, lowPrio ? 1 : 0);

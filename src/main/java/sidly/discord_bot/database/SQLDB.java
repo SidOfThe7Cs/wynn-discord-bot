@@ -137,6 +137,7 @@ public class SQLDB {
         if (columnExists(table, column)) {
             return;
         }
+        System.out.println("Adding column " + column + " to " + table);
         String sql = "ALTER TABLE " + table + " ADD COLUMN " + column + " " + type;
         executeQuery(sql);
     }

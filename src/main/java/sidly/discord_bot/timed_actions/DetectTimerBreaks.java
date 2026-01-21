@@ -30,25 +30,25 @@ public class DetectTimerBreaks {
 
                     Long now = System.currentTimeMillis();
 
-                    if (now - allGuildTrackerLastRun > 5000) {
+                    if (MassGuild.getTimerStatus() && now - allGuildTrackerLastRun > 60000) {
                         sb.append("guildTracker has not run since ");
                         sb.append(Utils.getDiscordTimestamp(allGuildTrackerLastRun, true));
                         sb.append("\n");
                     }
 
-                    if (now - yourGuildTrackerLastRun > 300000) {
+                    if (GuildRankUpdater.getStatus() && now - yourGuildTrackerLastRun > 300000) {
                         sb.append("yourGuildRankUpdater has not run since ");
                         sb.append(Utils.getDiscordTimestamp(yourGuildTrackerLastRun, true));
                         sb.append("\n");
                     }
 
-                    if (now - playerUpdaterLastRun > 10000) {
+                    if (UpdatePlayers.isRunning() && now - playerUpdaterLastRun > 10000) {
                         sb.append("playerUpdater has not run since ");
                         sb.append(Utils.getDiscordTimestamp(playerUpdaterLastRun, true));
                         sb.append("\n");
                     }
 
-                    if (now - yourGuildMemberUpdaterLastRun > TimeUnit.MINUTES.toMillis(150)) {
+                    if (GuildMemberUpdater.getStatus() && now - yourGuildMemberUpdaterLastRun > TimeUnit.MINUTES.toMillis(150)) {
                         sb.append("yourGuildMemberUpdater has not run since ");
                         sb.append(Utils.getDiscordTimestamp(yourGuildMemberUpdaterLastRun, true));
                         sb.append("\n");
