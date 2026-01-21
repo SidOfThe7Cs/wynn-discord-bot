@@ -383,11 +383,11 @@ public class MassGuild {
 
     private static void trackGuildIfNot(String prefix, int memberCount) {
         if (!AllGuilds.isTracked(prefix)) {
+            int size = sizeToPrefixes.values().stream().mapToInt(Set::size).sum();
+            AllGuilds.addTracked(prefix, false, memberCount);
+            System.out.println("tracking guild " + prefix + " there are now " + size);
             if (!queue.contains(prefix) && !lowToHighMoveQueue.contains(prefix)) {
-                int size = sizeToPrefixes.values().stream().mapToInt(Set::size).sum();
                 lowToHighMoveQueue.add(prefix);
-                AllGuilds.addTracked(prefix, false, memberCount);
-                System.out.println("tracking guild " + prefix + " there are now " + size);
             }
         }
     }
@@ -395,10 +395,10 @@ public class MassGuild {
     private static void unTrackGuildIfTracked(String prefix, int memberCount) {
         if (AllGuilds.isTracked(prefix)) {
             int size = sizeToPrefixes.values().stream().mapToInt(Set::size).sum();
+            AllGuilds.addTracked(prefix, true, memberCount);
+            System.out.println("un-tracking guild " + prefix + " there are now " + size);
             if (!lowPriorityQueue.contains(prefix) && !highToLowMoveQueue.contains(prefix)) {
                 highToLowMoveQueue.add(prefix);
-                AllGuilds.addTracked(prefix, true, memberCount);
-                System.out.println("un-tracking guild " + prefix + " there are now " + size);
             }
         }
     }

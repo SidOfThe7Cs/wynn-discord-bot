@@ -238,7 +238,8 @@ public class VerificationCommands {
     public static String updatePlayer(Member member) {
         String fullEffectiveName = member.getEffectiveName();
         String nickname = fullEffectiveName.split("\\[")[0].trim();
-        String uuid = UuidMap.getMinecraftIdByUsername(nickname.toLowerCase()) == null ? nickname : UuidMap.getMinecraftIdByUsername(nickname.toLowerCase());
+        String uuid = UuidMap.getMinecraftIdByUsername(nickname.toLowerCase()) == null ? nickname : UuidMap.getMinecraftIdByUsername(nickname.toLowerCase());String verifiedRoleId = ConfigManager.getConfigInstance().roles.get(Config.Roles.VerifiedRole);
+        if (!RoleUtils.hasRole(member, verifiedRoleId)) return member.getAsMention() + " :x: is not verified";
         PlayerProfile playerData = ApiUtils.getPlayerData(uuid);
         return updatePlayer(member, playerData);
     }
