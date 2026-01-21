@@ -20,6 +20,7 @@ public class DetectTimerBreaks {
             @Override
             public void run() {
                 try {
+                    lastRunTime = System.currentTimeMillis();
                     StringBuilder sb = new StringBuilder();
 
                     Long allGuildTrackerLastRun = MassGuild.getTimerLastRun();

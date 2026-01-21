@@ -70,12 +70,20 @@ public class MassGuild {
 
         multiselectorApiToken = (ConfigManager.getConfigInstance().other.get(Config.Settings.ApiToken8));
 
-        List<String> tracked = AllGuilds.getTracked(false);
-        queue.addAll(tracked);
-        //todo add all member counts once there stored
-        System.out.println("tracked guilds: " + queue.size());
+        Map<String, Integer> tracked = AllGuilds.getTracked(false);
+        queue.addAll(tracked.keySet());
+        for (Map.Entry<String, Integer> entry : tracked.entrySet()) {
+            String prefix = entry.getKey();
+            Integer memberCount = entry.getValue();
+            if (memberCount != null) {
+                sizeToPrefixes.computeIfAbsent(memberCount,
+                        k -> ConcurrentHashMap.newKeySet()).add(prefix);
+            }
+        }
+        System.out.println("tracked guilds: " + queue.size() + " should be same: " +
+                sizeToPrefixes.values().stream().mapToInt(Set::size).sum());
 
-        lowPriorityQueue.addAll(AllGuilds.getTracked(true));
+        lowPriorityQueue.addAll(AllGuilds.getTracked(true).keySet());
         cleanQueue(ApiUtils.getAllGuildsList());
 
         next();

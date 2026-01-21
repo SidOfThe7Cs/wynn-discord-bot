@@ -167,15 +167,15 @@ public class AllGuilds {
         return false;
     }
 
-    public static List<String> getTracked(boolean lowPrio) {
-        List<String> tracked = new ArrayList<>();
+    public static Map<String, Integer> getTracked(boolean lowPrio) {
+        Map<String, Integer> tracked = new HashMap<>();
         String sql = "SELECT prefix FROM guilds_40_plus WHERE low_priority = ?";
 
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setInt(1, lowPrio ? 1 : 0);
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
-                tracked.add(rs.getString("prefix"));
+                tracked.put(rs.getString("prefix"), rs.getInt("member_count"));
             }
         } catch (SQLException e) {
             e.printStackTrace();

@@ -41,7 +41,7 @@ public class DynamicTimer {
             lastSize = targetSet.size();
             delay = calculateDelay(lastSize);
             if (delay == minMillis) {
-                System.out.println("dynamic timer running at max speed this might cause issues if spammed");
+                System.out.println("dynamic timer running at max speed this might cause issues if spammed (assign more tokens)");
             }
         } else {
             delay = lastDelay; // reuse previous delay
