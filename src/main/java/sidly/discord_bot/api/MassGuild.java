@@ -44,6 +44,10 @@ public class MassGuild {
     private static int attempsCounter = 0;
     private static long startTime;
 
+    public static String getOverfullQueues() {
+        return tempHighPrioQueue.size() > 200 ? "to many guilds are failing and its infinitely cycling the same errors" : "";
+    }
+
     private static final Object LOCK = new Object();
 
     private static ConcurrentSkipListMap<Integer, Set<String>> sizeToPrefixes =
@@ -192,6 +196,7 @@ public class MassGuild {
         for (int i = 0; i < apiTokens.size(); i++) {
             if (!tempHighPrioQueue.isEmpty()) {
                 updateFromApi(tempHighPrioQueue.removeFirst(), i);
+                continue;
             }
             if (mainIndex >= queue.size()) {
 
