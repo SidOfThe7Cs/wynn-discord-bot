@@ -8,7 +8,6 @@ import sidly.discord_bot.database.PlayerDataShortened;
 import sidly.discord_bot.database.records.GuildName;
 import sidly.discord_bot.database.tables.*;
 import sidly.discord_bot.timed_actions.DynamicTimer;
-import sidly.discord_bot.timed_actions.GuildRankUpdater;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -69,8 +68,11 @@ public class MassGuild {
 
         multiselectorApiToken = (ConfigManager.getConfigInstance().other.get(Config.Settings.ApiToken8));
 
-        queue.addAll(AllGuilds.getTracked(false));
+        List<String> tracked = AllGuilds.getTracked(false);
+        queue.addAll(tracked);
+
         System.out.println("tracked guilds: " + queue.size());
+
         lowPriorityQueue.addAll(AllGuilds.getTracked(true));
         cleanQueue(ApiUtils.getAllGuildsList());
 
@@ -298,49 +300,83 @@ public class MassGuild {
         GuildInfo.Members members = apiData.members;
         if (members != null) {
             onlineCaptainPlusCount = members.getOnlineCaptainsPlusCount();
+            GuildActivity.add(apiData.uuid, apiData.prefix, apiData.name, apiData.online, onlineCaptainPlusCount);
 
-            sizeToPrefixes.computeIfAbsent(members.total, k -> ConcurrentHashMap.newKeySet()).add(prefix);
-
-            if (sizeToPrefixes.values().stream().mapToInt(Set::size).sum() > 300) {
-                Map.Entry<Integer, Set<String>> smallestPrefixes = sizeToPrefixes.lastEntry();
-                if (!smallestPrefixes.getValue().contains(prefix)) {
-                    // Untrack small guilds
-                    for (String prefixToUntrack : smallestPrefixes.getValue()) {
-                        if (AllGuilds.isTracked(prefixToUntrack)) {
-                            if (!lowPriorityQueue.contains(prefixToUntrack) && !highToLowMoveQueue.contains(prefixToUntrack)) {
-                                highToLowMoveQueue.add(prefixToUntrack);
-                                AllGuilds.addTracked(prefixToUntrack, true);
-                                System.out.println("un-tracking guild " + prefixToUntrack);
-                            }
-                        }
-                    }
-
-                    //track current guild
-                    if (!AllGuilds.isTracked(prefix)) {
-                        if (!queue.contains(prefix) && !lowToHighMoveQueue.contains(prefix)) {
-                            lowToHighMoveQueue.add(prefix);
-                            AllGuilds.addTracked(prefix, false);
-                            System.out.println("tracking guild " + prefix);
-                        }
-                    }
-
-                } else {
-                    if (AllGuilds.isTracked(prefix)) {
-                        if (!lowPriorityQueue.contains(prefix) && !highToLowMoveQueue.contains(prefix)) {
-                            highToLowMoveQueue.add(prefix);
-                            AllGuilds.addTracked(prefix, true);
-                            System.out.println("un-tracking guild " + prefix);
-                        }
-                    }
-                }
-                sizeToPrefixes.remove(smallestPrefixes.getKey());
+            int size = sizeToPrefixes.values().stream().mapToInt(Set::size).sum();
+            if (size < 300) {
+                trackGuildIfNot(prefix);
+                sizeToPrefixes.computeIfAbsent(members.total, k -> ConcurrentHashMap.newKeySet()).add(prefix);
+                return;
             }
+
+            Map.Entry<Integer, Set<String>> smallestPrefixes = getSmallest();
+            if (members.total > smallestPrefixes.getKey()) {
+                trackGuildIfNot(prefix);
+                sizeToPrefixes.computeIfAbsent(members.total, k -> ConcurrentHashMap.newKeySet()).add(prefix);
+            } else {
+                unTrackGuildIfTracked(prefix);
+                return;
+            }
+
+            if (size > 300) {
+                int count = size - 300;
+                removeSmallest(count);
+            }
+
         } else {
             tempHighPrioQueue.add(prefix);
-            return;
         }
+    }
 
-        GuildActivity.add(apiData.uuid, apiData.prefix, apiData.name, apiData.online, onlineCaptainPlusCount);
+    private static void removeSmallest(int count) {
+        if (count <= 0) return;
+        Map.Entry<Integer, Set<String>> smallest = getSmallest();
+        int size = smallest.getValue().size();
+        if (size <= count) {
+            Set<String> prefixes = new HashSet<>(smallest.getValue());
+            for (String prefix : prefixes) {
+                unTrackGuildIfTracked(prefix);
+            }
+            sizeToPrefixes.remove(smallest.getKey());
+            removeSmallest(count - size);
+        } else { // need to remove less than are in the set
+            int removedCounter = 0;
+            Iterator<String> iterator = smallest.getValue().iterator();
+            while (iterator.hasNext() && removedCounter < count) {
+                String prefix = iterator.next();
+                unTrackGuildIfTracked(prefix);
+                iterator.remove();
+                removedCounter++;
+            }
+        }
+    }
+
+    private static Map.Entry<Integer, Set<String>> getSmallest() {
+        Map.Entry<Integer, Set<String>> entry = sizeToPrefixes.lastEntry();
+        if (entry.getValue().isEmpty()) {
+            sizeToPrefixes.remove(entry.getKey()); // dont need an empty set
+            return getSmallest();
+        } else return entry;
+    }
+
+    private static void trackGuildIfNot(String prefix) {
+        if (!AllGuilds.isTracked(prefix)) {
+            if (!queue.contains(prefix) && !lowToHighMoveQueue.contains(prefix)) {
+                lowToHighMoveQueue.add(prefix);
+                AllGuilds.addTracked(prefix, false);
+                System.out.println("tracking guild " + prefix);
+            }
+        }
+    }
+
+    private static void unTrackGuildIfTracked(String prefix) {
+        if (AllGuilds.isTracked(prefix)) {
+            if (!lowPriorityQueue.contains(prefix) && !highToLowMoveQueue.contains(prefix)) {
+                highToLowMoveQueue.add(prefix);
+                AllGuilds.addTracked(prefix, true);
+                System.out.println("un-tracking guild " + prefix);
+            }
+        }
     }
 
     private static void handleMultiselecters(HttpResponse<String> response) {
