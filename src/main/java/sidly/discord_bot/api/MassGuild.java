@@ -328,6 +328,20 @@ public class MassGuild {
 
                 int size = sizeToPrefixes.values().stream().mapToInt(Set::size).sum();
                 int memberCount = members.total;
+
+                // check for duplicates
+                Integer existingSize = findExistingSize(prefix);
+                if (existingSize != null) {
+                    if (existingSize == memberCount) {
+                        trackGuildIfNot(prefix, memberCount);
+                        return; // Already tracked with same size
+                    } else {
+                        trackGuildIfNot(prefix, memberCount);
+                        moveSize(prefix, existingSize, memberCount);
+                        return;
+                    }
+                }
+
                 if (size < 300) {
                     trackGuildIfNot(prefix, memberCount);
                     sizeToPrefixes.computeIfAbsent(memberCount, k -> ConcurrentHashMap.newKeySet()).add(prefix);
@@ -351,6 +365,30 @@ public class MassGuild {
         } else {
             tempHighPrioQueue.add(prefix);
         }
+    }
+
+    private static Integer findExistingSize(String prefix) {
+        for (Map.Entry<Integer, Set<String>> entry : sizeToPrefixes.entrySet()) {
+            if (entry.getValue().contains(prefix)) {
+                return entry.getKey();
+            }
+        }
+        return null;
+    }
+
+    private static void moveSize(String prefix, Integer existingSize, Integer newSize) {
+        if (existingSize != null && newSize != null) {
+            Set<String> bucket = sizeToPrefixes.get(existingSize);
+            if (bucket != null) {
+                bucket.remove(prefix);
+                sizeToPrefixes.computeIfAbsent(newSize, k -> ConcurrentHashMap.newKeySet()).add(prefix);
+                if (bucket.isEmpty()) {
+                    sizeToPrefixes.remove(existingSize);
+                }
+                return;
+            }
+        }
+        System.out.println("failed to move " + prefix + " from " + existingSize + " to " + newSize);
     }
 
     private static void removeSmallest(int count, int memberCount) {
@@ -561,7 +599,6 @@ public class MassGuild {
         return results;
     }
 
-
     public static void updateAllGuildMembers() {
         GuildInfo guildInfo = ApiUtils.getGuildInfo(ConfigManager.getConfigInstance().other.get(Config.Settings.YourGuildPrefix));
         Set<String> memberUuids = guildInfo.members.getAllMembers().keySet();
@@ -595,13 +632,8 @@ public class MassGuild {
                 .filter(entry -> !tracked.containsKey(entry.getKey()))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-        System.out.println("\ntrackedNotInMem: \n" + trackedNotInMem);
-        System.out.println("\ninMemNotTracked: \n" + inMemNotTracked);
-
-        int seq = AllGuilds.getGuildMemberCount("SEQ");
-        System.out.println("\nseq memberCount: " + seq);
-        System.out.println("\nseq tracked: " + tracked.containsKey("SEQ"));
-        System.out.println("\nseq tracked in mem: " + allInMem.containsKey("SEQ"));
+        System.out.println("\ntrackedNotInMem " + trackedNotInMem.size() + "\n" + trackedNotInMem);
+        System.out.println("\ninMemNotTracked " + inMemNotTracked.size() + "\\n" + inMemNotTracked);
 
     }
 }
