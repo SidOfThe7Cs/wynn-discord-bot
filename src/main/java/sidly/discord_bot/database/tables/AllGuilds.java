@@ -123,6 +123,21 @@ public class AllGuilds {
         return null; // not found
     }
 
+    public static int getGuildMemberCount(String prefix) {
+        String sql = "SELECT member_count FROM guilds_40_plus WHERE prefix = ?";
+
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setString(1, prefix);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("member_count");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return -1; // not found
+    }
+
     public static Set<GuildName> getAllByPrefixes(Set<String> prefixes) {
         Set<GuildName> guilds = new HashSet<>();
         if (prefixes.isEmpty()) return guilds; // nothing to do

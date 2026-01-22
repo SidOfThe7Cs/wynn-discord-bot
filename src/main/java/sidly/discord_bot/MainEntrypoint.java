@@ -389,6 +389,9 @@ public class MainEntrypoint extends ListenerAdapter {
         commands.addCommands(AllSlashCommands.getserverlist.getBaseCommandData());
         AllSlashCommands.getserverlist.setAction(HelpCommands::getServerList);
 
+        commands.addCommands(AllSlashCommands.debug.getBaseCommandData());
+        AllSlashCommands.debug.setAction(MassGuild::debug);
+
 
         // Send the new set of commands to discord, this will override any existing global commands with the new set provided here
         commands.queue();

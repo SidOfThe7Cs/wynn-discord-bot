@@ -2,8 +2,10 @@ package sidly.discord_bot.api;
 
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
+import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import sidly.discord_bot.Config;
 import sidly.discord_bot.ConfigManager;
+import sidly.discord_bot.commands.GuildCommands;
 import sidly.discord_bot.commands.VerificationCommands;
 import sidly.discord_bot.database.PlayerDataShortened;
 import sidly.discord_bot.database.records.GuildName;
@@ -19,6 +21,7 @@ import java.net.http.HttpResponse;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 public class MassGuild {
     private static final List<String> apiTokens = new ArrayList<>();
@@ -569,5 +572,36 @@ public class MassGuild {
         GuildInfo guildInfo = ApiUtils.getGuildInfo(prefix);
         Set<String> memberUuids = guildInfo.members.getAllMembers().keySet();
         return getPlayerData(memberUuids, guildInfo.uuid);
+    }
+
+    public static void debug(SlashCommandInteractionEvent event) {
+        event.reply("check console").queue();
+        Map<String, Integer> allInMem = sizeToPrefixes.entrySet().stream()
+                .flatMap(entry ->
+                        entry.getValue().stream()
+                                .map(prefix -> Map.entry(prefix, entry.getKey()))
+                )
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue
+                ));
+        Map<String, Integer> tracked = AllGuilds.getTracked(false);
+
+        Map<String, Integer> trackedNotInMem = tracked.entrySet().stream()
+                .filter(entry -> !allInMem.containsKey(entry.getKey()))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+        Map<String, Integer> inMemNotTracked = allInMem.entrySet().stream()
+                .filter(entry -> !tracked.containsKey(entry.getKey()))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+        System.out.println("\ntrackedNotInMem: \n" + trackedNotInMem);
+        System.out.println("\ninMemNotTracked: \n" + inMemNotTracked);
+
+        int seq = AllGuilds.getGuildMemberCount("SEQ");
+        System.out.println("\nseq memberCount: " + seq);
+        System.out.println("\nseq tracked: " + tracked.containsKey("SEQ"));
+        System.out.println("\nseq tracked in mem: " + allInMem.containsKey("SEQ"));
+
     }
 }

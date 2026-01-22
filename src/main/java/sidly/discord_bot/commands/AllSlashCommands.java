@@ -61,7 +61,8 @@ public enum AllSlashCommands {
     setpromotionoptionalrequirement("set the required number of optional requirements that need to be met"),
     removepromotionrequirement("remove a requirement from the promotion check"),
     warreport("get player war counts per week"),
-    getserverlist("shows the list of server the bot is a member of");
+    getserverlist("shows the list of server the bot is a member of"),
+    debug("dev command that does whatever i happen to need it to");
 
     public Consumer<SlashCommandInteractionEvent> getAction() {
         return action;
