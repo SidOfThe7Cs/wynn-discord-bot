@@ -633,7 +633,7 @@ public class MassGuild {
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
         System.out.println("\ntrackedNotInMem " + trackedNotInMem.size() + "\n" + trackedNotInMem);
-        System.out.println("\ninMemNotTracked " + inMemNotTracked.size() + "\\n" + inMemNotTracked);
+        System.out.println("\ninMemNotTracked " + inMemNotTracked.size() + "\n" + inMemNotTracked);
 
     }
 }

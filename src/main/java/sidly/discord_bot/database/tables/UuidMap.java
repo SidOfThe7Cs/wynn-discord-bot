@@ -126,4 +126,14 @@ public class UuidMap {
             e.printStackTrace();
         }
     }
+
+    public static void removeById(String discordId) {
+        String sql = "DELETE FROM uuidMap WHERE discord_id = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setString(1, discordId);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 }

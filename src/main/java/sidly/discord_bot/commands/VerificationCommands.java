@@ -432,7 +432,9 @@ public class VerificationCommands {
     }
 
     public static void removeVerification(SlashCommandInteractionEvent event) {
-        event.reply("did nothing lmao (removed command you can just overwrite verifications with /verify)").setEphemeral(true).queue();
+        String id = event.getOption("user_id").getAsString();
+        UuidMap.removeById(id);
+        event.reply("hopefully did something").setEphemeral(true).queue();
     }
 
     public static void updateRoles(SlashCommandInteractionEvent event) {
