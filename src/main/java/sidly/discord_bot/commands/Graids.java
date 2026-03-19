@@ -113,7 +113,7 @@ public class Graids {
         EmbedBuilder embed = new EmbedBuilder();
         embed.setColor(Color.CYAN);
         String currentTime = Utils.getDiscordTimestamp(System.currentTimeMillis(), true);
-        embed.setTitle("Graid Tracker started " + Utils.getDiscordTimestamp(lastStartTime, true) + " last updated " + currentTime);
+        embed.setTitle("**Graid Tracker** started " + Utils.getDiscordTimestamp(lastStartTime, true) + "\nlast updated " + currentTime);
 
         List<Map.Entry<String, Integer>> sortedEntries = increaseCounts.entrySet().stream()
                 .filter(entry -> entry.getValue() > 0)
@@ -124,7 +124,7 @@ public class Graids {
         StringBuilder countsBuilder = new StringBuilder();
 
         for (Map.Entry<String, Integer> entry : sortedEntries) {
-            String playerLine = entry.getKey() + "\n";
+            String playerLine = Utils.escapeDiscordMarkdown(entry.getKey()) + "\n";
             String countLine = entry.getValue() + "\n";
 
             // Check if adding this line would exceed the limit
