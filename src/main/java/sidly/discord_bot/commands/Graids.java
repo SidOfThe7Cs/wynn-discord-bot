@@ -116,16 +116,32 @@ public class Graids {
         embed.setTitle("Graid Tracker started " + Utils.getDiscordTimestamp(lastStartTime, true) + " last updated " + currentTime);
 
         List<Map.Entry<String, Integer>> sortedEntries = increaseCounts.entrySet().stream()
+                .filter(entry -> entry.getValue() > 0)
                 .sorted(Map.Entry.comparingByValue())
                 .toList();
 
-        String players = sortedEntries.stream()
-                .map(Map.Entry::getKey)
-                .collect(Collectors.joining("\n"));
+        StringBuilder playersBuilder = new StringBuilder();
+        StringBuilder countsBuilder = new StringBuilder();
 
-        String graidComps = sortedEntries.stream()
-                .map(entry -> String.valueOf(entry.getValue()))
-                .collect(Collectors.joining("\n"));
+        for (Map.Entry<String, Integer> entry : sortedEntries) {
+            String playerLine = entry.getKey() + "\n";
+            String countLine = entry.getValue() + "\n";
+
+            // Check if adding this line would exceed the limit
+            if (playersBuilder.length() + playerLine.length() <= 1024 &&
+                    countsBuilder.length() + countLine.length() <= 1024) {
+                playersBuilder.append(playerLine);
+                countsBuilder.append(countLine);
+            } else {
+                // Add a truncation message
+                playersBuilder.append("...");
+                countsBuilder.append("...");
+                break;
+            }
+        }
+
+        String players = !playersBuilder.isEmpty() ? playersBuilder.toString() : "None";
+        String graidComps = !countsBuilder.isEmpty() ? countsBuilder.toString() : "None";
 
         embed.addField("Players", players, true);
         embed.addField(trackedRaid.name() + " Comps", graidComps, true);
