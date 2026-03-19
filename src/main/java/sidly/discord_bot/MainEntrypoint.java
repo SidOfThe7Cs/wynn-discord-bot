@@ -386,6 +386,12 @@ public class MainEntrypoint extends ListenerAdapter {
         );
         AllSlashCommands.removepromotionrequirement.setAction(PromotionCommands::removeRequirement);
 
+        commands.addCommands(AllSlashCommands.startgraidtracker.getBaseCommandData().addOptions(
+            new OptionData(CHANNEL, "channel", "channel", true),
+                new OptionData(STRING, "raid", "what raid to track", true).setAutoComplete(true)
+        ));
+        AllSlashCommands.startgraidtracker.setAction(Graids::startGraidTracker);
+
         commands.addCommands(AllSlashCommands.getserverlist.getBaseCommandData());
         AllSlashCommands.getserverlist.setAction(HelpCommands::getServerList);
 
@@ -509,6 +515,21 @@ public class MainEntrypoint extends ListenerAdapter {
                     .filter(name -> name.toLowerCase().startsWith(userInput.toLowerCase()))
                     .limit(10)
                     .map(name -> new Command.Choice(name, name))
+                    .collect(Collectors.toList());
+
+            event.replyChoices(choices).queue();
+        }
+
+        if (event.getFocusedOption().getName().equals("raid")) {
+            String userInput = event.getFocusedOption().getValue();
+
+            List<Command.Choice> choices = Arrays.stream(Graids.Raid.values())
+                    .filter(raid ->
+                            raid.name().toLowerCase().startsWith(userInput.toLowerCase()) ||
+                            raid.apiName().toLowerCase().startsWith(userInput.toLowerCase())
+                    )
+                    .limit(20)
+                    .map(raid -> new Command.Choice(raid.name(), raid.name()))
                     .collect(Collectors.toList());
 
             event.replyChoices(choices).queue();

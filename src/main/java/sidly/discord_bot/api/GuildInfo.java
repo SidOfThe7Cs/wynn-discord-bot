@@ -138,6 +138,7 @@ public class GuildInfo {
         public long contributed;
         public int contributionRank;
         public String joined;
+        public GuildRaids guildRaids;
     }
 
     public static class Banner {
@@ -155,5 +156,15 @@ public class GuildInfo {
     public static class SeasonRank {
         public int rating;
         public int finalTerritories;
+    }
+
+    public static class GuildRaids {
+        public int total;
+        public Map<String, Integer> list;
+
+        @Override
+        public String toString() {
+            return list.toString();
+        }
     }
 }

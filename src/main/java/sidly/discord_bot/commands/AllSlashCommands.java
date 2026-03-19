@@ -62,6 +62,7 @@ public enum AllSlashCommands {
     removepromotionrequirement("remove a requirement from the promotion check"),
     warreport("get player war counts per week"),
     getserverlist("shows the list of server the bot is a member of"),
+    startgraidtracker("start a graid tracker"),
     debug("dev command that does whatever i happen to need it to");
 
     public Consumer<SlashCommandInteractionEvent> getAction() {
