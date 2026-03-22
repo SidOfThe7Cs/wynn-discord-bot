@@ -387,8 +387,12 @@ public class MainEntrypoint extends ListenerAdapter {
         AllSlashCommands.removepromotionrequirement.setAction(PromotionCommands::removeRequirement);
 
         commands.addCommands(AllSlashCommands.startgraidtracker.getBaseCommandData().addOptions(
+                new OptionData(STRING, "name", "a unique name for the tracker", true),
             new OptionData(CHANNEL, "channel", "channel", true),
-                new OptionData(STRING, "raid", "what raid to track", true).setAutoComplete(true)
+                new OptionData(STRING, "raid", "what raid to track", true).setAutoComplete(true),
+                new OptionData(BOOLEAN, "stickied", "resend message instead of editing", false),
+                new OptionData(BOOLEAN, "aspects", "add a button for aspects", false),
+        new OptionData(BOOLEAN, "ranks", "adds the placement number before each player name", false)
         ));
         AllSlashCommands.startgraidtracker.setAction(Graids::startGraidTracker);
 
@@ -409,6 +413,7 @@ public class MainEntrypoint extends ListenerAdapter {
         GuildRankUpdater.start();
         MassGuild.init();
         GuildMemberUpdater.start();
+        Graids.startTimer();
 
         DetectTimerBreaks.init();
     }
@@ -439,6 +444,8 @@ public class MainEntrypoint extends ListenerAdapter {
         if (fullId.startsWith("pagination")){
             PageBuilder.handlePagination(event);
             return;
+        } else if (fullId.startsWith("aspects:")) {
+            Graids.buttonClicked(event);
         } else if (fullId.startsWith("verification")) {
             VerificationCommands.verify(event);
         } else if (fullId.startsWith("verC:") || fullId.startsWith("verD:")) {

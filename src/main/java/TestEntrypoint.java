@@ -11,6 +11,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static sidly.discord_bot.database.SQLDB.connection;
 
@@ -21,7 +22,14 @@ public class TestEntrypoint {
         SQLDB.init();
 
         GuildInfo hoc = ApiUtils.getGuildInfo("HOC");
-        System.out.println(hoc.name + " " + hoc.online + " / " + hoc.members.total);
+        if (hoc != null) {
+            Map<String, GuildInfo.MemberInfo> allMembers = hoc.members.getAllMembers();
+            for (Map.Entry<String, GuildInfo.MemberInfo> entry : allMembers.entrySet()) {
+                System.out.println(entry.getValue().username + " -> " + entry.getValue().guildRaids.list.get("Nest of the Grootslangs"));
+            }
+        }
+
+        //System.out.println(hoc.name + " " + hoc.online + " / " + hoc.members.total);
     }
 
     public static void testPriont() {
