@@ -2,6 +2,7 @@ package sidly.discord_bot.commands;
 
 import kotlin.Pair;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -158,26 +159,31 @@ public class Graids {
                 if (channel != null) {
                     channel.retrieveMessageById(messageId).queue(message -> {
                         MessageEmbed newMessage = getEmbed();
-                        if (stickied) {
-                            message.delete().queue();
 
-                            MessageCreateAction messageCreateAction = channel.sendMessageEmbeds(newMessage);
-                            ActionRow buttons = getButtons();
-                            if (buttons != null) {
-                                messageCreateAction.setComponents(buttons);
-                            }
-                            messageCreateAction.queue(
-                                    editedTo -> this.messageId = editedTo.getIdLong()
-                            );
+                        channel.getHistory().retrievePast(1).queue(history -> {
+                            Message latest = history.getFirst();
 
-                        } else {
-                            MessageEditAction messageAction = message.editMessageEmbeds(newMessage);
-                            ActionRow buttons = getButtons();
-                            if (buttons != null) {
-                                messageAction.setComponents(buttons);
+                            if (stickied && message.getIdLong() != latest.getIdLong()) {
+                                message.delete().queue();
+
+                                MessageCreateAction messageCreateAction = channel.sendMessageEmbeds(newMessage);
+                                ActionRow buttons = getButtons();
+                                if (buttons != null) {
+                                    messageCreateAction.setComponents(buttons);
+                                }
+                                messageCreateAction.queue(
+                                        editedTo -> this.messageId = editedTo.getIdLong()
+                                );
+
+                            } else {
+                                MessageEditAction messageAction = message.editMessageEmbeds(newMessage);
+                                ActionRow buttons = getButtons();
+                                if (buttons != null) {
+                                    messageAction.setComponents(buttons);
+                                }
+                                messageAction.queue();
                             }
-                            messageAction.queue();
-                        }
+                        });
                     });
                 }
             }
