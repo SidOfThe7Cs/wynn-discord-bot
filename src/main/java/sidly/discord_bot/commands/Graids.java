@@ -58,6 +58,7 @@ public class Graids {
         }
 
         private Integer getCount(GuildInfo.GuildRaids counts) {
+            if (counts == null || counts.list == null) return null;
             return raid == Raid.ALL ? counts.total : counts.list.get(raid.apiName());
         }
 
