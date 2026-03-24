@@ -74,8 +74,12 @@ public class Graids {
         }
 
         public void aspectsGiven(boolean roundUp) {
-            int threshold = roundUp ? 1 : 2;
-            increaseCounts.replaceAll((k, v) -> v >= threshold ? 0 : v);
+            if (roundUp) {
+                increaseCounts.clear();
+            } else {
+                increaseCounts.replaceAll((username, oldCount) -> oldCount % 2);
+            }
+            updateDisplay();
         }
 
         public void stop() {
