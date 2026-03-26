@@ -1,0 +1,117 @@
+// yoinked from https://github.com/NotEnoughUpdates/NotEnoughUpdates/blob/master/src/main/java/io/github/moulberry/notenoughupdates/core/config/ConfigUtil.java
+
+package sidly.discord_bot.v2.config;
+
+import com.google.gson.Gson;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.util.List;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
+
+import static sidly.discord_bot.v2.botapi.ConfigManager.GSON;
+
+public class ConfigUtil {
+    public static <T> @Nullable T loadConfig(Class<T> configClass, File file) {
+        return loadConfig(configClass, file, GSON, false);
+    }
+
+    public static <T> @Nullable T loadConfig(Class<T> configClass, File file, Gson gson, boolean useGzip) {
+        return loadConfig(configClass, file, gson, useGzip, true);
+    }
+
+    public static <T> @Nullable T loadConfig(
+            Class<T> configClass,
+            File file,
+            Gson gson,
+            boolean useGzip,
+            boolean handleError
+    ) {
+        if (!file.exists()) return null;
+        try (
+                BufferedReader reader = useGzip ?
+                        new BufferedReader(new InputStreamReader(
+                                new GZIPInputStream(Files.newInputStream(file.toPath())),
+                                StandardCharsets.UTF_8
+                        )) :
+                        new BufferedReader(new InputStreamReader(Files.newInputStream(file.toPath()), StandardCharsets.UTF_8))
+        ) {
+            return gson.fromJson(reader, configClass);
+        } catch (Exception e) {
+            if (!handleError) return null;
+            new RuntimeException(
+                    "Invalid config file '" + file + "'. This will reset to default",
+                    e
+            ).printStackTrace();
+            // Try to save a version of the corrupted config for debugging purposes
+            makeBackup(file, ".corrupted");
+        }
+        return null;
+    }
+
+    private static final List<String> unimportantConfigs = List.of();
+
+    public static void saveConfig(Object config, File file) {
+        saveConfig(config, file, GSON, false);
+    }
+
+    public static void saveConfig(Object config, File file, Gson gson) {
+        saveConfig(config, file, gson, false);
+    }
+
+    @SuppressWarnings("ResultOfMethodCallIgnored")
+    public static void saveConfig(Object config, File file, Gson gson, boolean useGzip) {
+        File tempFile = new File(file.getParent(), file.getName() + ".temp");
+        try {
+            tempFile.createNewFile();
+            try (
+                    BufferedWriter writer = useGzip ?
+                            new BufferedWriter(new OutputStreamWriter(
+                                    new GZIPOutputStream(Files.newOutputStream(tempFile.toPath())),
+                                    StandardCharsets.UTF_8
+                            )) :
+                            new BufferedWriter(new OutputStreamWriter(Files.newOutputStream(tempFile.toPath()), StandardCharsets.UTF_8))
+            ) {
+                String saving = gson.toJson(config);
+                writer.write(saving);
+            }
+
+            if (loadConfig(config.getClass(), tempFile, gson, useGzip, false) == null) {
+                if (!unimportantConfigs.contains(tempFile.getName())) makeBackup(tempFile, ".backup");
+                return;
+            }
+
+            try {
+                Files.move(tempFile.toPath(), file.toPath(), StandardCopyOption.ATOMIC_MOVE);
+            } catch (IOException e) {
+                // If atomic move fails it could be because it isn't supported or because the implementation of it
+                // doesn't overwrite the old file, in this case we will try a normal move.
+                Files.move(tempFile.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            }
+        } catch (Exception e) {
+            if (!unimportantConfigs.contains(tempFile.getName())) makeBackup(tempFile, ".backup");
+            e.printStackTrace();
+        }
+    }
+
+    @SuppressWarnings("ResultOfMethodCallIgnored")
+    private static void makeBackup(File file, String suffix) {
+        File backupFile = new File(file.getParent(), file.getName() + "-" + System.currentTimeMillis() + suffix);
+
+        try {
+            Files.move(file.toPath(), backupFile.toPath(), StandardCopyOption.ATOMIC_MOVE);
+        } catch (IOException e) {
+            try {
+                Files.move(file.toPath(), backupFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            } catch (Exception e2) {
+                e2.printStackTrace();
+            }
+        } finally {
+            file.delete();
+        }
+    }
+}
