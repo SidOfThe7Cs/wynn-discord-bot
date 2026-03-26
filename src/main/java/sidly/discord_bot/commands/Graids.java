@@ -222,8 +222,9 @@ public class Graids {
         for (Map.Entry<String, GuildInfo.MemberInfo> entry : allMembersByUsername.entrySet()) {
             String username = entry.getValue().username;
             GuildInfo.GuildRaids guildRaids = entry.getValue().guildRaids;
-            if (guildRaids.total < oldCounts.get(entry.getKey()).total) {
-                System.err.println("found a decrease in total graids comps? " + entry.getKey() + " old: " + oldCounts.get(entry.getKey()).total + " new: " + guildRaids.total);
+            GuildInfo.GuildRaids oldValues = oldCounts.get(username);
+            if (oldValues != null && guildRaids.total < oldValues.total) {
+                System.err.println("found a decrease in total graids comps? " + username + " old: " + oldValues.total + " new: " + guildRaids.total);
             } else {
                 totalCounts.put(username, guildRaids);
                 for (Tracker tracker : trackers.values()) {
