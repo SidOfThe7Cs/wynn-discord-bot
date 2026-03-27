@@ -29,6 +29,7 @@ public class Graids {
     private static final Map<String, Tracker> trackers = new HashMap<>();
     private static final Map<String, GuildInfo.GuildRaids> totalCounts = new HashMap<>();
     private static Timer timer;
+    private static Set<String> broken = new HashSet<>();
 
     public static class Tracker {
         private final ConcurrentHashMap<String, Integer> increaseCounts = new ConcurrentHashMap<>();
@@ -41,14 +42,16 @@ public class Graids {
         private final boolean stickied;
         private final boolean aspects;
         private final boolean positionNumbers;
+        private final boolean total;
 
-        public Tracker(String name, Raid raid, Long channelId, boolean stickied, boolean aspects, boolean positionNumbers) {
+        public Tracker(String name, Raid raid, Long channelId, boolean stickied, boolean aspects, boolean positionNumbers, boolean total) {
             this.trackerName = name;
             this.raid = raid;
             this.channelId = channelId;
             this.stickied = stickied;
             this.aspects = aspects;
             this.positionNumbers = positionNumbers;
+            this.total = total;
             this.startTime = System.currentTimeMillis();
             trackers.put(name, this);
         }
@@ -95,6 +98,12 @@ public class Graids {
         private MessageEmbed getEmbed() {
             EmbedBuilder embed = new EmbedBuilder();
             embed.setColor(Color.CYAN);
+
+            StringBuilder footer = new StringBuilder("id: " + trackerName + "\n");
+            if (!broken.isEmpty()) footer.append("broken in api:\n");
+            broken.forEach(name -> footer.append(name).append("\n"));
+            embed.setFooter(footer.toString());
+
             embed.setFooter("id: " + trackerName);
             String currentTime = Utils.getDiscordTimestamp(System.currentTimeMillis(), true);
             embed.setTitle("**Graid Tracker** started " + Utils.getDiscordTimestamp(startTime, true) + "\nlast updated " + currentTime);
@@ -141,6 +150,8 @@ public class Graids {
                 }
             }
 
+            int total = increaseCounts.values().stream().reduce(Integer::sum).orElse(0);
+            embed.setDescription(String.valueOf(total));
             embed.addField("Players", playersBuilder.toString(), true);
             embed.addField(raid.name() + " Comps", countsBuilder.toString(), true);
             if (aspects) embed.addField( "Aspects", aspectsBuilder.toString(), true);
@@ -210,6 +221,8 @@ public class Graids {
     }
 
     private static void updateAllCounts() {
+        if (trackers.isEmpty()) return;
+
         GuildInfo guildInfo = ApiUtils.getGuildInfo(ConfigManager.getConfigInstance().other.get(Config.Settings.YourGuildPrefix));
         if (guildInfo == null || guildInfo.members == null) {
             System.err.println("null guildInfo");
@@ -224,8 +237,13 @@ public class Graids {
             GuildInfo.GuildRaids guildRaids = entry.getValue().guildRaids;
             GuildInfo.GuildRaids oldValues = oldCounts.get(username);
             if (oldValues != null && guildRaids.total < oldValues.total) {
-                System.err.println("found a decrease in total graids comps? " + username + " old: " + oldValues.total + " new: " + guildRaids.total);
+                if (broken.add(username)) {
+                    System.err.println("found a decrease in total graids comps? " + username + " old: " + oldValues.total + " new: " + guildRaids.total);
+                }
             } else {
+                if (broken.remove(username)) {
+                    System.out.println(username + "'s graid count has returned to normal");
+                }
                 totalCounts.put(username, guildRaids);
                 for (Tracker tracker : trackers.values()) {
                     tracker.updateCount(username, oldCounts.get(username));
@@ -272,9 +290,12 @@ public class Graids {
         boolean positionNumbers = Optional.ofNullable(event.getOption("ranks"))
                 .map(OptionMapping::getAsBoolean)
                 .orElse(false);
+        boolean total = Optional.ofNullable(event.getOption("total"))
+                .map(OptionMapping::getAsBoolean)
+                .orElse(false);
 
 
-        Tracker tracker = new Tracker(name, raid, channel.getIdLong(), stickied, aspects, positionNumbers);
+        Tracker tracker = new Tracker(name, raid, channel.getIdLong(), stickied, aspects, positionNumbers, total);
         MessageCreateAction messageAction = channel.sendMessageEmbeds(tracker.getEmbed());
         ActionRow buttons = tracker.getButtons();
         if (buttons != null) {

@@ -388,11 +388,12 @@ public class MainEntrypoint extends ListenerAdapter {
 
         commands.addCommands(AllSlashCommands.startgraidtracker.getBaseCommandData().addOptions(
                 new OptionData(STRING, "name", "a unique name for the tracker", true),
-            new OptionData(CHANNEL, "channel", "channel", true),
+                new OptionData(CHANNEL, "channel", "channel", true),
                 new OptionData(STRING, "raid", "what raid to track", true).setAutoComplete(true),
                 new OptionData(BOOLEAN, "stickied", "resend message instead of editing", false),
                 new OptionData(BOOLEAN, "aspects", "add a button for aspects", false),
-        new OptionData(BOOLEAN, "ranks", "adds the placement number before each player name", false)
+                new OptionData(BOOLEAN, "ranks", "adds the placement number before each player name", false),
+                new OptionData(BOOLEAN, "total", "adds the total count of graids completed since starting the tracker", false)
         ));
         AllSlashCommands.startgraidtracker.setAction(Graids::startGraidTracker);
 
