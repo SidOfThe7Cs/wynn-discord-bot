@@ -118,14 +118,17 @@ public class Graids {
             StringBuilder countsBuilder = new StringBuilder();
             StringBuilder aspectsBuilder = new StringBuilder();
 
-            Pair<Integer, Integer> lastEntry = new Pair<>(0, 0);
+            int lastRank = -1;
+            int lastScore = 0;
             for (int i = 0; i < sortedEntries.size(); i++) {
                 Map.Entry<String, Integer> entry = sortedEntries.get(i);
                 String playerLine = "";
                 if (this.positionNumbers) {
-                    int completed = entry.getValue();
-                    int rank = completed < lastEntry.component1() ? i : lastEntry.component2();
-                    lastEntry = new Pair<>(completed, i);
+                    int score = entry.getValue();
+                    int rank = (score == lastScore) ? lastRank : i + 1;
+
+                    lastScore = score;
+                    lastRank = rank;
                     playerLine += rank + ". ";
                 }
                 playerLine += Utils.escapeDiscordMarkdown(entry.getKey()) + "\n";
