@@ -153,8 +153,10 @@ public class Graids {
                 }
             }
 
-            int total = increaseCounts.values().stream().reduce(Integer::sum).orElse(0);
-            embed.setDescription(String.valueOf(total));
+            if (this.total) {
+                int total = increaseCounts.values().stream().reduce(Integer::sum).orElse(0);
+                embed.setDescription("Total Completed: " + total);
+            }
             embed.addField("Players", playersBuilder.toString(), true);
             embed.addField(raid.name() + " Comps", countsBuilder.toString(), true);
             if (aspects) embed.addField( "Aspects", aspectsBuilder.toString(), true);
