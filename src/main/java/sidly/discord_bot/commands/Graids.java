@@ -101,11 +101,11 @@ public class Graids {
             EmbedBuilder embed = new EmbedBuilder();
             embed.setColor(Color.CYAN);
 
-            StringBuilder footer = new StringBuilder("-# id: " + trackerName + "\n");
+            StringBuilder footer = new StringBuilder("id: " + trackerName + "\n");
             if (!broken.isEmpty()) footer.append("-# broken in api:\n");
             broken.forEach(name -> footer.append("-# ").append(name).append("\n"));
+            embed.setFooter(footer.toString());
 
-            embed.setFooter("id: " + trackerName);
             String currentTime = Utils.getDiscordTimestamp(System.currentTimeMillis(), true);
             embed.setTitle("**Graid Tracker** started " + Utils.getDiscordTimestamp(startTime, true) + "\nlast updated " + currentTime);
 
@@ -161,7 +161,6 @@ public class Graids {
             embed.addField("Players", playersBuilder.toString(), true);
             embed.addField(raid.name() + " Comps", countsBuilder.toString(), true);
             if (aspects) embed.addField( "Aspects", aspectsBuilder.toString(), true);
-            embed.appendDescription(footer);
 
 
             return embed.build();
