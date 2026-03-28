@@ -66,14 +66,14 @@ public class Graids {
 
         private void updateCount(String username, GuildInfo.GuildRaids oldCounts) {
             GuildInfo.GuildRaids newCounts = totalCounts.get(username);
-            if (oldCounts.total == 0 && newCounts.total > 2) {
-                return; // we started the tracker when api showed 0 and it shouldn't have
-            }
 
             Integer oldTotal = getCount(oldCounts);
             Integer newTotal = getCount(newCounts);
 
             if (oldTotal != null) {
+                if (oldCounts.total == 0 && newCounts.total > 2) {
+                    return; // we started the tracker when api showed 0 and it shouldn't have
+                }
                 increaseCounts.merge(username, newTotal - oldTotal, Integer::sum);
             }
         }
@@ -130,7 +130,7 @@ public class Graids {
 
                     lastScore = score;
                     lastRank = rank;
-                    playerLine += rank + ", ";
+                    playerLine += rank + "\\. ";
                 }
                 playerLine += Utils.escapeDiscordMarkdown(entry.getKey()) + "\n";
                 String countLine = entry.getValue() + "\n";
