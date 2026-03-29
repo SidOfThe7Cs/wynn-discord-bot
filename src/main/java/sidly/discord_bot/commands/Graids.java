@@ -102,8 +102,8 @@ public class Graids {
             embed.setColor(Color.CYAN);
 
             StringBuilder footer = new StringBuilder("id: " + trackerName + "\n");
-            if (!broken.isEmpty()) footer.append("-# broken in api:\n");
-            broken.forEach(name -> footer.append("-# ").append(name).append("\n"));
+            if (!broken.isEmpty()) footer.append("broken in api:\n");
+            broken.forEach(name -> footer.append("   ").append(name).append("\n"));
             embed.setFooter(footer.toString());
 
             String currentTime = Utils.getDiscordTimestamp(System.currentTimeMillis(), true);
@@ -156,7 +156,7 @@ public class Graids {
 
             if (this.total) {
                 int total = increaseCounts.values().stream().reduce(Integer::sum).orElse(0);
-                embed.setDescription("Total Completed: " + total);
+                embed.setDescription("Total Completed: " + total / 4.f);
             }
             embed.addField("Players", playersBuilder.toString(), true);
             embed.addField(raid.name() + " Comps", countsBuilder.toString(), true);
