@@ -201,7 +201,10 @@ public class Config {
         Lvl95Role,
         Lvl100Role,
         Lvl105Role,
-        Lvl106Role
+        Lvl110Role,
+        Lvl115Role,
+        Lvl120Role,
+        Lvl121Role
 
     }
 }

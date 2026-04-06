@@ -156,7 +156,12 @@ public class Graids {
 
             if (this.total) {
                 int total = increaseCounts.values().stream().reduce(Integer::sum).orElse(0);
-                embed.setDescription("Total Completed: " + total / 4.f);
+                embed.setDescription("Total Completed: " + total / 4);
+            }
+            if (this.aspects) {
+                int aspectsDown = increaseCounts.values().stream().mapToInt(v -> (int) Math.floor(v / 2.f)).sum();
+                int aspectsUp = increaseCounts.values().stream().mapToInt(v -> (int) Math.ceil(v / 2.f)).sum();
+                embed.setDescription("Total aspects: " + aspectsDown + " (" + aspectsUp + ")");
             }
             embed.addField("Players", playersBuilder.toString(), true);
             embed.addField(raid.name() + " Comps", countsBuilder.toString(), true);
