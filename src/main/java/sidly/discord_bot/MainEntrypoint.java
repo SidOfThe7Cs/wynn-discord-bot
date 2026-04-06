@@ -132,12 +132,7 @@ public class MainEntrypoint extends ListenerAdapter {
 
         commands.addCommands(AllSlashCommands.editconfiglvlrole.getBaseCommandData()
                 .addOptions(
-                        new OptionData(OptionType.STRING, "role_name", "Choose a role", true)
-                                .addChoices(
-                                        Arrays.stream(Config.LvlRoles.values())
-                                                .map(e -> new Command.Choice(e.name(), e.name()))
-                                                .toArray(Command.Choice[]::new)
-                                ),
+                        new OptionData(OptionType.STRING, "lvl_role", "Choose a role", true).setAutoComplete(true),
                         new OptionData(ROLE, "role", "The id for the role", true)
                 )
         );
@@ -566,6 +561,20 @@ public class MainEntrypoint extends ListenerAdapter {
             event.replyChoices(
                     choices.stream().limit(25).toList()
             ).queue();
+        }
+
+
+        if (event.getFocusedOption().getName().equals("lvl_role")) {
+            String userInput = event.getFocusedOption().getValue();
+
+            List<Command.Choice> choices = Arrays.stream(Config.LvlRoles.values())
+                    .map(Enum::name)
+                    .filter(name -> name.toLowerCase().startsWith(userInput.toLowerCase()))
+                    .limit(10)
+                    .map(name -> new Command.Choice(name, name))
+                    .collect(Collectors.toList());
+
+            event.replyChoices(choices).queue();
         }
 
     }
