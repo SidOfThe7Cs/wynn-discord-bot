@@ -8,6 +8,7 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import sidly.discord_bot.*;
 import sidly.discord_bot.api.ApiUtils;
 import sidly.discord_bot.api.GuildInfo;
+import sidly.discord_bot.api.sub.MemberInfo;
 import sidly.discord_bot.database.PlayerDataShortened;
 import sidly.discord_bot.database.PlaytimeHistoryList;
 import sidly.discord_bot.database.tables.*;
@@ -155,7 +156,7 @@ public class PromotionCommands {
             return username + " cant be promoted error ❌";
         }
 
-        GuildInfo.MemberInfo guildMemberInfo = guildInfo.members.getMemberInfo(uuid);
+        MemberInfo guildMemberInfo = guildInfo.members.getMemberInfo(uuid);
 
         if (guildMemberInfo == null) return "guild member info is null error ❌";
 
@@ -222,7 +223,7 @@ public class PromotionCommands {
         return sb.toString();
     }
 
-    public static String checkRequirement(Requirement req, GuildInfo.MemberInfo guildMemberInfo, PlayerDataShortened playerDataShortened, Member member){
+    public static String checkRequirement(Requirement req, MemberInfo guildMemberInfo, PlayerDataShortened playerDataShortened, Member member){
         StringBuilder sb = new StringBuilder();
         Integer requirementCount = req.getValue();
         if (!req.isRequired()) sb.append("-# ");

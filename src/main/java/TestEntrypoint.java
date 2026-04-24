@@ -1,10 +1,7 @@
-import sidly.discord_bot.Utils;
 import sidly.discord_bot.api.ApiUtils;
 import sidly.discord_bot.api.GuildInfo;
-import sidly.discord_bot.database.PlaytimeHistoryList;
+import sidly.discord_bot.api.sub.MemberInfo;
 import sidly.discord_bot.database.SQLDB;
-import sidly.discord_bot.database.tables.PlaytimeHistory;
-import sidly.discord_bot.database.tables.UuidMap;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -23,9 +20,9 @@ public class TestEntrypoint {
 
         GuildInfo hoc = ApiUtils.getGuildInfo("HOC");
         if (hoc != null) {
-            Map<String, GuildInfo.MemberInfo> allMembers = hoc.members.getAllMembers();
-            for (Map.Entry<String, GuildInfo.MemberInfo> entry : allMembers.entrySet()) {
-                System.out.println(entry.getValue().username + " -> " + entry.getValue().guildRaids.list.get("Nest of the Grootslangs"));
+            Map<String, MemberInfo> allMembers = hoc.members.getAllMembers();
+            for (Map.Entry<String, MemberInfo> entry : allMembers.entrySet()) {
+                System.out.println(entry.getValue().username + " -> " + entry.getValue().globalData.guildRaids.list.get("Nest of the Grootslangs"));
             }
         }
 

@@ -17,6 +17,8 @@ import sidly.discord_bot.MainEntrypoint;
 import sidly.discord_bot.Utils;
 import sidly.discord_bot.api.ApiUtils;
 import sidly.discord_bot.api.GuildInfo;
+import sidly.discord_bot.api.sub.GuildRaids;
+import sidly.discord_bot.api.sub.MemberInfo;
 
 import java.awt.*;
 import java.util.*;
@@ -26,7 +28,7 @@ import java.util.concurrent.TimeUnit;
 
 public class Graids {
     private static final Map<String, Tracker> trackers = new HashMap<>();
-    private static final Map<String, GuildInfo.GuildRaids> totalCounts = new HashMap<>();
+    private static final Map<String, GuildRaids> totalCounts = new HashMap<>();
     private static Timer timer;
     private static final Set<String> broken = new HashSet<>();
 
@@ -59,13 +61,13 @@ public class Graids {
             this.messageId = messageId;
         }
 
-        private Integer getCount(GuildInfo.GuildRaids counts) {
+        private Integer getCount(GuildRaids counts) {
             if (counts == null || counts.list == null) return null;
             return raid == Raid.ALL ? counts.total : counts.list.get(raid.apiName());
         }
 
-        private void updateCount(String username, GuildInfo.GuildRaids oldCounts) {
-            GuildInfo.GuildRaids newCounts = totalCounts.get(username);
+        private void updateCount(String username, GuildRaids oldCounts) {
+            GuildRaids newCounts = totalCounts.get(username);
 
             Integer oldTotal = getCount(oldCounts);
             Integer newTotal = getCount(newCounts);
@@ -240,13 +242,13 @@ public class Graids {
             return;
         }
 
-        Map<String, GuildInfo.GuildRaids> oldCounts = new HashMap<>(totalCounts);
-        Map<String, GuildInfo.MemberInfo> allMembersByUsername = guildInfo.members.getAllMembersByUsername();
+        Map<String, GuildRaids> oldCounts = new HashMap<>(totalCounts);
+        Map<String, MemberInfo> allMembersByUsername = guildInfo.members.getAllMembersByUsername();
 
-        for (Map.Entry<String, GuildInfo.MemberInfo> entry : allMembersByUsername.entrySet()) {
+        for (Map.Entry<String, MemberInfo> entry : allMembersByUsername.entrySet()) {
             String username = entry.getValue().username;
-            GuildInfo.GuildRaids guildRaids = entry.getValue().guildRaids;
-            GuildInfo.GuildRaids oldValues = oldCounts.get(username);
+            GuildRaids guildRaids = entry.getValue().globalData.guildRaids;
+            GuildRaids oldValues = oldCounts.get(username);
             if (oldValues != null && guildRaids.total < oldValues.total) {
                 if (broken.add(username)) {
                     System.err.println("found a decrease in total graids comps? " + username + " old: " + oldValues.total + " new: " + guildRaids.total);

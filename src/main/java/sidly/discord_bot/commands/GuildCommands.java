@@ -10,6 +10,7 @@ import sidly.discord_bot.api.ApiUtils;
 import sidly.discord_bot.api.GuildInfo;
 import sidly.discord_bot.api.MassGuild;
 import sidly.discord_bot.api.PlayerProfile;
+import sidly.discord_bot.api.sub.MemberInfo;
 import sidly.discord_bot.database.PlayerDataShortened;
 import sidly.discord_bot.database.PlaytimeHistoryList;
 import sidly.discord_bot.database.records.GuildAverages;
@@ -39,7 +40,7 @@ public class GuildCommands {
         }
 
         // Collect all members into a list
-        List<GuildInfo.MemberInfo> allMembers = new ArrayList<>(members.total);
+        List<MemberInfo> allMembers = new ArrayList<>(members.total);
 
         if (members.owner != null) allMembers.addAll(members.owner.values());
         if (members.chief != null) allMembers.addAll(members.chief.values());
@@ -52,7 +53,7 @@ public class GuildCommands {
         allMembers.sort(Comparator.comparingInt(a -> a.contributionRank));
 
         StringBuilder leaderboard = new StringBuilder();
-        for (GuildInfo.MemberInfo member : allMembers) {
+        for (MemberInfo member : allMembers) {
             leaderboard
                     .append(member.contributionRank)
                     .append(". ")
@@ -119,14 +120,14 @@ public class GuildCommands {
     }
 
     // Helper function to build a string of online members for a rank string is uuid
-    static String membersList(Map<String, GuildInfo.MemberInfo> map, Set<String> streamers) {
+    static String membersList(Map<String, MemberInfo> map, Set<String> streamers) {
         if (map == null || map.isEmpty()) return "_None_";
 
         return map.entrySet().stream()
                 .filter(entry -> entry.getValue().online || streamers.contains(entry.getKey()))
                 .map(entry -> {
                     String key = entry.getKey();
-                    GuildInfo.MemberInfo member = entry.getValue();
+                    MemberInfo member = entry.getValue();
 
                     // Escape username
                     String username = Utils.escapeDiscordMarkdown(member.username);
@@ -328,7 +329,7 @@ public class GuildCommands {
         }
 
         List<Member> members = guild.getMembers();
-        Map<String, GuildInfo.MemberInfo> allMembers = guildinfo.members.getAllMembers();
+        Map<String, MemberInfo> allMembers = guildinfo.members.getAllMembers();
 
 
         StringBuilder sbfinal = new StringBuilder();
@@ -401,7 +402,7 @@ public class GuildCommands {
                 totalWeeklyPlaytime += playtimeHistory.getAverage(4);
             }
 
-            Map<String, GuildInfo.MemberInfo> allMembers = guildInfo.members.getAllMembers();
+            Map<String, MemberInfo> allMembers = guildInfo.members.getAllMembers();
 
             List<GuildStatEntry> sortedEntries = allMembers.entrySet().stream()
                     .sorted(Comparator.comparingInt(entry -> entry.getValue().contributionRank))
@@ -432,7 +433,7 @@ public class GuildCommands {
         PlayerProfile playerData = MassGuild.getPlayerData(Collections.singleton(statEntry.uuid()), statEntry.uuid).values().iterator().next();
         if (playerData.statusCode == 429) return "ratelimit hit :(";
 
-        GuildInfo.MemberInfo guildMemberData = statEntry.guildMemberData();
+        MemberInfo guildMemberData = statEntry.guildMemberData();
         long joinedDaysAgo = Utils.timeSinceIso(guildMemberData.joined, ChronoUnit.DAYS);
 
         long xpPerDay;
@@ -480,7 +481,7 @@ public class GuildCommands {
     public static String notInDiscord(Guild guild) {
         List<Member> discordMembers = guild.getMembers();
         GuildInfo guildInfo = ApiUtils.getGuildInfo(ConfigManager.getConfigInstance().other.get(Config.Settings.YourGuildPrefix));
-        Map<String, GuildInfo.MemberInfo> wynnMembers = guildInfo.members.getAllMembersByUsername();
+        Map<String, MemberInfo> wynnMembers = guildInfo.members.getAllMembersByUsername();
 
         StringBuilder sb = new StringBuilder();
 
@@ -521,7 +522,7 @@ public class GuildCommands {
                 return;
             }
 
-            Map<String, GuildInfo.MemberInfo> allMembers = guildInfo.members.getAllMembers();
+            Map<String, MemberInfo> allMembers = guildInfo.members.getAllMembers();
 
             List<LastLoginInfo> sortedMembers = new ArrayList<>();
 
@@ -630,7 +631,7 @@ public class GuildCommands {
         return 0;
     }
 
-    public record GuildStatEntry(String uuid, GuildInfo.MemberInfo guildMemberData){}
+    public record GuildStatEntry(String uuid, MemberInfo guildMemberData){}
     public record LastLoginInfo(
             String uuid,
             String username,

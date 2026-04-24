@@ -9,6 +9,7 @@ import sidly.discord_bot.ConfigManager;
 import sidly.discord_bot.Utils;
 import sidly.discord_bot.api.ApiUtils;
 import sidly.discord_bot.api.GuildInfo;
+import sidly.discord_bot.api.sub.MemberInfo;
 import sidly.discord_bot.commands.GuildCommands;
 import sidly.discord_bot.database.PlayerDataShortened;
 import sidly.discord_bot.database.PlaytimeHistoryList;
@@ -45,7 +46,7 @@ public class InactivityCommands {
             List<InactivityEntry> inactiveMembers = new ArrayList<>();
             List<String> membersNotInDiscord = new ArrayList<>();
 
-            Map<String, GuildInfo.MemberInfo> allMembers = guildinfo.members.getAllMembers();
+            Map<String, MemberInfo> allMembers = guildinfo.members.getAllMembers();
             int totalGuildMembers = guildinfo.members.total;
             int currentGuildMembers = allMembers.size();
             double averageOnline = GuildActivity.getAverageOnline(guildinfo.uuid, 28, false);
@@ -55,7 +56,7 @@ public class InactivityCommands {
 
             Map<String, PlaytimeHistoryList> playtimeHistoryForAll = PlaytimeHistory.getPlaytimeHistoryForAll(allMembers.keySet());
 
-            for (Map.Entry<String, GuildInfo.MemberInfo> entry : allMembers.entrySet()) {
+            for (Map.Entry<String, MemberInfo> entry : allMembers.entrySet()) {
                 String username = entry.getValue().username;
 
                 if (notInDiscord.contains(username)) {
