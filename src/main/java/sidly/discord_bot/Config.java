@@ -65,6 +65,7 @@ public class Config {
         roleRequirements.put(AllSlashCommands.stoptimer, Roles.ChiefRole);
         roleRequirements.put(AllSlashCommands.starttimer, Roles.ChiefRole);
         roleRequirements.put(AllSlashCommands.startgraidtracker, Roles.ChiefRole);
+        roleRequirements.put(AllSlashCommands.startwartracker, Roles.ChiefRole);
     }
 
     public enum Roles {

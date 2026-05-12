@@ -21,12 +21,15 @@ import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction;
 import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import sidly.discord_bot.api.MassGuild;
+import sidly.discord_bot.api.sub.RaidStats;
 import sidly.discord_bot.commands.*;
 import sidly.discord_bot.commands.inactivity_promotion.InactivityCommands;
 import sidly.discord_bot.commands.inactivity_promotion.PromotionCommands;
 import sidly.discord_bot.commands.inactivity_promotion.RequirementType;
 import sidly.discord_bot.database.SQLDB;
 import sidly.discord_bot.database.records.GuildAverages;
+import sidly.discord_bot.new_guild_endpoint.Graids;
+import sidly.discord_bot.new_guild_endpoint.WarTracker;
 import sidly.discord_bot.page.PageBuilder;
 import sidly.discord_bot.page.PaginationIds;
 import sidly.discord_bot.timed_actions.DetectTimerBreaks;
@@ -280,7 +283,8 @@ public class MainEntrypoint extends ListenerAdapter {
                                         new Command.Choice("guildTracker", "guildTracker"),
                                         new Command.Choice("yourGuildRankUpdater", "yourGuildRankUpdater"),
                                         new Command.Choice("yourGuildMemberUpdater", "yourGuildMemberUpdater"),
-                                        new Command.Choice("graidTracker", "graidTracker")
+                                        new Command.Choice("graidTracker", "graidTracker"),
+                                        new Command.Choice("warTracker", "graidTracker")
                                 )
                 )
         );
@@ -393,6 +397,20 @@ public class MainEntrypoint extends ListenerAdapter {
         ));
         AllSlashCommands.startgraidtracker.setAction(Graids::startGraidTracker);
 
+        commands.addCommands(AllSlashCommands.startwartracker.getBaseCommandData().addOptions(
+                new OptionData(STRING, "name", "a unique name for the tracker", true),
+                new OptionData(CHANNEL, "channel", "channel", true),
+                new OptionData(BOOLEAN, "stickied", "resend message instead of editing", false),
+                new OptionData(BOOLEAN, "ranks", "adds the placement number before each player name", false)
+        ));
+        AllSlashCommands.startwartracker.setAction(WarTracker::startWarTracker);
+
+        commands.addCommands(
+                AllSlashCommands.getraidstats.getBaseCommandData()
+                        .addOption(USER, "user", "e", true)
+        );
+        AllSlashCommands.getraidstats.setAction(RaidStats::getUser);
+
         commands.addCommands(AllSlashCommands.getserverlist.getBaseCommandData());
         AllSlashCommands.getserverlist.setAction(HelpCommands::getServerList);
 
@@ -411,6 +429,7 @@ public class MainEntrypoint extends ListenerAdapter {
         MassGuild.init();
         GuildMemberUpdater.start();
         Graids.startTimer();
+        WarTracker.startTimer();
 
         DetectTimerBreaks.init();
     }
@@ -443,7 +462,9 @@ public class MainEntrypoint extends ListenerAdapter {
             return;
         } else if (fullId.startsWith("aspects:")) {
             Graids.buttonClicked(event);
-        } else if (fullId.startsWith("verification")) {
+        } else if (fullId.startsWith("warTracker:")) {
+            WarTracker.buttonClicked(event);
+        }  else if (fullId.startsWith("verification")) {
             VerificationCommands.verify(event);
         } else if (fullId.startsWith("verC:") || fullId.startsWith("verD:")) {
             String[] parts = fullId.split(":");

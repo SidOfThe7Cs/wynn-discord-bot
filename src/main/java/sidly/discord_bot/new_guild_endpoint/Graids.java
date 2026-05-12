@@ -1,7 +1,6 @@
-package sidly.discord_bot.commands;
+package sidly.discord_bot.new_guild_endpoint;
 
 import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -10,10 +9,8 @@ import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
-import net.dv8tion.jda.api.requests.restaction.MessageEditAction;
 import sidly.discord_bot.Config;
 import sidly.discord_bot.ConfigManager;
-import sidly.discord_bot.MainEntrypoint;
 import sidly.discord_bot.Utils;
 import sidly.discord_bot.api.ApiUtils;
 import sidly.discord_bot.api.GuildInfo;
@@ -23,42 +20,28 @@ import sidly.discord_bot.api.sub.MemberInfo;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 public class Graids {
-    private static final Map<String, Tracker> trackers = new HashMap<>();
-    private static final Map<String, GuildRaids> totalCounts = new HashMap<>();
+    private static final Map<String, GraidTracker> trackers = new HashMap<>();
     private static Timer timer;
+    private static final Map<String, GuildRaids> totalCounts = new HashMap<>();
     private static final Set<String> broken = new HashSet<>();
 
-    public static class Tracker {
-        private final ConcurrentHashMap<String, Integer> increaseCounts = new ConcurrentHashMap<>();
-        private Long messageId;
-        private final Long channelId;
+    public static class GraidTracker extends Tracker {
         private final Raid raid;
-        private final Long startTime;
-        private final String trackerName;
 
-        private final boolean stickied;
         private final boolean aspects;
         private final boolean positionNumbers;
         private final boolean total;
 
-        public Tracker(String name, Raid raid, Long channelId, boolean stickied, boolean aspects, boolean positionNumbers, boolean total) {
-            this.trackerName = name;
+        public GraidTracker(String name, Raid raid, Long channelId, boolean stickied, boolean aspects, boolean positionNumbers, boolean total) {
+            super(channelId, name, stickied);
             this.raid = raid;
-            this.channelId = channelId;
-            this.stickied = stickied;
             this.aspects = aspects;
             this.positionNumbers = positionNumbers;
             this.total = total;
-            this.startTime = System.currentTimeMillis();
-            trackers.put(name, this);
-        }
-
-        public void updateMessageId(Long messageId) {
-            this.messageId = messageId;
+            trackers.put(trackerName, this);
         }
 
         private Integer getCount(GuildRaids counts) {
@@ -89,17 +72,8 @@ public class Graids {
             updateDisplay();
         }
 
-        public void stop() {
-            if (channelId != null && messageId != null) {
-                TextChannel channel = MainEntrypoint.jda.getTextChannelById(channelId);
-                if (channel != null) {
-                    channel.retrieveMessageById(messageId).queue(message -> message.editMessageComponents().queue());
-                }
-            }
-            trackers.remove(this.trackerName);
-        }
-
-        private MessageEmbed getEmbed() {
+        @Override
+        protected MessageEmbed getEmbed() {
             EmbedBuilder embed = new EmbedBuilder();
             embed.setColor(Color.CYAN);
 
@@ -167,12 +141,13 @@ public class Graids {
             }
             embed.addField("Players", playersBuilder.toString(), true);
             embed.addField(raid.name() + " Comps", countsBuilder.toString(), true);
-            if (aspects) embed.addField( "Aspects", aspectsBuilder.toString(), true);
+            if (aspects) embed.addField("Aspects", aspectsBuilder.toString(), true);
 
 
             return embed.build();
         }
 
+        @Override
         public ActionRow getButtons() {
             if (aspects) {
                 Button down = Button.primary("aspects:" + trackerName + ":down", "i gave out aspects (round down)");
@@ -180,42 +155,6 @@ public class Graids {
                 return ActionRow.of(down, up);
             }
             return null;
-        }
-
-        public void updateDisplay() {
-            if (channelId != null && messageId != null) {
-                TextChannel channel = MainEntrypoint.jda.getTextChannelById(channelId);
-                if (channel != null) {
-                    channel.retrieveMessageById(messageId).queue(message -> {
-                        MessageEmbed newMessage = getEmbed();
-
-                        channel.getHistory().retrievePast(1).queue(history -> {
-                            Message latest = history.getFirst();
-
-                            if (stickied && message.getIdLong() != latest.getIdLong()) {
-                                message.delete().queue();
-
-                                MessageCreateAction messageCreateAction = channel.sendMessageEmbeds(newMessage);
-                                ActionRow buttons = getButtons();
-                                if (buttons != null) {
-                                    messageCreateAction.setComponents(buttons);
-                                }
-                                messageCreateAction.queue(
-                                        editedTo -> this.messageId = editedTo.getIdLong()
-                                );
-
-                            } else {
-                                MessageEditAction messageAction = message.editMessageEmbeds(newMessage);
-                                ActionRow buttons = getButtons();
-                                if (buttons != null) {
-                                    messageAction.setComponents(buttons);
-                                }
-                                messageAction.queue();
-                            }
-                        });
-                    });
-                }
-            }
         }
     }
 
@@ -225,15 +164,15 @@ public class Graids {
             @Override
             public void run() {
                 try {
-                    updateAllCounts();
+                    Graids.updateAllCounts();
                 } catch (Exception e) {
                     System.err.println("Error in GraidTrackerTimer" + e.getMessage());
                 }
             }
-        },  9000, TimeUnit.MINUTES.toMillis(3));
+        }, 9000, TimeUnit.MINUTES.toMillis(3));
     }
 
-    private static void updateAllCounts() {
+    static void updateAllCounts() {
         if (trackers.isEmpty()) return;
 
         GuildInfo guildInfo = ApiUtils.getGuildInfo(ConfigManager.getConfigInstance().other.get(Config.Settings.YourGuildPrefix));
@@ -258,13 +197,13 @@ public class Graids {
                     System.out.println(username + "'s graid count has returned to normal");
                 }
                 totalCounts.put(username, guildRaids);
-                for (Tracker tracker : trackers.values()) {
+                for (GraidTracker tracker : trackers.values()) {
                     tracker.updateCount(username, oldCounts.get(username));
                 }
             }
         }
 
-        for (Tracker tracker : trackers.values()) {
+        for (GraidTracker tracker : trackers.values()) {
             tracker.updateDisplay();
         }
     }
@@ -287,7 +226,7 @@ public class Graids {
         if (trackers.containsKey(name)) {
             if (raid == Raid.NONE) {
                 event.reply("stopped tracker " + name).setEphemeral(true).queue();
-                trackers.get(name).stop();
+                trackers.get(name).stop(trackers);
                 return;
             }
             event.reply("cannot create tracker " + name + " as it already exists").setEphemeral(true).queue();
@@ -308,7 +247,7 @@ public class Graids {
                 .orElse(false);
 
 
-        Tracker tracker = new Tracker(name, raid, channel.getIdLong(), stickied, aspects, positionNumbers, total);
+        GraidTracker tracker = new GraidTracker(name, raid, channel.getIdLong(), stickied, aspects, positionNumbers, total);
         MessageCreateAction messageAction = channel.sendMessageEmbeds(tracker.getEmbed());
         ActionRow buttons = tracker.getButtons();
         if (buttons != null) {

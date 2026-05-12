@@ -3,6 +3,8 @@ package sidly.discord_bot.commands;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import sidly.discord_bot.Utils;
 import sidly.discord_bot.api.MassGuild;
+import sidly.discord_bot.new_guild_endpoint.Graids;
+import sidly.discord_bot.new_guild_endpoint.WarTracker;
 import sidly.discord_bot.timed_actions.DetectTimerBreaks;
 import sidly.discord_bot.timed_actions.GuildMemberUpdater;
 import sidly.discord_bot.timed_actions.GuildRankUpdater;
@@ -50,6 +52,9 @@ public class TimerCommands {
                 break;
             case "graidTracker":
                 Graids.startTimer();
+                break;
+            case "warTracker":
+                WarTracker.startTimer();
                 break;
         }
         event.reply("timer " + timerName + " started").queue();

@@ -12,7 +12,7 @@ public class GlobalData {
     public int lootruns;
     public int caves;
     public int completedQuests;
-    // raidStats = null?
+    public RaidStats raidStats;
     public Pvp pvp;
     public GuildRaids guildRaids;
     public float playtime;
