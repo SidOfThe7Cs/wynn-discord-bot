@@ -1,6 +1,7 @@
 package sidly.discord_bot.new_guild_endpoint;
 
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -11,6 +12,7 @@ import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
 import sidly.discord_bot.Config;
 import sidly.discord_bot.ConfigManager;
+import sidly.discord_bot.RoleUtils;
 import sidly.discord_bot.Utils;
 import sidly.discord_bot.api.ApiUtils;
 import sidly.discord_bot.api.GuildInfo;
@@ -31,6 +33,7 @@ public class WarTracker extends Tracker {
     public WarTracker(String trackerName, Long channelId, boolean stickied, boolean positionNumbers) {
         super(channelId, trackerName, stickied);
         this.positionNumbers = positionNumbers;
+        trackers.put(trackerName, this);
     }
 
     public static void startTimer() {
@@ -105,7 +108,7 @@ public class WarTracker extends Tracker {
         embed.setFooter(footer.toString());
 
         String currentTime = Utils.getDiscordTimestamp(System.currentTimeMillis(), true);
-        embed.setTitle("**Graid Tracker** started " + Utils.getDiscordTimestamp(startTime, true) + "\nlast updated " + currentTime);
+        embed.setTitle("**War Tracker** started " + Utils.getDiscordTimestamp(startTime, true) + "\nlast updated " + currentTime);
 
         List<Map.Entry<String, Integer>> sortedEntries = increaseCounts.entrySet().stream()
                 .filter(entry -> entry.getValue() > 0)
@@ -197,6 +200,18 @@ public class WarTracker extends Tracker {
     }
 
     public static void buttonClicked(ButtonInteractionEvent event) {
+        Member member = event.getMember();
+        if (member == null) {
+            event.reply("cmd must be used in a server").setEphemeral(true).queue();
+            return;
+        }
+        boolean isChief = RoleUtils.hasRole(member, Config.Roles.ChiefRole);
+        boolean isOwner = RoleUtils.hasRole(member, Config.Roles.OwnerRole);
+        if (!isChief && !isOwner) {
+            event.reply("you do not have perms to do this").setEphemeral(true).queue();
+        }
+
+
         String[] parts = event.getComponentId().split(":");
         if (parts.length == 3) {
             String name = parts[1];

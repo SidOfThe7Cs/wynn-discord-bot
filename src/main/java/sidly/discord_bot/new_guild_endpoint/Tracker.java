@@ -49,6 +49,7 @@ public abstract class Tracker {
             TextChannel channel = MainEntrypoint.jda.getTextChannelById(channelId);
             if (channel != null) {
                 channel.retrieveMessageById(messageId).queue(message -> {
+                    if (message == null) return;
                     MessageEmbed newMessage = getEmbed();
 
                     channel.getHistory().retrievePast(1).queue(history -> {

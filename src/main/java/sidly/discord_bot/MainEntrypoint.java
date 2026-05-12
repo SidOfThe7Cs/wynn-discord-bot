@@ -407,7 +407,8 @@ public class MainEntrypoint extends ListenerAdapter {
 
         commands.addCommands(
                 AllSlashCommands.getraidstats.getBaseCommandData()
-                        .addOption(USER, "user", "e", true)
+                        .addOption(USER, "user", "server member", false)
+                        .addOption(STRING, "username", "username", false)
         );
         AllSlashCommands.getraidstats.setAction(RaidStats::getUser);
 
