@@ -279,7 +279,8 @@ public class MainEntrypoint extends ListenerAdapter {
                                         new Command.Choice("playerUpdater", "playerUpdater"),
                                         new Command.Choice("guildTracker", "guildTracker"),
                                         new Command.Choice("yourGuildRankUpdater", "yourGuildRankUpdater"),
-                                        new Command.Choice("yourGuildMemberUpdater", "yourGuildMemberUpdater")
+                                        new Command.Choice("yourGuildMemberUpdater", "yourGuildMemberUpdater"),
+                                        new Command.Choice("graidTracker", "graidTracker")
                                 )
                 )
         );

@@ -48,6 +48,9 @@ public class TimerCommands {
             case "yourGuildMemberUpdater":
                 GuildMemberUpdater.start();
                 break;
+            case "graidTracker":
+                Graids.startTimer();
+                break;
         }
         event.reply("timer " + timerName + " started").queue();
     }
