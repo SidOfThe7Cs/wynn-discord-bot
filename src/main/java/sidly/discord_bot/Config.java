@@ -65,6 +65,7 @@ public class Config {
         roleRequirements.put(AllSlashCommands.stoptimer, Roles.ChiefRole);
         roleRequirements.put(AllSlashCommands.starttimer, Roles.ChiefRole);
         roleRequirements.put(AllSlashCommands.startgraidtracker, Roles.ChiefRole);
+        roleRequirements.put(AllSlashCommands.startwartracker, Roles.ChiefRole);
     }
 
     public enum Roles {
@@ -176,6 +177,7 @@ public class Config {
         ApiToken6,
         ApiToken7,
         ApiToken8,
+        Strat_Plus_Token
     }
 
     public enum LvlRoles {
@@ -201,7 +203,10 @@ public class Config {
         Lvl95Role,
         Lvl100Role,
         Lvl105Role,
-        Lvl106Role
+        Lvl110Role,
+        Lvl115Role,
+        Lvl120Role,
+        Lvl121Role
 
     }
 }

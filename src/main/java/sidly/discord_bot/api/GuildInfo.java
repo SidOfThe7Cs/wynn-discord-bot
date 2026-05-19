@@ -2,6 +2,8 @@ package sidly.discord_bot.api;
 
 import sidly.discord_bot.Config;
 import sidly.discord_bot.Utils;
+import sidly.discord_bot.api.sub.Dungeons;
+import sidly.discord_bot.api.sub.MemberInfo;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -131,16 +133,6 @@ public class GuildInfo {
 
     }
 
-    public static class MemberInfo {
-        public String username;
-        public boolean online;
-        public String server; // nullable
-        public long contributed;
-        public int contributionRank;
-        public String joined;
-        public GuildRaids guildRaids;
-    }
-
     public static class Banner {
         public String base;
         public int tier;
@@ -158,13 +150,4 @@ public class GuildInfo {
         public int finalTerritories;
     }
 
-    public static class GuildRaids {
-        public int total;
-        public Map<String, Integer> list;
-
-        @Override
-        public String toString() {
-            return list.toString();
-        }
-    }
 }

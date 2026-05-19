@@ -1,10 +1,9 @@
-import sidly.discord_bot.Utils;
+import sidly.discord_bot.Config;
+import sidly.discord_bot.ConfigManager;
 import sidly.discord_bot.api.ApiUtils;
 import sidly.discord_bot.api.GuildInfo;
-import sidly.discord_bot.database.PlaytimeHistoryList;
+import sidly.discord_bot.api.sub.MemberInfo;
 import sidly.discord_bot.database.SQLDB;
-import sidly.discord_bot.database.tables.PlaytimeHistory;
-import sidly.discord_bot.database.tables.UuidMap;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -21,11 +20,13 @@ public class TestEntrypoint {
     public static void main(String[] args) throws SQLException {
         SQLDB.init();
 
-        GuildInfo hoc = ApiUtils.getGuildInfo("HOC");
+        ConfigManager.load();
+
+        GuildInfo hoc = ApiUtils.getGuildInfo("HOC", true);
         if (hoc != null) {
-            Map<String, GuildInfo.MemberInfo> allMembers = hoc.members.getAllMembers();
-            for (Map.Entry<String, GuildInfo.MemberInfo> entry : allMembers.entrySet()) {
-                System.out.println(entry.getValue().username + " -> " + entry.getValue().guildRaids.list.get("Nest of the Grootslangs"));
+            Map<String, MemberInfo> allMembers = hoc.members.getAllMembers();
+            for (Map.Entry<String, MemberInfo> entry : allMembers.entrySet()) {
+                System.out.println(entry.getValue().username + " -> " + entry.getValue().weekly);
             }
         }
 

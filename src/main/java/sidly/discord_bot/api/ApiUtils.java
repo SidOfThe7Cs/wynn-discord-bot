@@ -104,7 +104,13 @@ public class ApiUtils {
     }
 
     public static GuildInfo getGuildInfo(String prefix){
-        String apiToken = ConfigManager.getConfigInstance().other.get(Config.Settings.ApiToken);
+        return getGuildInfo(prefix, false);
+    }
+
+    public static GuildInfo getGuildInfo(String prefix, boolean strat_plus){
+        String apiToken = strat_plus ?
+                ConfigManager.getConfigInstance().other.get(Config.Settings.Strat_Plus_Token)
+                : ConfigManager.getConfigInstance().other.get(Config.Settings.ApiToken);
         try {
             HttpClient client = HttpClient.newHttpClient();
             HttpRequest request;

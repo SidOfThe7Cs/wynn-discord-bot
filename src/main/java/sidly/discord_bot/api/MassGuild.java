@@ -38,9 +38,9 @@ public class MassGuild {
     private static DynamicTimer mainTimer;
     private static DynamicTimer lowPrioTimer;
     private static boolean timersRunning = false;
-    private static List<String> handledMultis = new ArrayList<>();
-    private static List<String> lowToHighMoveQueue = new ArrayList<>();
-    private static List<String> highToLowMoveQueue = new ArrayList<>();
+    private static final List<String> handledMultis = new ArrayList<>();
+    private static final List<String> lowToHighMoveQueue = new ArrayList<>();
+    private static final List<String> highToLowMoveQueue = new ArrayList<>();
 
     public static ApiUtils.RateLimitInfo guildRateLimitInfo;
 
@@ -130,7 +130,7 @@ public class MassGuild {
         if (lowPriorityQueue.isEmpty()) return;
         for (int i = 0; i < apiTokens.size(); i++) {
             if (lowPrioIndex >= lowPriorityQueue.size()) lowPrioIndex = 0;
-            updateFromApi(lowPriorityQueue.get(lowPrioIndex), i);
+            updateFromApi(lowPriorityQueue.get(lowPrioIndex), i, true);
             lowPrioIndex++;
         }
     }
@@ -199,7 +199,7 @@ public class MassGuild {
 
         for (int i = 0; i < apiTokens.size(); i++) {
             if (!tempHighPrioQueue.isEmpty()) {
-                updateFromApi(tempHighPrioQueue.removeFirst(), i);
+                updateFromApi(tempHighPrioQueue.removeFirst(), i, false);
                 continue;
             }
             if (mainIndex >= queue.size()) {
@@ -229,12 +229,12 @@ public class MassGuild {
                 updateNext = true;
                 mainIndex = 0;
             }
-            if (!queue.isEmpty()) updateFromApi(queue.get(mainIndex), i);
+            if (!queue.isEmpty()) updateFromApi(queue.get(mainIndex), i, true);
             mainIndex++;
         }
     }
 
-    private static void updateFromApi(String prefix, int index) {
+    private static void updateFromApi(String prefix, int index, boolean retry) {
         String apiToken = apiTokens.get(index);
         HttpRequest request;
 
@@ -248,21 +248,21 @@ public class MassGuild {
                 .build();
         CompletableFuture<HttpResponse<String>> httpResponseCompletableFuture = client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
                 .orTimeout(30, TimeUnit.SECONDS);
-        httpResponseCompletableFuture.thenAccept(response -> handleApiResponse(prefix, response)).exceptionally(ex -> {
+        httpResponseCompletableFuture.thenAccept(response -> handleApiResponse(prefix, response, retry)).exceptionally(ex -> {
             Throwable cause = ex instanceof CompletionException ? ex.getCause() : ex;
 
             if (cause instanceof java.net.SocketException) {
-                tempHighPrioQueue.addFirst(prefix); // retry
+                if (retry) tempHighPrioQueue.addFirst(prefix);
             } else if (cause instanceof javax.net.ssl.SSLHandshakeException) {
-                tempHighPrioQueue.addFirst(prefix); // retry
+                if (retry) tempHighPrioQueue.addFirst(prefix);
             } else if (cause instanceof TimeoutException) {
-                tempHighPrioQueue.addFirst(prefix); // retry
+                if (retry) tempHighPrioQueue.addFirst(prefix);
             } else if ("too many concurrent streams".equals(cause.getMessage())) {
-                tempHighPrioQueue.addFirst(prefix); // retry
+                if (retry) tempHighPrioQueue.addFirst(prefix);
             } else if (cause instanceof IOException && cause.getMessage().contains("GOAWAY")) {
-                tempHighPrioQueue.addFirst(prefix); // retry
+                if (retry) tempHighPrioQueue.addFirst(prefix);
             } else if (cause instanceof IOException && cause.getMessage().contains("Connection reset")) {
-                tempHighPrioQueue.addFirst(prefix); // retry
+                if (retry) tempHighPrioQueue.addFirst(prefix);
             } else {
                 cause.printStackTrace();
             }
@@ -270,7 +270,7 @@ public class MassGuild {
         });
     }
 
-    private static void handleApiResponse(String prefix, HttpResponse<String> response) {
+    private static void handleApiResponse(String prefix, HttpResponse<String> response, boolean retry) {
         count++;
         //System.out.println(count);
 
@@ -289,17 +289,17 @@ public class MassGuild {
         Gson gson = new GsonBuilder().create();
 
         if (status == 300) {
-            if(!handledMultis.contains(prefix)) handleMultiselecters(response);
+            if(!handledMultis.contains(prefix)) handleMultiselecters(response, retry);
             handledMultis.add(prefix);
             return;
         }
         if (status == 429) { // rate limit
             System.out.println("ratelimited (did you get temp banned from api?)");
-            tempHighPrioQueue.addFirst(prefix); // retry current
+            if (retry) tempHighPrioQueue.addFirst(prefix); // retry current
             return;
         }
         if (status == 520) {
-            tempHighPrioQueue.addFirst(prefix); // retry current
+            if (retry) tempHighPrioQueue.addFirst(prefix); // retry current
             return;
         }
         if (status == 500) {
@@ -363,7 +363,7 @@ public class MassGuild {
                 }
             }
         } else {
-            tempHighPrioQueue.add(prefix);
+            if (retry) tempHighPrioQueue.add(prefix);
         }
     }
 
@@ -444,7 +444,7 @@ public class MassGuild {
         }
     }
 
-    private static void handleMultiselecters(HttpResponse<String> response) {
+    private static void handleMultiselecters(HttpResponse<String> response, boolean retry) {
         JsonObject objects = JsonParser.parseString(response.body()).getAsJsonObject();
 
         for (Map.Entry<String, JsonElement> entry : objects.entrySet()) {
@@ -464,20 +464,20 @@ public class MassGuild {
                     .build();
             CompletableFuture<HttpResponse<String>> httpResponseCompletableFuture = client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
                     .orTimeout(30, TimeUnit.SECONDS);
-            httpResponseCompletableFuture.thenAccept(responseName -> handleApiResponse(prefix, responseName)).exceptionally(ex -> {
+            httpResponseCompletableFuture.thenAccept(responseName -> handleApiResponse(prefix, responseName, retry)).exceptionally(ex -> {
                 Throwable cause = ex instanceof CompletionException ? ex.getCause() : ex;
                 if (cause instanceof java.net.SocketException) {
-                    tempHighPrioQueue.addFirst(prefix); // retry
+                    if (retry) tempHighPrioQueue.addFirst(prefix); // retry
                 } else if (cause instanceof javax.net.ssl.SSLHandshakeException) {
-                    tempHighPrioQueue.addFirst(prefix); // retry
+                    if (retry) tempHighPrioQueue.addFirst(prefix); // retry
                 } else if ("too many concurrent streams".equals(cause.getMessage())) {
-                    tempHighPrioQueue.addFirst(prefix); // retry
+                    if (retry) tempHighPrioQueue.addFirst(prefix); // retry
                 } else if (cause instanceof TimeoutException) {
-                    tempHighPrioQueue.addFirst(prefix); // retry
+                    if (retry) tempHighPrioQueue.addFirst(prefix); // retry
                 } else if (cause instanceof IOException && cause.getMessage().contains("GOAWAY")) {
-                    tempHighPrioQueue.addFirst(prefix); // retry
+                    if (retry) tempHighPrioQueue.addFirst(prefix); // retry
                 } else if (cause instanceof IOException && cause.getMessage().contains("Connection reset")) {
-                    tempHighPrioQueue.addFirst(prefix); // retry
+                    if (retry) tempHighPrioQueue.addFirst(prefix); // retry
                 } else {
                     cause.printStackTrace();
                 }

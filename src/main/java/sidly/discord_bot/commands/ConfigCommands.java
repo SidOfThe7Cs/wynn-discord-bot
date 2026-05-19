@@ -128,7 +128,7 @@ public class ConfigCommands {
 
 
     public static void editConfigLvlRoleOption(SlashCommandInteractionEvent event) {
-        String setting = event.getOption("role_name").getAsString();
+        String setting = event.getOption("lvl_role").getAsString();
         Role mention = event.getOption("role").getAsRole();
         String id = mention.getId();
         Config.LvlRoles option = Config.LvlRoles.valueOf(setting);

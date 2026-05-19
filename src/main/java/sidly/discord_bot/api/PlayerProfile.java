@@ -1,6 +1,7 @@
 package sidly.discord_bot.api;
 
 import sidly.discord_bot.Utils;
+import sidly.discord_bot.api.sub.*;
 
 import java.util.List;
 import java.util.Map;
@@ -39,44 +40,6 @@ public class PlayerProfile {
     public boolean publicProfile;
     public Map<String, CharacterData> characters;
 
-    public static class LegacyRankColour {
-        public String main;
-        public String sub;
-    }
-
-    public static class Guild {
-        public String name;
-        public String prefix;
-        public String rank;
-        public String rankStars;
-    }
-
-    public static class GlobalData {
-        public int wars;
-        public int totalLevels;
-        public int killedMobs;
-        public int chestsFound;
-        public Dungeons dungeons;
-        public Raids raids;
-        public int completedQuests;
-        public Pvp pvp;
-    }
-
-    public static class Dungeons {
-        public int total;
-        public Map<String, Integer> list;
-    }
-
-    public static class Raids {
-        public int total;
-        public Map<String, Integer> list;
-    }
-
-    public static class Pvp {
-        public int kills;
-        public int deaths;
-    }
-
     public static class CharacterData {
         public String type;
         public String nickname;
@@ -103,19 +66,6 @@ public class PlayerProfile {
         public List<String> quests;
     }
 
-    public static class SkillPoints {
-        public int strength;
-        public int dexterity;
-        public int intelligence;
-        public int defence;
-        public int agility;
-    }
-
-    public static class Profession {
-        public int level;
-        public int xpPercent;
-    }
-
     public int getHighestLevel(){
         if (this.characters == null || this.characters.isEmpty()) return 0;
         int highestLevel = 0;
@@ -125,6 +75,7 @@ public class PlayerProfile {
         }
         return highestLevel;
     }
+
     public int getHighestContentCompletion(){
         if (this.characters == null || this.characters.isEmpty()) return 0;
         int highestContentCompletion = 0;
@@ -134,6 +85,7 @@ public class PlayerProfile {
         }
         return highestContentCompletion;
     }
+
     public Utils.RankList getRank(){
         if (this.guild == null) return null;
         return switch (this.guild.rank) {

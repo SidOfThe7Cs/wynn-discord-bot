@@ -63,6 +63,9 @@ public enum AllSlashCommands {
     warreport("get player war counts per week"),
     getserverlist("shows the list of server the bot is a member of"),
     startgraidtracker("start a graid tracker"),
+    startwartracker("start a war tracker"),
+    getraidstats("get raid stats"),
+    getweekly("guild weekly obj"),
     debug("dev command that does whatever i happen to need it to");
 
     public Consumer<SlashCommandInteractionEvent> getAction() {
