@@ -136,7 +136,10 @@ public class PageBuilder {
 
 
                 //custom data handling
-                if (this.equals(PaginationManager.get(PaginationIds.GUILD_STATS.name())) || this.equals(PaginationManager.get(PaginationIds.GUILD.name()))) {
+                if (this.equals(PaginationManager.get(PaginationIds.GUILD_STATS.name())) ||
+                        this.equals(PaginationManager.get(PaginationIds.GUILD.name())) ||
+                        this.equals(PaginationManager.get(PaginationIds.WEEKLY_OBJ.name()))
+                ) {
                     sb.append(this.customData);
                 }
 

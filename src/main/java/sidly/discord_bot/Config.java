@@ -177,6 +177,7 @@ public class Config {
         ApiToken6,
         ApiToken7,
         ApiToken8,
+        Strat_Plus_Token
     }
 
     public enum LvlRoles {

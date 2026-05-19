@@ -9,5 +9,6 @@ public enum PaginationIds {
     LAST_LOGINS,
     CONFIG_LIST,
     WAR_REPORT,
-    CHECK_INACTIVITY
+    CHECK_INACTIVITY,
+    WEEKLY_OBJ
 }

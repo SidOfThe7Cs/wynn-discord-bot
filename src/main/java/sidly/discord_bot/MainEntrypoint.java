@@ -21,6 +21,7 @@ import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction;
 import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import sidly.discord_bot.api.MassGuild;
+import sidly.discord_bot.api.sub.MemberInfo;
 import sidly.discord_bot.api.sub.RaidStats;
 import sidly.discord_bot.commands.*;
 import sidly.discord_bot.commands.inactivity_promotion.InactivityCommands;
@@ -30,6 +31,7 @@ import sidly.discord_bot.database.SQLDB;
 import sidly.discord_bot.database.records.GuildAverages;
 import sidly.discord_bot.new_guild_endpoint.Graids;
 import sidly.discord_bot.new_guild_endpoint.WarTracker;
+import sidly.discord_bot.new_guild_endpoint.Weekly;
 import sidly.discord_bot.page.PageBuilder;
 import sidly.discord_bot.page.PaginationIds;
 import sidly.discord_bot.timed_actions.DetectTimerBreaks;
@@ -417,6 +419,15 @@ public class MainEntrypoint extends ListenerAdapter {
 
         commands.addCommands(AllSlashCommands.debug.getBaseCommandData());
         AllSlashCommands.debug.setAction(MassGuild::debug);
+
+        commands.addCommands(
+                AllSlashCommands.getweekly.getBaseCommandData()
+                        .addOption(USER, "user", "server member", false)
+                        .addOption(STRING, "username", "username", false)
+        );
+        AllSlashCommands.getweekly.setAction(Weekly::getCommandResponse);
+        PageBuilder.PaginationManager.register(PaginationIds.WEEKLY_OBJ.name(),
+                entry -> Weekly.weeklyConverter((MemberInfo) entry), "Weekly Objectives", 20);
 
 
         // Send the new set of commands to discord, this will override any existing global commands with the new set provided here

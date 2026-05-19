@@ -1,3 +1,5 @@
+import sidly.discord_bot.Config;
+import sidly.discord_bot.ConfigManager;
 import sidly.discord_bot.api.ApiUtils;
 import sidly.discord_bot.api.GuildInfo;
 import sidly.discord_bot.api.sub.MemberInfo;
@@ -18,11 +20,13 @@ public class TestEntrypoint {
     public static void main(String[] args) throws SQLException {
         SQLDB.init();
 
-        GuildInfo hoc = ApiUtils.getGuildInfo("HOC");
+        ConfigManager.load();
+
+        GuildInfo hoc = ApiUtils.getGuildInfo("HOC", true);
         if (hoc != null) {
             Map<String, MemberInfo> allMembers = hoc.members.getAllMembers();
             for (Map.Entry<String, MemberInfo> entry : allMembers.entrySet()) {
-                System.out.println(entry.getValue().username + " -> " + entry.getValue().globalData.guildRaids.list.get("Nest of the Grootslangs"));
+                System.out.println(entry.getValue().username + " -> " + entry.getValue().weekly);
             }
         }
 
