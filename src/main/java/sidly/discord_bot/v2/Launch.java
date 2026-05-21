@@ -18,9 +18,6 @@ import java.util.EnumSet;
 public class Launch {
     public static JDA jda;
 
-    private static Command testCmd = new Command.Builder("test_cmd")
-            .build();
-
     private static boolean shuttingDown = false;
     public static void shutdown() {
         if (shuttingDown) return;
