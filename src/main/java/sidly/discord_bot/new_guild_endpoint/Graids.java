@@ -55,7 +55,7 @@ public class Graids {
             Integer oldTotal = getCount(oldCounts);
             Integer newTotal = getCount(newCounts);
 
-            if (oldTotal != null) {
+            if (oldTotal != null && newTotal != null) {
                 if (oldCounts.total == 0 && newCounts.total > 2) {
                     return; // we started the tracker when api showed 0 and it shouldn't have
                 }
@@ -166,7 +166,8 @@ public class Graids {
                 try {
                     Graids.updateAllCounts();
                 } catch (Exception e) {
-                    System.err.println("Error in GraidTrackerTimer" + e.getMessage());
+                    System.err.println("Error in GraidTrackerTimer");
+                    e.printStackTrace();
                 }
             }
         }, 9000, TimeUnit.MINUTES.toMillis(3));
@@ -185,8 +186,10 @@ public class Graids {
         Map<String, MemberInfo> allMembersByUsername = guildInfo.members.getAllMembersByUsername();
 
         for (Map.Entry<String, MemberInfo> entry : allMembersByUsername.entrySet()) {
-            String username = entry.getValue().username;
-            GuildRaids guildRaids = entry.getValue().globalData.guildRaids;
+            MemberInfo memberInfo = entry.getValue();
+            if (memberInfo == null) continue;
+            String username = memberInfo.username;
+            GuildRaids guildRaids = memberInfo.globalData.guildRaids;
             GuildRaids oldValues = oldCounts.get(username);
             if (oldValues != null && guildRaids.total < oldValues.total) {
                 if (broken.add(username)) {
