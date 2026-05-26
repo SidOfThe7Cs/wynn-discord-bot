@@ -24,6 +24,10 @@ public class RaidStats {
     public int gambitsUsed;
 
     public static void getUser(SlashCommandInteractionEvent event) {
+        if (event.getGuild() == null) {
+            event.reply("use in server").queue();
+            return;
+        }
 
         User user = Optional.ofNullable(event.getOption("user"))
                 .map(OptionMapping::getAsUser)
@@ -35,29 +39,38 @@ public class RaidStats {
                     .map(OptionMapping::getAsString)
                     .orElse(null);
         }
-        if (username == null) {
-            event.reply("please specify a user or username").setEphemeral(true).queue();
+        if (username == null || username.isEmpty()) {
+            username = event.getMember().getEffectiveName();
+        }
+
+        PlayerProfile playerInfo = ApiUtils.getPlayerData(username);
+        if (playerInfo == null) {
+            event.reply("failed to get player info").queue();
             return;
         }
 
-        if (username.isEmpty()) return;
-        PlayerProfile playerInfo = ApiUtils.getPlayerData(username);
-
-        Map<String, Integer> guildDataRaidsMap = new HashMap<>();
+        GlobalData playerData = playerInfo.globalData;
+        Map<String, Integer> currentGuildRaidsMap = new HashMap<>();
+        Map<String, Integer> guildRaidsMap = new HashMap<>();
+        Map<String, Integer> raidsMap = new HashMap<>();
         int gRaidTotal = 0;
         try {
             GlobalData guildData = ApiUtils.getGuildInfo(ConfigManager.getConfigInstance().other.get(Config.Settings.YourGuildPrefix)).members.getMemberInfo(playerInfo.uuid).globalData;
-            guildDataRaidsMap = guildData.guildRaids.list;
+            currentGuildRaidsMap = guildData.currentGuildRaids.list;
+            guildRaidsMap = guildData.guildRaids.list;
+            raidsMap = guildData.raids.list;
             gRaidTotal = guildData.guildRaids.total;
         } catch (Exception ignored) {
         }
-        GlobalData playerData = playerInfo.globalData;
+
+        if (guildRaidsMap.isEmpty()) guildRaidsMap = playerData.guildRaids.list;
+        if (raidsMap.isEmpty()) raidsMap = playerData.raids.list;
 
         StringBuilder sb = new StringBuilder();
 
-        sb.append("RaidCounts - Graids - In-HOC\n");
-        Map<String, Integer> raidsMap = playerData.raids.list;
-        Map<String, Integer> guildRaidsMap = playerData.guildRaids.list;
+        sb.append("RaidCounts - Graids - In-")
+                .append(ConfigManager.getConfigInstance().other.get(Config.Settings.YourGuildPrefix))
+                .append("\n");
 
         int total = playerData.raids.total;
         if (total == 0) return;
@@ -69,12 +82,12 @@ public class RaidStats {
         for (String key : raidsMap.keySet()) {
             int raidsValue = raidsMap.getOrDefault(key, 0);
             int guildRaidsValue = guildRaidsMap.getOrDefault(key, 0);
-            int guildDataRaidsValue = guildDataRaidsMap.getOrDefault(key, 0);
+            int currentGuildRaidsValue = currentGuildRaidsMap.getOrDefault(key, 0);
 
             sb.append(key).append(": ")
                     .append(Utils.formatNumber(raidsValue)).append(" (")
                     .append(Utils.formatNumber(guildRaidsValue)).append(") (")
-                    .append(Utils.formatNumber(guildDataRaidsValue)).append(")\n");
+                    .append(Utils.formatNumber(currentGuildRaidsValue)).append(")\n");
         }
 
         sb.append("\n");

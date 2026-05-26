@@ -189,7 +189,7 @@ public class Graids {
             MemberInfo memberInfo = entry.getValue();
             if (memberInfo == null) continue;
             String username = memberInfo.username;
-            GuildRaids guildRaids = memberInfo.globalData.guildRaids;
+            GuildRaids guildRaids = memberInfo.globalData.currentGuildRaids;
             GuildRaids oldValues = oldCounts.get(username);
             if (oldValues != null && guildRaids.total < oldValues.total) {
                 if (broken.add(username)) {

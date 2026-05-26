@@ -15,6 +15,7 @@ public class GlobalData {
     public RaidStats raidStats;
     public Pvp pvp;
     public GuildRaids guildRaids;
+    public GuildRaids currentGuildRaids;
     public float playtime;
     // TODO restrictions
 }
