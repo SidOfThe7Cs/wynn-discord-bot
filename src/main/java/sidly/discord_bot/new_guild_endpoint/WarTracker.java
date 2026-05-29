@@ -161,42 +161,45 @@ public class WarTracker extends Tracker {
     }
 
     public static void startWarTracker(SlashCommandInteractionEvent event) {
-        TextChannel channel = (TextChannel) event.getOption("channel").getAsChannel();
-        String name = event.getOption("name").getAsString();
+        event.deferReply(true).queue(hook -> {
 
-        if (name.equals("get")) {
-            Set<String> strings = trackers.keySet();
-            StringBuilder sb = new StringBuilder();
-            for (String string : strings) {
-                sb.append(string).append("\n");
+            TextChannel channel = (TextChannel) event.getOption("channel").getAsChannel();
+            String name = event.getOption("name").getAsString();
+
+            if (name.equals("get")) {
+                Set<String> strings = trackers.keySet();
+                StringBuilder sb = new StringBuilder();
+                for (String string : strings) {
+                    sb.append(string).append("\n");
+                }
+                hook.editOriginal("Current Trackers:\n" + sb).queue();
+                return;
             }
-            event.reply("Current Trackers:\n" + sb).setEphemeral(true).queue();
-            return;
-        }
 
-        if (trackers.containsKey(name)) {
-            event.reply("cannot create tracker " + name + " as it already exists").setEphemeral(true).queue();
-            return;
-        }
+            if (trackers.containsKey(name)) {
+                hook.editOriginal("cannot create tracker " + name + " as it already exists").queue();
+                return;
+            }
 
-        boolean stickied = Optional.ofNullable(event.getOption("stickied"))
-                .map(OptionMapping::getAsBoolean)
-                .orElse(false);
-        boolean positionNumbers = Optional.ofNullable(event.getOption("ranks"))
-                .map(OptionMapping::getAsBoolean)
-                .orElse(false);
+            boolean stickied = Optional.ofNullable(event.getOption("stickied"))
+                    .map(OptionMapping::getAsBoolean)
+                    .orElse(false);
+            boolean positionNumbers = Optional.ofNullable(event.getOption("ranks"))
+                    .map(OptionMapping::getAsBoolean)
+                    .orElse(false);
 
 
-        WarTracker tracker = new WarTracker(name, channel.getIdLong(), stickied, positionNumbers);
-        MessageCreateAction messageAction = channel.sendMessageEmbeds(tracker.getEmbed());
-        ActionRow buttons = tracker.getButtons();
-        if (buttons != null) {
-            messageAction.setComponents(buttons);
-        }
-        messageAction.queue(
-                message -> tracker.updateMessageId(message.getIdLong())
-        );
-        event.reply("war tracker " + name + " started in " + channel.getAsMention()).setEphemeral(true).queue();
+            WarTracker tracker = new WarTracker(name, channel.getIdLong(), stickied, positionNumbers);
+            MessageCreateAction messageAction = channel.sendMessageEmbeds(tracker.getEmbed());
+            ActionRow buttons = tracker.getButtons();
+            if (buttons != null) {
+                messageAction.setComponents(buttons);
+            }
+            messageAction.queue(
+                    message -> tracker.updateMessageId(message.getIdLong())
+            );
+            hook.editOriginal("war tracker " + name + " started in " + channel.getAsMention()).queue();
+        });
     }
 
     public static void buttonClicked(ButtonInteractionEvent event) {
