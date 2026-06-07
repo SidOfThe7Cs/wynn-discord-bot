@@ -201,13 +201,21 @@ public class Graids {
                 }
                 totalCounts.put(username, guildRaids);
                 for (GraidTracker tracker : trackers.values()) {
-                    tracker.updateCount(username, oldCounts.get(username));
+                    try {
+                        tracker.updateCount(username, oldCounts.get(username));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         }
 
         for (GraidTracker tracker : trackers.values()) {
-            tracker.updateDisplay();
+            try {
+                tracker.updateDisplay();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 

@@ -3,7 +3,9 @@ package sidly.discord_bot.new_guild_endpoint;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.exceptions.ErrorResponseException;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
+import net.dv8tion.jda.api.requests.ErrorResponse;
 import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
 import net.dv8tion.jda.api.requests.restaction.MessageEditAction;
 import sidly.discord_bot.MainEntrypoint;
@@ -48,35 +50,45 @@ public abstract class Tracker {
         if (channelId != null && messageId != null) {
             TextChannel channel = MainEntrypoint.jda.getTextChannelById(channelId);
             if (channel != null) {
-                channel.retrieveMessageById(messageId).queue(message -> {
-                    if (message == null) return;
-                    MessageEmbed newMessage = getEmbed();
+                channel.retrieveMessageById(messageId).queue(
+                        message -> {
+                            if (message == null) return;
+                            MessageEmbed newMessage = getEmbed();
 
-                    channel.getHistory().retrievePast(1).queue(history -> {
-                        Message latest = history.getFirst();
+                            channel.getHistory().retrievePast(1).queue(history -> {
+                                Message latest = history.getFirst();
 
-                        if (stickied && message.getIdLong() != latest.getIdLong()) {
-                            message.delete().queue();
+                                if (stickied && message.getIdLong() != latest.getIdLong()) {
+                                    message.delete().queue();
 
-                            MessageCreateAction messageCreateAction = channel.sendMessageEmbeds(newMessage);
-                            ActionRow buttons = getButtons();
-                            if (buttons != null) {
-                                messageCreateAction.setComponents(buttons);
+                                    MessageCreateAction messageCreateAction = channel.sendMessageEmbeds(newMessage);
+                                    ActionRow buttons = getButtons();
+                                    if (buttons != null) {
+                                        messageCreateAction.setComponents(buttons);
+                                    }
+                                    messageCreateAction.queue(
+                                            editedTo -> this.messageId = editedTo.getIdLong()
+                                    );
+
+                                } else {
+                                    MessageEditAction messageAction = message.editMessageEmbeds(newMessage);
+                                    ActionRow buttons = getButtons();
+                                    if (buttons != null) {
+                                        messageAction.setComponents(buttons);
+                                    }
+                                    messageAction.queue();
+                                }
+                            });
+                        },
+                        error -> {
+                            if (error instanceof ErrorResponseException ex) {
+                                if (ex.getErrorResponse() == ErrorResponse.UNKNOWN_MESSAGE) {
+                                    return;
+                                }
                             }
-                            messageCreateAction.queue(
-                                    editedTo -> this.messageId = editedTo.getIdLong()
-                            );
-
-                        } else {
-                            MessageEditAction messageAction = message.editMessageEmbeds(newMessage);
-                            ActionRow buttons = getButtons();
-                            if (buttons != null) {
-                                messageAction.setComponents(buttons);
-                            }
-                            messageAction.queue();
+                            error.printStackTrace();
                         }
-                    });
-                });
+                );
             }
         }
     }

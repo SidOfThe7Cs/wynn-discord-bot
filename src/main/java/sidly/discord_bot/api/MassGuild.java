@@ -447,44 +447,54 @@ public class MassGuild {
     }
 
     private static void handleMultiselecters(HttpResponse<String> response, boolean retry) {
-        JsonObject objects = JsonParser.parseString(response.body()).getAsJsonObject();
+        try {
+            JsonObject objects = JsonParser.parseString(response.body()).getAsJsonObject();
 
-        for (Map.Entry<String, JsonElement> entry : objects.entrySet()) {
-            JsonObject guild = entry.getValue().getAsJsonObject();
-            String name = guild.get("name").getAsString();
-            String prefix = guild.get("prefix").getAsString();
+            for (Map.Entry<String, JsonElement> entry : objects.entrySet()) {
+                try {
+                    JsonObject guild = entry.getValue().getAsJsonObject();
+                    String name = guild.get("name").getAsString();
+                    String prefix = guild.get("prefix").getAsString();
 
-            String encodedName = name.replace(" ", "%20");
-            String url = "https://api.wynncraft.com/v3/guild/" + encodedName + "?identifier=uuid";
+                    String encodedName = name.replace(" ", "%20");
+                    String url = "https://api.wynncraft.com/v3/guild/" + encodedName + "?identifier=uuid";
 
-            HttpRequest request;
-            attempsCounter++;
-            request = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-                    .header("Authorization", "Bearer " + multiselectorApiToken)
-                    .GET()
-                    .build();
-            CompletableFuture<HttpResponse<String>> httpResponseCompletableFuture = client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                    .orTimeout(30, TimeUnit.SECONDS);
-            httpResponseCompletableFuture.thenAccept(responseName -> handleApiResponse(prefix, responseName, retry)).exceptionally(ex -> {
-                Throwable cause = ex instanceof CompletionException ? ex.getCause() : ex;
-                if (cause instanceof java.net.SocketException) {
-                    if (retry) tempHighPrioQueue.addFirst(prefix); // retry
-                } else if (cause instanceof javax.net.ssl.SSLHandshakeException) {
-                    if (retry) tempHighPrioQueue.addFirst(prefix); // retry
-                } else if ("too many concurrent streams".equals(cause.getMessage())) {
-                    if (retry) tempHighPrioQueue.addFirst(prefix); // retry
-                } else if (cause instanceof TimeoutException) {
-                    if (retry) tempHighPrioQueue.addFirst(prefix); // retry
-                } else if (cause instanceof IOException && cause.getMessage().contains("GOAWAY")) {
-                    if (retry) tempHighPrioQueue.addFirst(prefix); // retry
-                } else if (cause instanceof IOException && cause.getMessage().contains("Connection reset")) {
-                    if (retry) tempHighPrioQueue.addFirst(prefix); // retry
-                } else {
-                    cause.printStackTrace();
+                    HttpRequest request;
+                    attempsCounter++;
+                    request = HttpRequest.newBuilder()
+                            .uri(URI.create(url))
+                            .header("Authorization", "Bearer " + multiselectorApiToken)
+                            .GET()
+                            .build();
+                    CompletableFuture<HttpResponse<String>> httpResponseCompletableFuture = client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                            .orTimeout(30, TimeUnit.SECONDS);
+                    httpResponseCompletableFuture.thenAccept(responseName -> handleApiResponse(prefix, responseName, retry)).exceptionally(ex -> {
+                        Throwable cause = ex instanceof CompletionException ? ex.getCause() : ex;
+                        if (cause instanceof java.net.SocketException) {
+                            if (retry) tempHighPrioQueue.addFirst(prefix); // retry
+                        } else if (cause instanceof javax.net.ssl.SSLHandshakeException) {
+                            if (retry) tempHighPrioQueue.addFirst(prefix); // retry
+                        } else if ("too many concurrent streams".equals(cause.getMessage())) {
+                            if (retry) tempHighPrioQueue.addFirst(prefix); // retry
+                        } else if (cause instanceof TimeoutException) {
+                            if (retry) tempHighPrioQueue.addFirst(prefix); // retry
+                        } else if (cause instanceof IOException && cause.getMessage().contains("GOAWAY")) {
+                            if (retry) tempHighPrioQueue.addFirst(prefix); // retry
+                        } else if (cause instanceof IOException && cause.getMessage().contains("Connection reset")) {
+                            if (retry) tempHighPrioQueue.addFirst(prefix); // retry
+                        } else {
+                            cause.printStackTrace();
+                        }
+                        return null;
+                    });
+                } catch (Exception e) {
+                    System.err.println("Failed to handle multiselector entry: " + entry.getKey() + " -> " + entry.getValue());
+                    e.printStackTrace();
                 }
-                return null;
-            });
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to handle multi-selector: " + response.body());
+            e.printStackTrace();
         }
     }
 
