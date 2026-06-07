@@ -19,7 +19,7 @@ import sidly.discord_bot.database.tables.*;
 import sidly.discord_bot.page.PageBuilder;
 import sidly.discord_bot.page.PaginationIds;
 
-import java.awt.Color;
+import java.awt.*;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.List;
@@ -266,7 +266,7 @@ public class GuildCommands {
                 }
             }
 
-            pageState.customData = "[" + prefix +"] is in position " + (index + 1) + "\n\n";
+            pageState.customData = "[" + prefix + "] is in position " + (index + 1) + "\n\n";
 
             pageState.reset(guildAverages);
 
@@ -301,7 +301,7 @@ public class GuildCommands {
         GuildName guild = AllGuilds.getGuild(prefix);
         String guildName = "guild name not found";
         if (guild != null) {
-             guildName = guild.name();
+            guildName = guild.name();
         }
 
         return "**[" + prefix + "] " + guildName + "**\n" +
@@ -449,8 +449,8 @@ public class GuildCommands {
         if (lastSeen < 90 && !playerData.online) sb.append("Online in streamer\n");
         else if (lastSeen == Long.MAX_VALUE) sb.append("Data is Hidden\n");
         else sb.append(playerData.online ?
-                "Online " + playerData.server + "\n"
-                : "Offline, last seen " + Utils.formatTime(lastSeen, ChronoUnit.SECONDS) + "\n");
+                    "Online " + playerData.server + "\n"
+                    : "Offline, last seen " + Utils.formatTime(lastSeen, ChronoUnit.SECONDS) + "\n");
         sb.append(Utils.formatNumbersInString(String.valueOf(guildMemberData.contributed))).append(" XP (").append(Utils.formatNumber(xpPerDay)).append("/day)\n");
         sb.append("Joined ").append(joinedDaysAgo).append(" days ago\n");
         if (playerData.globalData != null) {
@@ -504,7 +504,7 @@ public class GuildCommands {
                 sb.append(username).append(" is in the discord but not verified\n");
             }
         }
-        return sb.toString();
+        return sb.isEmpty() ? "Everyone is in the discord server!" : sb.toString();
     }
 
     public static void notInDiscord(SlashCommandInteractionEvent event) {
@@ -595,6 +595,7 @@ public class GuildCommands {
 
         });
     }
+
     private static int compareReports(String reportA, String reportB) {
         // Priority: 4w > 2w > 1w > total
 
@@ -613,6 +614,7 @@ public class GuildCommands {
         // total
         return compareIncreases(reportA, reportB, "total wars: (\\d+)");
     }
+
     private static int compareIncreases(String reportA, String reportB, String regex) {
         int valA = extractOrZero(reportA, regex);
         int valB = extractOrZero(reportB, regex);
@@ -623,6 +625,7 @@ public class GuildCommands {
         }
         return 0;
     }
+
     private static int extractOrZero(String report, String regex) {
         Matcher m = Pattern.compile(regex).matcher(report);
         if (m.find()) {
@@ -631,13 +634,16 @@ public class GuildCommands {
         return 0;
     }
 
-    public record GuildStatEntry(String uuid, MemberInfo guildMemberData){}
+    public record GuildStatEntry(String uuid, MemberInfo guildMemberData) {
+    }
+
     public record LastLoginInfo(
             String uuid,
             String username,
             long lastJoinedDays,
             Utils.RankList rank,
             int highestLvl
-    ) {}
+    ) {
+    }
 
 }

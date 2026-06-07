@@ -100,6 +100,22 @@ public class PlaytimeHistoryList {
         return totalWeighted / totalWeights;
     }
 
+    public String getPlaytimeReport() {
+        if (playtimeHistory.isEmpty()) {
+            return "No data available";
+        }
+
+        StringBuilder sb = new StringBuilder();
+        for (int i = playtimeHistory.size() - 1; i >= 0; i--) {
+            PlaytimeHistoryEntry entry = playtimeHistory.get(i);
+            sb.append(entry.playtime)
+                    .append(" ")
+                    .append(Utils.getDiscordTimestamp(entry.timeLogged, true))
+                    .append("\n");
+        }
+        return sb.toString();
+    }
+
     public String getWarsReport() {
         if (playtimeHistory.isEmpty()) {
             return "No data available";
@@ -169,7 +185,7 @@ public class PlaytimeHistoryList {
         }
 
         @Override
-        public String toString(){
+        public String toString() {
             return playtime + " hours " + Utils.getDiscordTimestamp(timeLogged, true);
         }
     }
