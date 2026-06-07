@@ -66,6 +66,7 @@ public enum AllSlashCommands {
     startwartracker("start a war tracker"),
     getraidstats("get raid stats"),
     getweekly("guild weekly obj"),
+    getplaytimeentries("get the playtime entries for a user"),
     debug("dev command that does whatever i happen to need it to");
 
     public Consumer<SlashCommandInteractionEvent> getAction() {
@@ -91,11 +92,11 @@ public enum AllSlashCommands {
         return description;
     }
 
-    public void setAction(Consumer<SlashCommandInteractionEvent> action){
+    public void setAction(Consumer<SlashCommandInteractionEvent> action) {
         this.action = action;
     }
 
-    public SlashCommandData getBaseCommandData(){
+    public SlashCommandData getBaseCommandData() {
         return Commands.slash(this.name(), this.getDescription())
                 .setContexts(InteractionContextType.GUILD)
                 .setIntegrationTypes(IntegrationType.GUILD_INSTALL);
@@ -125,21 +126,21 @@ public enum AllSlashCommands {
                 break;
             }
         }
-        if (!allowedChannels.isEmpty()){
+        if (!allowedChannels.isEmpty()) {
             String id = event.getChannel().getId();
-            if (hasTrue){ // you need to be in a whitelisted channel to run command
-                if (!allowedChannels.containsKey(id) || !allowedChannels.get(id).equals(true)){
+            if (hasTrue) { // you need to be in a whitelisted channel to run command
+                if (!allowedChannels.containsKey(id) || !allowedChannels.get(id).equals(true)) {
                     event.reply("❌ you may not run commands here").setEphemeral(true).queue();
                     return;
                 }
-            }else { // you can run commands in any not blacklisted channel
-                if (allowedChannels.containsKey(id) && allowedChannels.get(id).equals(false)){
+            } else { // you can run commands in any not blacklisted channel
+                if (allowedChannels.containsKey(id) && allowedChannels.get(id).equals(false)) {
                     event.reply("❌ you may not run commands here").setEphemeral(true).queue();
                     return;
                 }
             }
         }
-        
+
         Config.Roles requiredRole = getRequiredRole();
         if (requiredRole == null) {
             action.accept(event);
@@ -158,6 +159,6 @@ public enum AllSlashCommands {
     }
 
     public Config.Roles getRequiredRole() {
-         return ConfigManager.getConfigInstance().roleRequirements.get(this);
+        return ConfigManager.getConfigInstance().roleRequirements.get(this);
     }
 }

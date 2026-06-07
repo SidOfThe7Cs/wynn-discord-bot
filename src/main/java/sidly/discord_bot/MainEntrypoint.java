@@ -25,6 +25,7 @@ import sidly.discord_bot.api.sub.MemberInfo;
 import sidly.discord_bot.api.sub.RaidStats;
 import sidly.discord_bot.commands.*;
 import sidly.discord_bot.commands.inactivity_promotion.InactivityCommands;
+import sidly.discord_bot.commands.inactivity_promotion.PlaytimeCommands;
 import sidly.discord_bot.commands.inactivity_promotion.PromotionCommands;
 import sidly.discord_bot.commands.inactivity_promotion.RequirementType;
 import sidly.discord_bot.database.SQLDB;
@@ -54,6 +55,7 @@ public class MainEntrypoint extends ListenerAdapter {
     public static JDA jda;
 
     private static boolean shuttingDown = false;
+
     public static void shutdown() {
         if (shuttingDown) return;
         shuttingDown = true;
@@ -76,7 +78,7 @@ public class MainEntrypoint extends ListenerAdapter {
         ConfigManager.load();
         SQLDB.init();
         String token = ConfigManager.getConfigInstance().other.get(Config.Settings.Token);
-        if (token == null || token.isEmpty()){
+        if (token == null || token.isEmpty()) {
             System.err.println("please assign your bot token in the config file located at " + ConfigManager.CONFIG_FILE.getAbsolutePath());
             shutdown();
         }
@@ -236,13 +238,13 @@ public class MainEntrypoint extends ListenerAdapter {
         commands.addCommands(AllSlashCommands.addchannelrestriction.getBaseCommandData()
                 .addOption(CHANNEL, "channel", "channel", true)
                 .addOptions(
-                new OptionData(OptionType.STRING, "allowed", "whitelisted / blacklisted / default", true)
-                        .addChoices(
-                                new Command.Choice("whitelisted", "true"),
-                                new Command.Choice("blacklisted", "false"),
-                                new Command.Choice("default", "null")
-                        )
-        ));
+                        new OptionData(OptionType.STRING, "allowed", "whitelisted / blacklisted / default", true)
+                                .addChoices(
+                                        new Command.Choice("whitelisted", "true"),
+                                        new Command.Choice("blacklisted", "false"),
+                                        new Command.Choice("default", "null")
+                                )
+                ));
         AllSlashCommands.addchannelrestriction.setAction(ChannelRestrinctionCommands::addRestriction);
 
         commands.addCommands(AllSlashCommands.addtrackedguild.getBaseCommandData()
@@ -263,14 +265,14 @@ public class MainEntrypoint extends ListenerAdapter {
                 .addOption(INTEGER, "days", "average over the last number of days", false));
         AllSlashCommands.trackedguilds.setAction(GuildCommands::viewTrackedGuilds);
         PageBuilder.PaginationManager.register(PaginationIds.GUILD.name(),
-                trackedGuild -> GuildCommands.guildConverter((GuildAverages) trackedGuild), "Average activity for tracked guilds",9);
+                trackedGuild -> GuildCommands.guildConverter((GuildAverages) trackedGuild), "Average activity for tracked guilds", 9);
 
         commands.addCommands(AllSlashCommands.getsysteminfo.getBaseCommandData());
         AllSlashCommands.getsysteminfo.setAction(HelpCommands::getSystemInfo);
 
         commands.addCommands(AllSlashCommands.warreport.getBaseCommandData());
         AllSlashCommands.warreport.setAction(GuildCommands::getWarReport);
-        PageBuilder.PaginationManager.register(PaginationIds.WAR_REPORT.name(), null, "War report",5);
+        PageBuilder.PaginationManager.register(PaginationIds.WAR_REPORT.name(), null, "War report", 5);
 
         commands.addCommands(AllSlashCommands.updateplayerranks.getBaseCommandData());
         AllSlashCommands.updateplayerranks.setAction(GuildCommands::updatePlayerRanks);
@@ -429,6 +431,12 @@ public class MainEntrypoint extends ListenerAdapter {
         PageBuilder.PaginationManager.register(PaginationIds.WEEKLY_OBJ.name(),
                 entry -> Weekly.weeklyConverter((MemberInfo) entry), "Weekly Objectives", 20);
 
+        commands.addCommands(
+                AllSlashCommands.getplaytimeentries.getBaseCommandData()
+                        .addOption(USER, "user", "server member", false)
+                        .addOption(STRING, "username", "username", false)
+        );
+        AllSlashCommands.getplaytimeentries.setAction(PlaytimeCommands::getPlaytimeReport);
 
         // Send the new set of commands to discord, this will override any existing global commands with the new set provided here
         commands.queue();
@@ -469,14 +477,14 @@ public class MainEntrypoint extends ListenerAdapter {
             return;
         }
 
-        if (fullId.startsWith("pagination")){
+        if (fullId.startsWith("pagination")) {
             PageBuilder.handlePagination(event);
             return;
         } else if (fullId.startsWith("aspects:")) {
             Graids.buttonClicked(event);
         } else if (fullId.startsWith("warTracker:")) {
             WarTracker.buttonClicked(event);
-        }  else if (fullId.startsWith("verification")) {
+        } else if (fullId.startsWith("verification")) {
             VerificationCommands.verify(event);
         } else if (fullId.startsWith("verC:") || fullId.startsWith("verD:")) {
             String[] parts = fullId.split(":");
@@ -519,7 +527,6 @@ public class MainEntrypoint extends ListenerAdapter {
         }
 
 
-
         String[] id = event.getComponentId().split(":");
         String authorId = id[0];
         String type = id[1];
@@ -529,8 +536,7 @@ public class MainEntrypoint extends ListenerAdapter {
         MessageChannel channel = event.getChannel();
         Message message = event.getMessage();
         MessageEmbed originalEmbed = message.getEmbeds().isEmpty() ? null : message.getEmbeds().getFirst();
-        switch (type)
-        {
+        switch (type) {
             case "update.confirm":
                 UpdaterCommands.update();
                 break;
@@ -563,7 +569,7 @@ public class MainEntrypoint extends ListenerAdapter {
             List<Command.Choice> choices = Arrays.stream(Graids.Raid.values())
                     .filter(raid ->
                             raid.name().toLowerCase().startsWith(userInput.toLowerCase()) ||
-                            raid.apiName().toLowerCase().startsWith(userInput.toLowerCase())
+                                    raid.apiName().toLowerCase().startsWith(userInput.toLowerCase())
                     )
                     .limit(20)
                     .map(raid -> new Command.Choice(raid.name(), raid.name()))
@@ -589,7 +595,7 @@ public class MainEntrypoint extends ListenerAdapter {
             List<Command.Choice> choices = new ArrayList<>();
 
             for (Config.Settings setting : Config.Settings.values()) {
-                    choices.add(new Command.Choice(setting.name(), setting.name()));
+                choices.add(new Command.Choice(setting.name(), setting.name()));
             }
 
             event.replyChoices(
@@ -615,7 +621,8 @@ public class MainEntrypoint extends ListenerAdapter {
 
     @Override
     public void onGuildMemberJoin(GuildMemberJoinEvent event) {
-        if (!ConfigManager.getConfigInstance().other.get(Config.Settings.YourDiscordServerId).equals(event.getGuild().getId())) return;
+        if (!ConfigManager.getConfigInstance().other.get(Config.Settings.YourDiscordServerId).equals(event.getGuild().getId()))
+            return;
 
         Member member = event.getMember();
         Guild guild = event.getGuild();
@@ -641,7 +648,8 @@ public class MainEntrypoint extends ListenerAdapter {
 
     @Override
     public void onGuildMemberRemove(GuildMemberRemoveEvent event) {
-        if (!ConfigManager.getConfigInstance().other.get(Config.Settings.YourDiscordServerId).equals(event.getGuild().getId())) return;
+        if (!ConfigManager.getConfigInstance().other.get(Config.Settings.YourDiscordServerId).equals(event.getGuild().getId()))
+            return;
 
         User user = event.getUser();
         Guild guild = event.getGuild();

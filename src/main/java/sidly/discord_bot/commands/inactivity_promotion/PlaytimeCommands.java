@@ -11,7 +11,7 @@ import sidly.discord_bot.database.tables.UuidMap;
 import java.util.Optional;
 
 public class PlaytimeCommands {
-    public static void getWarReport(SlashCommandInteractionEvent event) {
+    public static void getPlaytimeReport(SlashCommandInteractionEvent event) {
         event.deferReply(false).queue(hook -> {
             User user = Optional.ofNullable(event.getOption("user"))
                     .map(OptionMapping::getAsUser)
