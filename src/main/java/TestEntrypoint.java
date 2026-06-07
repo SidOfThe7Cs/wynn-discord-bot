@@ -1,16 +1,12 @@
-import sidly.discord_bot.Config;
 import sidly.discord_bot.ConfigManager;
-import sidly.discord_bot.api.ApiUtils;
-import sidly.discord_bot.api.GuildInfo;
-import sidly.discord_bot.api.sub.MemberInfo;
 import sidly.discord_bot.database.SQLDB;
+import sidly.discord_bot.new_guild_endpoint.Graids;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import static sidly.discord_bot.database.SQLDB.connection;
 
@@ -22,14 +18,10 @@ public class TestEntrypoint {
 
         ConfigManager.load();
 
-        GuildInfo hoc = ApiUtils.getGuildInfo("HOC", true);
-        if (hoc != null) {
-            Map<String, MemberInfo> allMembers = hoc.members.getAllMembers();
-            for (Map.Entry<String, MemberInfo> entry : allMembers.entrySet()) {
-                System.out.println(entry.getValue().username + " -> " + entry.getValue().weekly);
-            }
-        }
 
+        Graids.GraidTracker tracker = new Graids.GraidTracker("test", Graids.Raid.ALL, null, false, false, false, false);
+
+        Graids.startTimer();
         //System.out.println(hoc.name + " " + hoc.online + " / " + hoc.members.total);
     }
 

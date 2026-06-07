@@ -95,6 +95,7 @@ public class WarTracker extends Tracker {
     private void restart() {
         startTime = System.currentTimeMillis();
         increaseCounts.clear();
+        updateDisplay();
     }
 
     @Override
@@ -212,6 +213,7 @@ public class WarTracker extends Tracker {
         boolean isOwner = RoleUtils.hasRole(member, Config.Roles.OwnerRole);
         if (!isChief && !isOwner) {
             event.reply("you do not have perms to do this").setEphemeral(true).queue();
+            return;
         }
 
 

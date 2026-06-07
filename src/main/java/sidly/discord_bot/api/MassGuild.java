@@ -5,11 +5,13 @@ import com.google.gson.reflect.TypeToken;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import sidly.discord_bot.Config;
 import sidly.discord_bot.ConfigManager;
-import sidly.discord_bot.commands.GuildCommands;
 import sidly.discord_bot.commands.VerificationCommands;
 import sidly.discord_bot.database.PlayerDataShortened;
 import sidly.discord_bot.database.records.GuildName;
-import sidly.discord_bot.database.tables.*;
+import sidly.discord_bot.database.tables.AllGuilds;
+import sidly.discord_bot.database.tables.GuildActivity;
+import sidly.discord_bot.database.tables.Players;
+import sidly.discord_bot.database.tables.PlaytimeHistory;
 import sidly.discord_bot.timed_actions.DynamicTimer;
 
 import java.io.IOException;
@@ -122,6 +124,7 @@ public class MassGuild {
     public static boolean getTimerStatus() {
         return timersRunning;
     }
+
     public static Long getTimerLastRun() {
         return Math.min(lowPrioTimer.getLastTimeRan(), mainTimer.getLastTimeRan());
     }
@@ -176,7 +179,6 @@ public class MassGuild {
             }
         }
     }
-
 
 
     public static void next() {
@@ -289,7 +291,7 @@ public class MassGuild {
         Gson gson = new GsonBuilder().create();
 
         if (status == 300) {
-            if(!handledMultis.contains(prefix)) handleMultiselecters(response, retry);
+            if (!handledMultis.contains(prefix)) handleMultiselecters(response, retry);
             handledMultis.add(prefix);
             return;
         }
@@ -487,6 +489,7 @@ public class MassGuild {
     }
 
     private static final AtomicInteger tokenIndex = new AtomicInteger(0);
+
     public static Map<String, PlayerProfile> getPlayerData(Set<String> uuids, String guildUuid) {
         if (apiTokens.isEmpty()) throw new IllegalStateException("No API tokens available");
 
@@ -498,7 +501,8 @@ public class MassGuild {
         }
 
         Gson gson = new GsonBuilder().create();
-        Type type = new TypeToken<PlayerProfile>(){}.getType();
+        Type type = new TypeToken<PlayerProfile>() {
+        }.getType();
         Map<String, PlayerProfile> results = new ConcurrentHashMap<>();
 
         List<CompletableFuture<Void>> futures = new ArrayList<>();
@@ -517,8 +521,8 @@ public class MassGuild {
                         int status = response.statusCode();
 
                         String remaining = response.headers().map().getOrDefault("ratelimit-remaining", List.of("unknown")).getFirst();
-                        String reset     = response.headers().map().getOrDefault("ratelimit-reset", List.of("unknown")).getFirst();
-                        String limit     = response.headers().map().getOrDefault("ratelimit-limit", List.of("unknown")).getFirst();
+                        String reset = response.headers().map().getOrDefault("ratelimit-reset", List.of("unknown")).getFirst();
+                        String limit = response.headers().map().getOrDefault("ratelimit-limit", List.of("unknown")).getFirst();
 
                         if (Objects.equals(limit, "unknown") || Objects.equals(reset, "unknown") || Objects.equals(remaining, "unknown")) {
                             List<String> invalidTokens = ConfigManager.getConfigInstance().other.entrySet().stream()

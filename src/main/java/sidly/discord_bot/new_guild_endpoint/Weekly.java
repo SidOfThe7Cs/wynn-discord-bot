@@ -15,7 +15,6 @@ import sidly.discord_bot.page.PageBuilder;
 import sidly.discord_bot.page.PaginationIds;
 
 import java.time.DayOfWeek;
-import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.TemporalAdjusters;
@@ -65,7 +64,7 @@ public class Weekly {
         String maybe = memberInfo.weekly.completed ? "" : " NOT";
         return getSymbol(memberInfo.weekly) + " " +
                 memberInfo.username +
-                " has" + maybe + " completed there guild obj" +
+                " has" + maybe + " completed their guild obj" +
                 " (Streak " + memberInfo.weekly.streak + ")\n";
     }
 
