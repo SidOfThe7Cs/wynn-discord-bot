@@ -38,8 +38,14 @@ public class Weekly {
 
             GuildInfo guildInfo = ApiUtils.getGuildInfo(ConfigManager.getConfigInstance().other.get(Config.Settings.YourGuildPrefix), true);
             if (guildInfo == null) return;
+
+            int minStreak = Optional.ofNullable(event.getOption("streak"))
+                    .map(OptionMapping::getAsInt)
+                    .orElse(0);
+
             Map<String, MemberInfo> allMembersByUsername = guildInfo.members.getAllMembersByUsername();
             List<MemberInfo> sortedEntries = allMembersByUsername.values().stream()
+                    .filter(m -> m.weekly.streak >= minStreak)
                     .filter(m -> username == null || username.isEmpty() || username.equalsIgnoreCase(m.username))
                     .sorted(Comparator.comparingInt(m -> m.contributionRank))
                     .toList();

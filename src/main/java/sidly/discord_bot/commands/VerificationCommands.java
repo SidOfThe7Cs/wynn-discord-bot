@@ -14,8 +14,10 @@ import sidly.discord_bot.api.GuildInfo;
 import sidly.discord_bot.api.PlayerProfile;
 import sidly.discord_bot.database.tables.UuidMap;
 
-import java.awt.Color;
-import java.util.*;
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -238,7 +240,8 @@ public class VerificationCommands {
     public static String updatePlayer(Member member) {
         String fullEffectiveName = member.getEffectiveName();
         String nickname = fullEffectiveName.split("\\[")[0].trim();
-        String uuid = UuidMap.getMinecraftIdByUsername(nickname.toLowerCase()) == null ? nickname : UuidMap.getMinecraftIdByUsername(nickname.toLowerCase());String verifiedRoleId = ConfigManager.getConfigInstance().roles.get(Config.Roles.VerifiedRole);
+        String uuid = UuidMap.getMinecraftIdByUsername(nickname.toLowerCase()) == null ? nickname : UuidMap.getMinecraftIdByUsername(nickname.toLowerCase());
+        String verifiedRoleId = ConfigManager.getConfigInstance().roles.get(Config.Roles.VerifiedRole);
         if (!RoleUtils.hasRole(member, verifiedRoleId)) return member.getAsMention() + " :x: is not verified";
         PlayerProfile playerData = ApiUtils.getPlayerData(uuid);
         return updatePlayer(member, playerData);
@@ -298,10 +301,12 @@ public class VerificationCommands {
                 boolean hasMemberRole = RoleUtils.hasRole(member, memberRole.getId());
                 if (isMember) {
                     // they are in your guild
+                    /* API DESYNC creates spam cant add here
                     if (!hasMemberRole) {
                         member.getGuild().addRoleToMember(member, memberRole).queue();
                         sb.append("Added the member role ").append(memberRole.getAsMention()).append('\n');
                     }
+                     */
                     if (!isOwner)
                         member.modifyNickname(nickname).queue(); // make sure there nick doesnt have a guild tag after it
                 } else {
@@ -322,6 +327,7 @@ public class VerificationCommands {
         }
 
 
+        /* API DESYNC creates spam cant add here
         // add their in-game guild rank
         if (isMember) {
             Utils.RankList rankOfMember = playerData.getRank();
@@ -344,6 +350,7 @@ public class VerificationCommands {
             // if null there are not in your guild and it will remove all roles otherwise remove all and add the correct one
             sb.append(RoleUtils.removeRankRolesExcept(member, rankRoleId));
         }
+         */
 
         // add their support rank
         String supportRoleId = null;

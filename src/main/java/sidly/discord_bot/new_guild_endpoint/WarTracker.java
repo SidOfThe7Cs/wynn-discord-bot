@@ -82,7 +82,12 @@ public class WarTracker extends Tracker {
         }
 
         for (WarTracker tracker : trackers.values()) {
-            tracker.updateDisplay();
+            try {
+                tracker.updateDisplay();
+            } catch (Exception e) {
+                System.out.println("error updating a war tracker: ");
+                e.printStackTrace();
+            }
         }
     }
 

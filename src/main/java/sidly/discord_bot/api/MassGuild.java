@@ -447,8 +447,24 @@ public class MassGuild {
     }
 
     private static void handleMultiselecters(HttpResponse<String> response, boolean retry) {
+        JsonObject objects = JsonParser.parseString(response.body()).getAsJsonObject();
+        handleMultiselecters(objects, retry);
+    }
+
+    private static void handleMultiselecters(JsonObject objects, boolean retry) {
+
+        JsonElement objects1 = objects.get("objects");
+        if (objects1 != null) {
+            try {
+                handleMultiselecters(objects1.getAsJsonObject(), retry);
+            } catch (Exception e) {
+                System.out.println("error handling multiselector: " + objects1);
+                e.printStackTrace();
+            }
+            return;
+        }
+
         try {
-            JsonObject objects = JsonParser.parseString(response.body()).getAsJsonObject();
 
             for (Map.Entry<String, JsonElement> entry : objects.entrySet()) {
                 try {
@@ -493,7 +509,7 @@ public class MassGuild {
                 }
             }
         } catch (Exception e) {
-            System.err.println("Failed to handle multi-selector: " + response.body());
+            System.err.println("Failed to handle multi-selector: " + objects);
             e.printStackTrace();
         }
     }

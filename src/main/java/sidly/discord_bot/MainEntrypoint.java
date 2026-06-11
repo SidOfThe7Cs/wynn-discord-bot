@@ -426,6 +426,7 @@ public class MainEntrypoint extends ListenerAdapter {
                 AllSlashCommands.getweekly.getBaseCommandData()
                         .addOption(USER, "user", "server member", false)
                         .addOption(STRING, "username", "username", false)
+                        .addOption(INTEGER, "streak", "only show users at or above the specified streak", false)
         );
         AllSlashCommands.getweekly.setAction(Weekly::getCommandResponse);
         PageBuilder.PaginationManager.register(PaginationIds.WEEKLY_OBJ.name(),

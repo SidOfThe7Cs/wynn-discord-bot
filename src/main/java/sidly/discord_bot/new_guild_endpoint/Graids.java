@@ -214,6 +214,7 @@ public class Graids {
             try {
                 tracker.updateDisplay();
             } catch (Exception e) {
+                System.out.println("error updating a graid tracker: ");
                 e.printStackTrace();
             }
         }

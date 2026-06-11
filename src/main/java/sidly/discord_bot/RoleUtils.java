@@ -11,19 +11,17 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class RoleUtils {
-    public static String removeRolesIfNotMember(Member member){
+    public static String removeRolesIfNotMember(Member member) {
 
-        return removeRankRolesExcept(member, null) +
-                removeTrialWarRoles(member) +
+        return removeTrialWarRoles(member) +
                 removeRole(member, Config.Roles.MemberRole) +
-                removeRole(member, Config.Roles.GuildRaidsRole) +
                 removeRole(member, Config.Roles.WarrerRole) +
                 removeRole(member, Config.Roles.WarPingRole) +
                 removeRole(member, Config.Roles.EventsRole) +
                 removeRole(member, Config.Roles.GiveawayRole);
     }
 
-    public static String removeRolesUnverify(Member member){
+    public static String removeRolesUnverify(Member member) {
         return removeRolesIfNotMember(member) +
                 removeRole(member, Config.Roles.WynnVetRole) +
                 removeRole(member, Config.Roles.OneHundredPercentContentCompletionRole) +
@@ -36,7 +34,7 @@ public class RoleUtils {
                 removeRole(member, Config.Roles.WynnContentTeamRole);
     }
 
-    public static String removeTrialWarRoles(Member member){
+    public static String removeTrialWarRoles(Member member) {
         Set<String> allTrialRoleIds = Stream.of(
                         ConfigManager.getConfigInstance().roles.get(Config.Roles.TrialEcoRole),
                         ConfigManager.getConfigInstance().roles.get(Config.Roles.TrialTankRole),
@@ -66,7 +64,7 @@ public class RoleUtils {
         return removeRolesExcept(member, allRankRoleIds, rankRoleId);
     }
 
-    public static String removeSupportRankRolesExcept(Member member, String supportRankRoleId){
+    public static String removeSupportRankRolesExcept(Member member, String supportRankRoleId) {
         // All support rank role IDs from config
         Set<String> allSupportRoleIds = Stream.of(
                         ConfigManager.getConfigInstance().roles.get(Config.Roles.VipRole),
@@ -81,7 +79,7 @@ public class RoleUtils {
         return removeRolesExcept(member, allSupportRoleIds, supportRankRoleId);
     }
 
-    public static String removeWynnRankRolesExcept(Member member, String wynnRankRoleId){
+    public static String removeWynnRankRolesExcept(Member member, String wynnRankRoleId) {
         // All support rank role IDs from config
         Set<String> allWynnRankRoleIds = Stream.of(
                         ConfigManager.getConfigInstance().roles.get(Config.Roles.WynnModeratorRole),
@@ -94,7 +92,7 @@ public class RoleUtils {
         return removeRolesExcept(member, allWynnRankRoleIds, wynnRankRoleId);
     }
 
-    public static String removeClassRolesExcept(Member member, Config.ClassRoles classRole){
+    public static String removeClassRolesExcept(Member member, Config.ClassRoles classRole) {
         String classRoleId = ConfigManager.getConfigInstance().classRoles.get(classRole);
         // All support rank role IDs from config
         Set<String> allClassRoleIds = Stream.of(
@@ -110,7 +108,7 @@ public class RoleUtils {
         return removeRolesExcept(member, allClassRoleIds, classRoleId);
     }
 
-    public static String removeArchetypeRolesExcept(Member member, Config.ClassRoles ArchetypeRole){
+    public static String removeArchetypeRolesExcept(Member member, Config.ClassRoles ArchetypeRole) {
         String ArchetypeRoleId = ConfigManager.getConfigInstance().classRoles.get(ArchetypeRole);
         // All support rank role IDs from config
         Set<String> allArchetypeRoleIds = Stream.of(
@@ -136,7 +134,7 @@ public class RoleUtils {
         return removeRolesExcept(member, allArchetypeRoleIds, ArchetypeRoleId);
     }
 
-    public static String removeLvlRolesExcept(Member member, String lvlRoleId){
+    public static String removeLvlRolesExcept(Member member, String lvlRoleId) {
         // All support rank role IDs from config
         Set<String> allLvlRoleIds = Arrays.stream(Config.LvlRoles.values())
                 .map(lvlRole -> ConfigManager.getConfigInstance().lvlRoles.get(lvlRole))
@@ -146,7 +144,7 @@ public class RoleUtils {
         return removeRolesExcept(member, allLvlRoleIds, lvlRoleId);
     }
 
-    public static String removeRolesExcept(Member member, Set<String> allIds, String idToKeep){
+    public static String removeRolesExcept(Member member, Set<String> allIds, String idToKeep) {
         StringBuilder sb = new StringBuilder();
 
         Guild guild = member.getGuild();
@@ -180,7 +178,7 @@ public class RoleUtils {
         return sb.toString();
     }
 
-    public static boolean hasRole(Member user, String roleId){
+    public static boolean hasRole(Member user, String roleId) {
         return user != null && user.getRoles().stream().anyMatch(role -> role.getId().equals(roleId));
     }
 
@@ -210,7 +208,7 @@ public class RoleUtils {
                 .orElse(null); // or throw exception if you want
     }
 
-    public static String addRole(Member member, String roleId){
+    public static String addRole(Member member, String roleId) {
         StringBuilder sb = new StringBuilder();
         Guild guild = member.getGuild();
         Role roleToAdd = getRoleFromGuild(guild, roleId);
@@ -223,12 +221,12 @@ public class RoleUtils {
         return sb.toString();
     }
 
-    public static String addRole(Member member, Config.Roles role){
+    public static String addRole(Member member, Config.Roles role) {
         String roleId = ConfigManager.getConfigInstance().roles.get(role);
         return addRole(member, roleId);
     }
 
-    public static String removeRole(Member member, String roleId){
+    public static String removeRole(Member member, String roleId) {
         StringBuilder sb = new StringBuilder();
         Guild guild = member.getGuild();
         Role roleToRemove = getRoleFromGuild(guild, roleId);
@@ -241,15 +239,15 @@ public class RoleUtils {
         return sb.toString();
     }
 
-    public static String removeRole(Member member, Config.Roles role){
+    public static String removeRole(Member member, Config.Roles role) {
         String roleId = ConfigManager.getConfigInstance().roles.get(role);
         return removeRole(member, roleId);
     }
 
-    public static Role getRoleFromGuild(Guild guild, String id){
-        if (id == null || id.isEmpty()){
+    public static Role getRoleFromGuild(Guild guild, String id) {
+        if (id == null || id.isEmpty()) {
             return null;
-        }else{
+        } else {
             return guild.getRoleById(id);
         }
     }
