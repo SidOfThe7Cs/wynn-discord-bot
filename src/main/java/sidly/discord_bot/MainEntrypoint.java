@@ -427,6 +427,7 @@ public class MainEntrypoint extends ListenerAdapter {
                         .addOption(USER, "user", "server member", false)
                         .addOption(STRING, "username", "username", false)
                         .addOption(INTEGER, "streak", "only show users at or above the specified streak", false)
+                        .addOption(INTEGER, "incomplete", "only show users who have not completed there obj", false)
         );
         AllSlashCommands.getweekly.setAction(Weekly::getCommandResponse);
         PageBuilder.PaginationManager.register(PaginationIds.WEEKLY_OBJ.name(),
@@ -453,6 +454,8 @@ public class MainEntrypoint extends ListenerAdapter {
         WarTracker.startTimer();
 
         DetectTimerBreaks.init();
+
+        MassGuild.stopTimer();
     }
 
 

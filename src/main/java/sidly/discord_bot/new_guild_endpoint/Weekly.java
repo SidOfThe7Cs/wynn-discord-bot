@@ -43,9 +43,18 @@ public class Weekly {
                     .map(OptionMapping::getAsInt)
                     .orElse(0);
 
+            boolean incomplete = Optional.ofNullable(event.getOption("incomplete"))
+                    .map(OptionMapping::getAsBoolean)
+                    .orElse(false);
+
             Map<String, MemberInfo> allMembersByUsername = guildInfo.members.getAllMembersByUsername();
             List<MemberInfo> sortedEntries = allMembersByUsername.values().stream()
-                    .filter(m -> m.weekly.streak >= minStreak)
+                    .filter(m -> {
+                        boolean streakMet = m.weekly.streak >= minStreak;
+                        boolean completedFilter = true;
+                        if (incomplete) completedFilter = !m.weekly.completed;
+                        return streakMet && completedFilter;
+                    })
                     .filter(m -> username == null || username.isEmpty() || username.equalsIgnoreCase(m.username))
                     .sorted(Comparator.comparingInt(m -> m.contributionRank))
                     .toList();

@@ -14,7 +14,6 @@ public class RoleUtils {
     public static String removeRolesIfNotMember(Member member) {
 
         return removeTrialWarRoles(member) +
-                removeRole(member, Config.Roles.MemberRole) +
                 removeRole(member, Config.Roles.WarrerRole) +
                 removeRole(member, Config.Roles.WarPingRole) +
                 removeRole(member, Config.Roles.EventsRole) +
@@ -23,6 +22,7 @@ public class RoleUtils {
 
     public static String removeRolesUnverify(Member member) {
         return removeRolesIfNotMember(member) +
+                removeRole(member, Config.Roles.MemberRole) +
                 removeRole(member, Config.Roles.WynnVetRole) +
                 removeRole(member, Config.Roles.OneHundredPercentContentCompletionRole) +
                 removeRole(member, Config.Roles.VerifiedRole) +

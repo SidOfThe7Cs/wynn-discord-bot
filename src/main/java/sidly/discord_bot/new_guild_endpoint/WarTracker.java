@@ -68,7 +68,7 @@ public class WarTracker extends Tracker {
             Integer oldCount = oldCounts.get(username);
             if (oldCount != null && wars < oldCount) {
                 if (broken.add(username)) {
-                    System.err.println("found a decrease in total war comps? " + username + " old: " + oldCounts + " new: " + wars);
+                    System.err.println("found a decrease in total war comps? " + username + " old: " + oldCount + " new: " + wars);
                 }
             } else {
                 if (broken.remove(username)) {
